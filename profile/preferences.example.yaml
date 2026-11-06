@@ -55,13 +55,17 @@ browser:
   max_parallel_tabs: 3
 
 portal_accounts:
-  allow_sso: true        # prefer "Sign in with Google/Microsoft/LinkedIn" with the account already in Chrome
-  allow_sign_in: true    # use credentials from the OS keychain or the browser
-  allow_create: false    # create portal accounts (Workday: one per company) with a generated password
-  allow_password_reset: false
+  allow_sso: true        # Sign in with Google, then Microsoft, then LinkedIn, with an account already signed in to Chrome
+  allow_saved_login: true  # click Sign In when Chrome itself autofilled a saved login
   email: ""              # blank: use contact.email from standing answers
-  email_code_minutes: 10 # how far back to look for an emailed verification code
-  sms_codes: false       # macOS only: read SMS codes from Messages (needs Full Disk Access)
+  # Optional credential mode, off by default. Many agents (including Claude) will refuse
+  # these steps under their own safety rules; when they do, the job parks for you.
+  credential_mode: false
+  allow_sign_in: false   # credential mode: type the email and paste a password from the OS keychain
+  allow_create: false    # credential mode: create portal accounts (Workday: one per company) with a generated password
+  allow_password_reset: false  # credential mode
+  email_code_minutes: 10 # credential mode: how far back to look for an emailed verification code
+  sms_codes: false       # credential mode, macOS only: read SMS codes from Messages (needs Full Disk Access)
 
 notify:
   method: none           # none | macos | ntfy | slack. Setup writes the details to state/notify.json

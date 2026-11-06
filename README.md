@@ -41,10 +41,10 @@ Then ask your agent to "run the job-setup skill".
 `/job-agent:setup` (or "run the job-setup skill") does everything in one pass:
 
 - asks what jobs you want and your standard application answers, and records your master resume
-- attaches to the Chrome you already use, so you never sign in to anything again
+- attaches to the Chrome you already use, so it starts with the logins you already have
 - checks which MCPs you have (Gmail, Notion, Sheets, Indeed) and what each adds
 - offers the optional auto-allow helper for walk-away runs
-- asks whether the agent may use Sign in with Google on job portals, sign in with saved passwords, create or reset portal accounts, and (macOS) read SMS codes
+- asks whether the agent may use Sign in with Google, Microsoft or LinkedIn on job portals and click Sign In on logins Chrome already saved, and offers the optional credential mode (off by default)
 - sets up a notification (macOS, ntfy.sh or Slack) for jobs that need you
 
 Then:
@@ -63,7 +63,7 @@ Then:
 | Gate | `job-gate` | Filters by title, term, pay floor, location and posting age. Skips jobs already in your tracker |
 | Tailor | `tailor-resume` | Copies your master, picks the best entries and bullets, reports keyword coverage before and after, asks you about missing terms |
 | Fill | `apply-fill` | Fills the form in its own tab with real clicks and typing, uploads the resume, checks every field |
-| Sign in | `portal-auth` | Tries Sign in with Google, then Microsoft, then LinkedIn, then saved passwords; creates or resets accounts only if you allowed it; reads email and (macOS) SMS codes. Parks the job if the agent declines or cannot do a step |
+| Sign in | `portal-auth` | Tries Sign in with Google, then Microsoft, then LinkedIn, then a login Chrome already saved. Otherwise it parks the job for you. Typed passwords, new accounts, resets and codes need the optional credential mode |
 | Run | `job-run` | Runs the loop, one applier per job, each with its own browser connection, then re-checks every form |
 | Track | `tracker` | Local CSV by default, or Notion or Google Sheets. Finds the receipt email after a submit |
 | Sync | `status-sync` | Reads new email for assessments, interviews, offers and rejections and updates each row |
@@ -105,13 +105,19 @@ The agent will never:
 - solve or get around a CAPTCHA or bot check. It parks that job instead: the tab stays open and filled, the tracker row says `Needs you: captcha`, you get a notification, and the run moves on. The run ends with a list of parked tabs so you clear them in one sitting.
 - stall or crash on a step it will not or cannot do. Some agents refuse to type passwords, create accounts or enter codes under their own policies. The agent parks that job the same way (`Needs you: sign-in`, `Needs you: create account` and so on), does not retry it, and moves on.
 - enter an SSN or payment details, or approve an authenticator or push 2FA request.
-- use Sign in with Google, create a portal account or reset a password unless you allowed it in setup. With Google it picks only your own matching account and continues only past consent screens that ask for basic profile and email. Generated passwords go to your OS keychain and never appear in chat or logs.
+- use Sign in with Google, Microsoft or LinkedIn unless you allowed it in setup. It picks only your own matching account and continues only past consent screens that ask for basic profile and email.
 - press Enter or Escape inside a form, or reload a filled tab. It answers fields with real clicks and typing.
 - write answers to essay questions. It leaves them empty and lists them for you.
 - touch a browser tab it did not open.
 - automate LinkedIn or any social media site.
 
-Verification codes: emailed codes are read through the Gmail MCP (newest message from that sender, within a few minutes). On macOS, if you opt in, SMS codes are read from the Messages database (`~/Library/Messages/chat.db`, read-only, last 5 minutes), which needs Full Disk Access for the app running your agent (System Settings > Privacy & Security > Full Disk Access) and Text Message Forwarding from your iPhone. On Windows, SMS codes come to you, because Phone Link has no stable API.
+### Portal sign-in
+
+By default the agent signs in to job portals only with an account already signed in to your Chrome (Google, then Microsoft, then LinkedIn) or a login Chrome already saved. If neither works, it parks the job: the tab stays open and you finish the sign-in.
+
+**Optional credential mode, off by default.** It lets the agent type passwords from your OS keychain, create portal accounts, reset passwords and enter verification codes. Many agents (including Claude) will refuse these steps under their own safety rules; when they do, the job parks for you. Generated passwords go to your OS keychain and never appear in chat or logs.
+
+Verification codes (credential mode): emailed codes are read through the Gmail MCP (newest message from that sender, within a few minutes). On macOS, if you opt in, SMS codes are read from the Messages database (`~/Library/Messages/chat.db`, read-only, last 5 minutes), which needs Full Disk Access for the app running your agent (System Settings > Privacy & Security > Full Disk Access) and Text Message Forwarding from your iPhone. On Windows, SMS codes come to you, because Phone Link has no stable API.
 
 Before it calls a form ready, it re-reads the live form for errors. Some portals record your application before the last step; on unfamiliar multi-step forms it stops after step 1 and checks your email after each step.
 

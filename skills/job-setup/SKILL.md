@@ -38,7 +38,7 @@ Never write user data into the plugin or skill folder. If `JOB_AGENT_HOME` point
    - `skip_if_genai_banned` (default true)
 3. **Standing answers.** Follow `profile/standing-answers.example.yaml`. EEO answers are optional; default each to "Decline to self-identify". Never guess; a blank means the agent asks later.
 4. **Master resume.** Ask for its path (Markdown or LaTeX). If they only have a one-page resume, offer to start a master from `templates/master-resume.md` and ask for extra entries and alternate bullets. Record `master_resume`.
-5. **Browser: attach to the user's main Chrome (default).** The agent uses the Chrome they already use, with their existing logins, so they never sign in again.
+5. **Browser: attach to the user's main Chrome (default).** The agent uses the Chrome they already use, with their existing logins, so they do not sign in to JobRight or Gmail again. Portals that need a new sign-in may still park for them.
    - Needs Chrome 144 or later and Node.js (for `npx chrome-devtools-mcp`). Ask the user to open `chrome://inspect/#remote-debugging` and turn remote debugging on. That is a one-time switch.
    - The Claude Code plugin ships the `job-agent-browser` MCP server (chrome-devtools MCP with `--autoConnect`). For other agents, add chrome-devtools MCP with `--autoConnect` to their MCP config, and show the user the exact snippet for their agent.
    - Test it: call `list_pages`. Chrome shows "Allow remote debugging?". The user clicks Allow. Chrome asks again for every new connection, and each parallel applier opens its own connection, so a run raises one prompt per applier.
@@ -50,12 +50,12 @@ Never write user data into the plugin or skill folder. If `JOB_AGENT_HOME` point
    - macOS: grant Accessibility to the app that runs the agent (System Settings > Privacy & Security > Accessibility). Windows: beta and untested, needs `pip install pywinauto`. Linux: not available.
    - If yes: run `python3 scripts/auto_allow.py enable` and set `browser.auto_allow: true`.
 7. **Portal accounts.** Ask each once and store under `portal_accounts`:
-   - "Allow the agent to use Sign in with Google (or Microsoft, LinkedIn) on job portals, with the account already signed in to your Chrome?" Default yes if the user agrees. It only picks the user's own matching account and only continues past consent screens that ask for basic profile and email.
-   - May it sign in with credentials saved in the OS keychain or the browser? (default yes)
-   - May it create portal accounts for the user (Workday creates one per company) with their email and a generated password stored in the OS keychain? (default no)
-   - May it reset a forgotten portal password through the reset email? (default no)
-   - macOS only: may it read SMS verification codes from Messages? Explain that it reads `~/Library/Messages/chat.db` read-only for a code from the last 5 minutes, and needs Full Disk Access for the app running the agent (System Settings > Privacy & Security > Full Disk Access) plus Text Message Forwarding from their iPhone. Default no. On Windows say SMS codes come back to them (Phone Link has no stable API).
-   If account creation or reset is yes, check `python3 -c "import keyring"`; if missing, ask before running `pip install keyring`. Explain that CAPTCHAs and bot checks are never solved: the agent parks that tab, filled and open, and tells them.
+   - "Allow the agent to use Sign in with Google, Microsoft or LinkedIn on job portals, with an account already signed in to your Chrome?" Default yes. It tries Google, then Microsoft, then LinkedIn, picks only the user's own matching account, and only continues past consent screens that ask for basic profile and email.
+   - May it click Sign In when Chrome itself autofills a saved login? (default yes) It never types or reads the password in this step.
+   - Explain that anything else (no SSO, no saved login) parks the job for them: the tab stays open and they finish the sign-in by hand.
+   - Offer the optional credential mode (default no). Say exactly: "Many agents (including Claude) will refuse these steps under their own safety rules; when they do, the job parks for you." It covers typing a password stored in the OS keychain (`allow_sign_in`), creating portal accounts with a generated password (`allow_create`; Workday creates one per company), resetting a forgotten password through the reset email (`allow_password_reset`), and entering emailed or (macOS) SMS codes (`sms_codes`). Only if they say yes, set `credential_mode: true` and ask about each of those four (each default no).
+   - SMS codes (macOS only): explain that it reads `~/Library/Messages/chat.db` read-only for a code from the last 5 minutes, and needs Full Disk Access for the app running the agent (System Settings > Privacy & Security > Full Disk Access) plus Text Message Forwarding from their iPhone. On Windows say SMS codes come back to them (Phone Link has no stable API).
+   If credential mode is on with sign-in, creation or reset, check `python3 -c "import keyring"`; if missing, ask before running `pip install keyring`. Explain that CAPTCHAs and bot checks are never solved: the agent parks that tab, filled and open, and tells them.
 8. **Notifications for parked jobs.** Ask how to reach them when a tab needs them: macOS notification, an ntfy.sh topic (suggest a long random topic name, since anyone who knows it can read it), a Slack incoming webhook, or none. Write `<workspace>/state/notify.json` (shapes in `../job-run/scripts/notify.py`), set `notify.method` in preferences, and send a test with `notify.py --title "job-agent" --message "test"`.
 9. **JobRight feed.** Ask the user to open JobRight, go to recommended jobs, sort by Most Recent, and paste that URL; save it as `sources.jobright.feed_url`.
 10. **Optional connectors.** Check which MCPs exist and say what each enables: Gmail (receipts, account verification, status sync), Notion or Google Sheets (tracker), Indeed (fallback job source). Missing ones are fine.
@@ -64,4 +64,4 @@ Never write user data into the plugin or skill folder. If `JOB_AGENT_HOME` point
 ## Never
 
 - Store passwords, codes or API keys in any file. Passwords go only in the OS keychain through `portal-auth`.
-- Enable `auto_allow` or portal account creation without the user's explicit yes after the explanation above.
+- Enable `auto_allow` or credential mode without the user's explicit yes after the explanation above.
