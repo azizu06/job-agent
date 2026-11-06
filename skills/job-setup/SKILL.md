@@ -1,13 +1,25 @@
 ---
 name: job-setup
-description: One-command setup for job-agent. Interviews the user, writes profile/preferences.yaml and profile/standing-answers.yaml in the job-agent workspace, records the master resume, attaches the agent to the user's own signed-in Chrome, checks the MCPs, and offers the optional auto-allow helper and portal-account settings. Use when the user says set up job-agent or "set this up" about this repo, runs /job-agent:setup, or when another job-agent skill finds no profile.
+description: Guided, resumable setup for job-agent for first-time users. Explains each step, interviews the user, writes profile/preferences.yaml and profile/standing-answers.yaml in the job-agent workspace, records the master resume, attaches the agent to the user's own signed-in Chrome, checks the MCPs, and offers the optional auto-allow helper and portal-account settings. Use when the user says set up job-agent or "set this up" about this repo, runs /job-agent:setup, or when another job-agent skill finds no profile.
 ---
 
 # job-setup
 
-One pass, start to finish. Ask one topic at a time in plain language, offer the example value as the default, and write files only after the user confirms. Do every step you can yourself; ask the user only for choices and for clicks only they can make.
+Guided setup for someone who has never seen this project. They must finish without asking the creator anything. Plain words, short sentences. For every step: say in one sentence WHY it matters, then give exact clicks, then check it worked yourself. Ask one thing at a time. Offer the safe default. Write files only after the user confirms.
 
-## Workspace
+Do everything you can yourself. Ask the user only for choices and for clicks only they can make.
+
+## Opening (always show first)
+
+Say this, adjusted to the steps still open:
+
+> Setup takes about 10 minutes. We will: (1) connect me to your Chrome, (2) connect Gmail and pick a tracker, (3) link JobRight, (4) add your resume, (5) set your rules, (6) run a practice application that stops before Submit.
+>
+> Have ready: Google Chrome 144 or later, Node.js installed, your resume (PDF, Word, or your LinkedIn profile text), a Gmail account, and a free JobRight account (we make one if needed). Optional: a Notion or Google account for the tracker.
+
+Ask: "Ready?" Then go.
+
+## Workspace and progress
 
 All user data lives in the workspace: `$JOB_AGENT_HOME` if set, else `~/.job-agent/` (on Windows `%USERPROFILE%\.job-agent\`). Create it if missing:
 
@@ -25,55 +37,98 @@ All user data lives in the workspace: `$JOB_AGENT_HOME` if set, else `~/.job-age
 
 Never write user data into the plugin or skill folder. If `JOB_AGENT_HOME` points at a clone of this repo, its `.gitignore` already excludes these paths.
 
+Progress file: `<workspace>/state/setup-progress.json`, like `{"done": ["chrome", "connectors"]}`. After each step passes its check, add its id. On a re-run, read it, print a checklist with done steps ticked, say "Skipping what is already done", and resume at the first open step. If the user asks to redo a step, remove its id. Step ids: `chrome`, `autoallow`, `connectors`, `tracker`, `jobright`, `resume`, `preferences`, `answers`, `permissions`, `notify`, `dryrun`.
+
 ## Steps
 
-Script commands below say `python3`; on Windows use `py -3`.
+Script commands say `python3`; on Windows use `py -3`.
 
 1. **Existing files.** If `profile/preferences.yaml` exists, summarize it and ask what to change instead of starting over.
-2. **Preferences.** Follow the keys and comments in `assets/preferences.example.yaml` in this skill's folder:
-   - target roles and title words to exclude; seniority, and for internships the term (for example Summer 2027)
+
+2. **Chrome connection** (id `chrome`).
+   - Why: I work inside the Chrome you already use, so your logins carry over and you never re-enter passwords.
+   - Click path: open Chrome, paste `chrome://inspect/#remote-debugging` into the address bar, turn on the remote debugging toggle. One time only. Needs Chrome 144 or later and Node.js (for `npx chrome-devtools-mcp`).
+   - The Claude Code plugin ships the `job-agent-browser` MCP server (chrome-devtools MCP with `--autoConnect --no-usage-statistics --workspace=${HOME}/.job-agent`). If the skills were installed with `npx skills add` (they live in `.agents/skills/`), add it yourself: `npx -y chrome-devtools-mcp@1.10.1 --autoConnect --no-usage-statistics --workspace=<workspace>` (Codex: `codex mcp add job-agent-browser -- npx -y chrome-devtools-mcp@1.10.1 --autoConnect --no-usage-statistics --workspace=<workspace>`). Show the exact snippet for their agent. `--workspace` lets the browser server read tailored resumes for upload.
+   - Test it: call `list_pages`. Chrome shows "Allow remote debugging?". Tell them: click **Allow**. Chrome asks again for every new connection, and each parallel applier connects separately, so a run can raise one prompt per applier.
+   - Claude Code parallel appliers: copy `assets/job-applier.md` from this skill's folder to `~/.claude/agents/job-applier.md` (set `--workspace=` to the real workspace path when it is not `~/.job-agent`; in dedicated mode swap `--autoConnect` for `--browser-url=http://127.0.0.1:<browser.port>`). Tell the user you did it. If the file exists and differs, show the difference and ask before replacing it.
+   - Alternative, isolated from the main browser: `python3 scripts/launch_chrome.py` starts a separate profile with `--remote-debugging-port=9333 --user-data-dir=<workspace>/chrome-profile`. No prompts, but they sign in to JobRight, Gmail and portals once in that window. Set `browser.mode: dedicated` and use `--browser-url=http://127.0.0.1:9333` instead of `--autoConnect`.
+
+3. **Hands-free Allow clicks** (id `autoallow`, macOS only, default no).
+   - Why: without it you click Allow each time the agent connects.
+   - Ask yes/no: "Let a small helper click Allow for the agent? Consequence: any local program that connects to Chrome in the same few seconds is approved too. Default: no."
+   - If yes: run `python3 scripts/auto_allow.py enable`, set `browser.auto_allow: true`. Accessibility click path: System Settings > Privacy & Security > Accessibility > the **+** button > press Cmd-Shift-G > paste the Python path that `enable` printed > Open > switch it on. Chrome must be in English.
+   - How it works: right before each agent's own connect, that agent arms a 15 second window. While any window is open, `scripts/auto_allow.py` presses Allow, logs each click to `<workspace>/auto-allow.log`, and closes one window per click. With no open window it clicks nothing. `enable` installs a per-user LaunchAgent (`~/Library/LaunchAgents/io.github.azizu06.job-agent.auto-allow.plist`); `disable` removes it. Never run the clicker from the agent's own shell (System Events is unreachable from a sandbox, AppleScript error -10827). Windows: not supported yet. Linux: not available. On those, say "skipped, you click Allow yourself".
+
+4. **Gmail and connectors** (id `connectors`).
+   - Why: Gmail lets me find confirmation emails and verification codes.
+   - Check which MCP connectors exist. If Gmail is missing: "Open Claude settings, go to Connectors, find **Gmail**, click Connect, choose your Google account, click Allow." In Claude Code: run `/mcp`, choose Gmail, finish the sign-in page. Re-check after they say done.
+   - Notion and Sheets connectors are handled in the tracker step. Indeed is an optional fallback job source. Missing optional ones are fine.
+
+5. **Tracker** (id `tracker`).
+   - Why: a list of everything applied to, so you see status at a glance.
+   - Show this menu, default 1:
+     1. **CSV**: zero setup, a local file. Not shareable.
+     2. **Google Sheets**: easy to share and filter. Needs the Google Sheets connector.
+     3. **Notion**: the nicest board view. Needs the Notion connector.
+   - Columns for all: `company, role, req_id, link, date, resume_used, status, receipt_id, notes` (statuses are in the tracker skill).
+   - CSV: create `<workspace>/tracker.csv` with that header row. Set `tracker.backend: csv`.
+   - Sheets: if the connector is missing, click path: Connectors > Google Sheets > Connect > Allow. Create a sheet named "Job applications" with that header row. Save its URL to `tracker.sheets_url`, set `backend: sheets`.
+   - Notion: if the connector is missing, click path: Connectors > Notion > Connect > choose a workspace > pick a page to share. Create a database "Job applications": `company` as title, `status` as select (tracker skill statuses), `date` as date, `link` as URL, the other columns as text. Save its URL to `tracker.notion_database_url`, set `backend: notion`. Offer a Board view grouped by `status`.
+   - Check: confirm the file, sheet or database exists and has the columns.
+
+6. **JobRight feed** (id `jobright`). Capture the URL yourself; never ask the user to paste it.
+   - Why: JobRight is the main source of new postings.
+   - With your browser MCP, open `https://jobright.ai/jobs/recommend` in a new tab with `new_page` (or reuse a JobRight tab the user has open, read-only). Take a snapshot.
+   - Signed in: job cards or a profile avatar show, and the URL stays under `/jobs`. Signed out: redirect to a landing or sign-in page, or "Sign in", "Log in", "Sign up" with no job cards.
+   - If signed out, give these steps and wait until they say done:
+     1. Go to https://jobright.ai and click Join Now. Make a free account (Sign in with Google works).
+     2. Answer the job preference questions: roles, locations, experience level, job type.
+     3. Open **Jobs** in the menu.
+     4. Sort the list by **Most Recent**.
+     Labels may differ slightly; pick the closest one. Then snapshot again. Never create the account or type credentials for them.
+   - Once signed in, select Most Recent yourself if another sort shows, read the tab URL, save it as `sources.jobright.feed_url`, and confirm the snapshot lists job cards. Tell the user the URL.
+   - Dedicated-profile mode: do this in that profile's window.
+
+7. **Master resume** (id `resume`).
+   - Why: every application is a trimmed copy of one master file. I never invent facts, so the master must hold the full truth.
+   - Ask what they have: (a) a PDF or Word file, (b) pasted LinkedIn profile text (About, Experience, Education, Skills, Projects), (c) a Markdown or LaTeX master, or (d) nothing.
+   - (a) and (b): read the file or text and convert it to the `assets/master-resume.md` layout (`##` sections, `###` entries, `- ` bullets). Show it and ask what is missing.
+   - (c): record the path.
+   - (d), or thin input: offer "I can build it by asking you questions, about 10 minutes. Yes?" If yes, ask one block at a time and fill the template: Header; Education; each job (title, company, dates, what you built, tools, numbers you can defend); each project (one line "A <thing> that <does what> for <whom>", stack, result, link); Skills (only tools you have used); awards and clubs. After each entry ask "any other way to say this?" and store answers as alternates in `<!-- alt -->` blocks. Never add a metric or tool they did not state.
+   - Save to `<workspace>/resumes/master.md`, set `master_resume` and `resume_format`. LaTeX users start from `assets/master-resume.tex`.
+
+8. **Preferences** (id `preferences`). Follow `assets/preferences.example.yaml`:
+   - target roles and title words to exclude; seniority, and the term for internships (for example Summer 2027)
    - pay floor with units, and what to do when pay is missing (default: check the live posting)
    - locations, remote, relocation; sectors and interests (ranking only)
-   - companies to skip, per-company caps and rolling windows; max posting age in days
-   - tracker backend: csv (default), notion, or sheets, plus its URL
-   - `auto_submit` (default false), `dry_run`, daily cap. Explain the README "Auto-submit" trade-off before they choose true.
+   - companies to skip, per-company caps; max posting age in days
    - `skip_if_genai_banned` (default true)
-3. **Standing answers.** Follow `assets/standing-answers.example.yaml` in this skill's folder. EEO answers are optional; default each to "Decline to self-identify". Never guess; a blank means the agent asks later.
-4. **Master resume.** Ask for its path (Markdown or LaTeX). If they only have a one-page resume, offer to start a master from `assets/master-resume.md` (LaTeX: `assets/master-resume.tex`) and ask for extra entries and alternate bullets. Record `master_resume`.
-5. **Browser: attach to the user's main Chrome (default).** The agent uses the Chrome they already use, with their existing logins, so they do not sign in to JobRight or Gmail again. Portals that need a new sign-in may still park for them.
-   - Needs Chrome 144 or later and Node.js (for `npx chrome-devtools-mcp`). Ask the user to open `chrome://inspect/#remote-debugging` and turn remote debugging on. That is a one-time switch.
-   - The Claude Code plugin ships the `job-agent-browser` MCP server (chrome-devtools MCP with `--autoConnect --no-usage-statistics --workspace=${HOME}/.job-agent`). If the skills were installed with `npx skills add` (they live in `.agents/skills/`), add the browser MCP yourself: `npx -y chrome-devtools-mcp@1.10.1 --autoConnect --no-usage-statistics --workspace=<workspace>` (Codex: `codex mcp add job-agent-browser -- npx -y chrome-devtools-mcp@1.10.1 --autoConnect --no-usage-statistics --workspace=<workspace>`). Show the user the exact snippet for their agent. `--workspace` lets the browser server read the tailored resumes for upload.
-   - Test it: call `list_pages`. Chrome shows "Allow remote debugging?". The user clicks Allow. Chrome asks again for every new connection, and each parallel applier opens its own connection, so a run raises one prompt per applier.
-   - Claude Code parallel appliers: copy `assets/job-applier.md` from this skill's folder to `~/.claude/agents/job-applier.md` (in the copy, set `--workspace=` to the real workspace path when it is not `~/.job-agent`, so appliers can upload the tailored resumes; in dedicated mode, also swap `--autoConnect` for `--browser-url=http://127.0.0.1:<browser.port>`). That subagent starts its own chrome-devtools MCP connection, so appliers never share a selected tab. Tell the user you did it. If the file already exists and differs, show the difference and ask before replacing it.
-   - Alternative for people who want the agent isolated from their main browser: `python3 scripts/launch_chrome.py` starts a separate profile with `--remote-debugging-port=9333 --user-data-dir=<workspace>/chrome-profile` (macOS, Linux, Windows). No prompts, but they sign in to JobRight, Gmail and job portals once in that window. Set `browser.mode: dedicated` and point the MCP at `--browser-url=http://127.0.0.1:9333` instead of `--autoConnect`.
-6. **Walk-away runs: the auto-allow helper (recommended for unattended runs, off by default).** Offer it, explain it, and enable it only if the user says yes:
-   - What it does: right before each agent's own connect, that agent arms a 15 second window. While any window is open, `scripts/auto_allow.py` presses Allow on Chrome's prompt, logs each click to `<workspace>/auto-allow.log`, and closes one window per click. With no open window it clicks nothing.
-   - What it means: the prompt does not say who is asking, so any local program that connects to Chrome inside an open window is approved too.
-   - macOS only. `enable` installs and loads a per-user LaunchAgent (`~/Library/LaunchAgents/io.github.azizu06.job-agent.auto-allow.plist`, RunAtLoad and KeepAlive) that does the clicking; `disable` unloads and removes it. Never run the clicker from the agent's own shell: System Events is unreachable from a sandboxed agent or hook (AppleScript error -10827). Grant Accessibility to the Python binary that `enable` prints, since that is what the LaunchAgent runs (System Settings > Privacy & Security > Accessibility, +, Cmd-Shift-G to paste the path). It finds Chrome's prompt by its English text, so Chrome must be in English. Windows: not supported yet. Linux: not available.
-   - If yes: run `python3 scripts/auto_allow.py enable` and set `browser.auto_allow: true`.
-7. **Portal accounts.** Ask each once and store under `portal_accounts`:
-   - "Allow the agent to use Sign in with Google, Microsoft or LinkedIn on job portals, with an account already signed in to your Chrome?" Default yes. It tries Google, then Microsoft, then LinkedIn, picks only the user's own matching account, and only continues past consent screens that ask for basic profile and email.
-   - May it click Sign In when Chrome itself autofills a saved login? (default yes) It never types or reads the password in this step.
-   - Explain that anything else (no SSO, no saved login) parks the job for them: the tab stays open and they finish the sign-in by hand.
-   - Offer the optional credential mode (default no). Say exactly: "Many agents (including Claude) will refuse these steps under their own safety rules; when they do, the job parks for you." It covers typing a password stored in the OS keychain (`allow_sign_in`), creating portal accounts with a generated password (`allow_create`; Workday creates one per company), resetting a forgotten password through the reset email (`allow_password_reset`), and entering emailed or (macOS) SMS codes (`sms_codes`). Only if they say yes, set `credential_mode: true` and ask about each of those four (each default no).
-   - SMS codes (macOS only): explain that it reads `~/Library/Messages/chat.db` read-only for a code from the last 5 minutes, and needs Full Disk Access for the app running the agent (System Settings > Privacy & Security > Full Disk Access) plus Text Message Forwarding from their iPhone. On Windows say SMS codes come back to them (Phone Link has no stable API).
-   If credential mode is on with sign-in, creation or reset, check `python3 -c "import keyring"`; if missing, ask before running `pip install keyring`. Explain that CAPTCHAs and bot checks are never solved: the agent parks that tab, filled and open, and tells them.
-8. **Notifications for parked jobs.** Ask how to reach them when a tab needs them: macOS notification, an ntfy.sh topic (suggest a long random topic name, since anyone who knows it can read it), a Slack incoming webhook, or none. Write `<workspace>/state/notify.json` (shapes in `../job-run/scripts/notify.py`), set `notify.method` in preferences, and send a test with `notify.py --title "job-agent" --message "test"`.
-9. **JobRight feed.** Capture it yourself; do not ask the user to paste a URL.
-   - With your browser MCP, open `https://jobright.ai/jobs/recommend` in a new tab with `new_page` (or reuse a JobRight tab the user already has open, read-only). Take a snapshot.
-   - Signed in: the page shows job cards, or a profile avatar, and the URL stays under `/jobs`. Signed out: it redirects to a landing or sign-in page, or shows "Sign in", "Log in" or "Sign up" with no job cards.
-   - If signed out, give the user these steps and wait until they say done:
-     1. Go to https://jobright.ai and create a free account (Sign in with Google works).
-     2. Finish the job preferences it asks for: roles, locations, experience level, job type.
-     3. Open **Jobs** in the left menu.
-     4. Sort the list by **Most Recent**.
-     Then snapshot the tab again. Never create the account or type credentials for them.
-   - Once signed in with Most Recent selected (select it yourself if the sort control shows another option), read the tab's URL and save it as `sources.jobright.feed_url`. Confirm by checking the snapshot lists job cards. Tell the user the URL you saved.
-   - Dedicated-profile mode: do this in that profile's window, where the user signs in once.
-10. **Optional connectors.** Check which MCPs exist and say what each enables: Gmail (receipts, account verification, status sync), Notion or Google Sheets (tracker), Indeed (fallback job source). Missing ones are fine.
-11. **Write and confirm.** Write both YAML files, print a short summary (no secrets, no full contact details), and suggest `/job-agent:run dry-run` (other agents: "run the job-run skill in dry-run mode") for the first run.
+
+9. **Standing answers** (id `answers`). Why: forms ask the same questions every time. Follow `assets/standing-answers.example.yaml`. EEO answers are optional; default each to "Decline to self-identify". Never guess; blank means the agent asks later.
+
+10. **Permissions** (id `permissions`). Ask each as yes/no, say its consequence in one line, show the safe default, write the answer to preferences.
+    - **Sign in with Google, Microsoft or LinkedIn on job portals** (`portal_accounts.allow_sso`, default yes). Consequence: uses an account already signed in to your Chrome; only continues past basic profile and email consent screens.
+    - **Click Sign In when Chrome autofills a saved login** (`allow_saved_login`, default yes). Consequence: I never read or type the password. Anything else parks the job and you finish by hand.
+    - **Credential mode** (`credential_mode`, default no). Consequence: I may type a keychain password, create portal accounts with a generated password, reset a forgotten password by email, and enter emailed or SMS codes. Say exactly: "Many agents (including Claude) will refuse these steps under their own safety rules; when they do, the job parks for you." Only on yes, ask each of `allow_sign_in`, `allow_create`, `allow_password_reset`, `sms_codes` (each default no).
+    - **SMS codes** (macOS, only if credential mode is on, default no). Consequence: reads `~/Library/Messages/chat.db` read-only for a code from the last 5 minutes. Click path: System Settings > Privacy & Security > Full Disk Access > add the app running the agent; on iPhone: Settings > Messages > Text Message Forwarding > your Mac. On Windows, codes come back to you.
+    - If credential mode needs it, check `python3 -c "import keyring"`; if missing, ask before `pip install keyring`.
+    - **auto_submit** (default **no**). Consequence: yes means the agent presses Submit itself, up to the daily cap; no means it fills every form and stops for you to review and press Submit. Explain the README "Auto-submit" trade-off. Also set `dry_run` and `caps.daily_submit_cap`.
+    - **Schedule** (default no). Consequence: the agent scans and applies while you are away, within your caps. If yes, default **every 3 hours**; accept another interval. Save `schedule.every_hours`.
+    - CAPTCHAs and bot checks are never solved: the agent parks that tab, filled and open, and tells you.
+
+11. **Notifications** (id `notify`). Why: so you hear when a tab needs you. Ask how to reach them: macOS notification, an ntfy.sh topic (suggest a long random name, since anyone who knows it can read it), a Slack incoming webhook, or none. Write `<workspace>/state/notify.json` (shapes in `../job-run/scripts/notify.py`), set `notify.method`, and send a test with `notify.py --title "job-agent" --message "test"`.
+
+12. **Practice run** (id `dryrun`). Why: proves everything works before it matters.
+    - Write both YAML files first and print a short summary (no secrets). Pick one real posting from the JobRight feed that matches the preferences. Run the job-run skill in dry-run mode on that one posting: tailor the resume, open the application, fill every field, stop at Submit without pressing it. Show the filled form and the tailored resume path. If something parks or fails, fix it or give the exact click needed.
+
+13. **Summary screen.** Print:
+    - A checklist of what is set up (Chrome, auto-allow on or off, Gmail, tracker type and location, JobRight feed URL, master resume path, auto_submit, schedule, notifications), each ticked or "not set".
+    - How to start: `/job-agent:run dry-run` for another practice, `/job-agent:run` for a real run (other agents: "run the job-run skill").
+    - If a schedule is enabled: "Say 'start the schedule' and I will run every <N> hours. Say 'stop the schedule' to end it." Do not start it without a yes.
+    - "Run `/job-agent:setup` again any time; finished steps are skipped."
 
 ## Never
 
 - Store passwords, codes or API keys in any file. Passwords go only in the OS keychain through `portal-auth`.
-- Enable `auto_allow` or credential mode without the user's explicit yes after the explanation above.
+- Enable `auto_allow`, credential mode, `auto_submit` or the schedule without the user's explicit yes after the explanation above.
+- Press Submit during the practice run.
