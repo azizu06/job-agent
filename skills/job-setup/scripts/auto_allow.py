@@ -12,16 +12,25 @@ prompts. For walk-away runs this helper clicks them, but only while armed:
   2. One watcher process runs while any window is open. Each time a Chrome
      prompt appears it clicks Allow, logs the click, and closes the oldest
      open window. N arms allow at most N clicks.
-  3. When no window is open, the watcher exits. Nothing runs between runs.
+  3. When no window is open, nothing is clicked.
+
+On macOS the clicker never runs from the agent's shell: System Events is not
+reachable from a sandboxed agent or hook process (AppleScript error -10827).
+`enable` installs a per-user LaunchAgent
+(~/Library/LaunchAgents/io.github.azizu06.job-agent.auto-allow.plist,
+RunAtLoad and KeepAlive) that runs `auto_allow.py daemon`. The daemon idles
+until an agent arms a window through the state files, then clicks. `disable`
+unloads and removes it.
 
 What turning it on means: the prompt does not say who is asking. Any local
 program that requests a debugging connection while a window is open gets
 approved too, and uses up that agent's window.
 
 Platforms:
-  macOS    System Events UI scripting through osascript. Grant Accessibility
-           to the app that runs your agent (System Settings > Privacy &
-           Security > Accessibility).
+  macOS    System Events UI scripting through osascript, run by the
+           LaunchAgent. Grant Accessibility to the LaunchAgent's Python
+           binary (the path `enable` prints; System Settings > Privacy &
+           Security > Accessibility, press +, Cmd-Shift-G to paste the path).
   Windows  not supported yet. An untested pywinauto backend exists; it runs
            only with JOB_AGENT_AUTO_ALLOW_WINDOWS=1 (`pip install pywinauto`).
 
@@ -32,7 +41,8 @@ Commands:
   enable | disable          turn the helper on or off (setup asks you first)
   arm [--window S] [--label NAME]
   status
-  watch                     internal: the watcher loop
+  watch                     internal: the watcher loop (Windows)
+  daemon                    internal: the LaunchAgent loop (macOS)
 
 Standard library only (plus pywinauto for the untested Windows backend).
 """
@@ -42,6 +52,7 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import os
+import plistlib
 import subprocess
 import sys
 import time
@@ -261,6 +272,79 @@ def platform_backend():
     return None
 
 
+# ------------------------------------------------------------------ macOS LaunchAgent
+
+LAUNCH_LABEL = "io.github.azizu06.job-agent.auto-allow"
+
+
+def launch_agent_path(home: Path | None = None) -> Path:
+    home = Path.home() if home is None else home
+    return home / "Library" / "LaunchAgents" / f"{LAUNCH_LABEL}.plist"
+
+
+def python_binary() -> str:
+    """The real interpreter the LaunchAgent runs; this is what needs Accessibility."""
+    return os.path.realpath(sys.executable)
+
+
+def launch_agent_plist(base: Path, python: str, script: Path) -> bytes:
+    workspace = str(base.parent)
+    return plistlib.dumps({
+        "Label": LAUNCH_LABEL,
+        "ProgramArguments": [python, str(script), "daemon"],
+        "EnvironmentVariables": {"JOB_AGENT_HOME": workspace},
+        "RunAtLoad": True,
+        "KeepAlive": True,
+        "ProcessType": "Background",
+        "StandardOutPath": str(base / "daemon.out.log"),
+        "StandardErrorPath": str(base / "daemon.err.log"),
+    })
+
+
+def _launchctl(*args: str) -> subprocess.CompletedProcess:
+    return subprocess.run(["launchctl", *args], capture_output=True, text=True)
+
+
+def install_launch_agent(base: Path, plist_path: Path | None = None, launchctl=_launchctl) -> Path:
+    plist_path = launch_agent_path() if plist_path is None else plist_path
+    plist_path.parent.mkdir(parents=True, exist_ok=True)
+    base.mkdir(parents=True, exist_ok=True)
+    domain = f"gui/{os.getuid()}"
+    launchctl("bootout", f"{domain}/{LAUNCH_LABEL}")  # reload cleanly if already there
+    plist_path.write_bytes(launch_agent_plist(base, python_binary(), Path(__file__).resolve()))
+    out = launchctl("bootstrap", domain, str(plist_path))
+    if out.returncode != 0:
+        raise RuntimeError(f"launchctl bootstrap failed: {(out.stderr or out.stdout).strip()}")
+    return plist_path
+
+
+def remove_launch_agent(plist_path: Path | None = None, launchctl=_launchctl) -> None:
+    plist_path = launch_agent_path() if plist_path is None else plist_path
+    launchctl("bootout", f"gui/{os.getuid()}/{LAUNCH_LABEL}")
+    plist_path.unlink(missing_ok=True)
+
+
+def daemon(base: Path, backend, sleep=time.sleep, clock=time.time, max_loops: int | None = None) -> int:
+    """LaunchAgent loop: idle while nothing is armed, click while a window is open."""
+    clicks = 0
+    loops = 0
+    while True:
+        live = open_arms(base, clock()) if is_enabled(base) else []
+        if live:
+            try:
+                hits = backend(len(live))
+            except Exception as exc:
+                log(base, f"click attempt failed: {exc}")
+                hits = []
+            for what, f in zip(hits, live):
+                consume(base, f, what)
+                clicks += 1
+        loops += 1
+        if max_loops is not None and loops >= max_loops:
+            return clicks
+        sleep(0.5 if live else 1.0)
+
+
 # ------------------------------------------------------------------ watcher
 
 def watch(base: Path, backend, sleep=time.sleep, clock=time.time, max_loops: int | None = None) -> int:
@@ -318,6 +402,7 @@ def main(argv: list[str] | None = None) -> int:
     p_arm.add_argument("--label", default="agent")
     sub.add_parser("status")
     sub.add_parser("watch")
+    sub.add_parser("daemon")
     args = ap.parse_args(argv)
     base = base_dir()
     p = paths(base)
@@ -328,11 +413,25 @@ def main(argv: list[str] | None = None) -> int:
             return 1
         base.mkdir(parents=True, exist_ok=True)
         p["enabled"].write_text("on\n", encoding="utf-8")
-        log(base, "enabled by user")
-        print("auto-allow enabled. It only acts while an agent has armed it.")
+        if sys.platform == "darwin":
+            try:
+                plist = install_launch_agent(base)
+            except RuntimeError as exc:
+                p["enabled"].unlink(missing_ok=True)
+                print(str(exc), file=sys.stderr)
+                return 1
+            log(base, f"enabled by user; LaunchAgent {plist}")
+            print(f"auto-allow enabled. LaunchAgent installed: {plist}")
+            print(f"Grant Accessibility to {python_binary()} (System Settings > Privacy & Security > Accessibility).")
+        else:
+            log(base, "enabled by user")
+            print("auto-allow enabled.")
+        print("It only clicks while an agent has armed it.")
         return 0
     if args.cmd == "disable":
         p["enabled"].unlink(missing_ok=True)
+        if sys.platform == "darwin":
+            remove_launch_agent()
         for f in open_arms(base):
             f.unlink(missing_ok=True)
         log(base, "disabled by user")
@@ -351,7 +450,8 @@ def main(argv: list[str] | None = None) -> int:
         except PermissionError as exc:
             print(str(exc), file=sys.stderr)
             return 1
-        spawn_watcher()
+        if sys.platform != "darwin":  # on macOS the LaunchAgent daemon clicks
+            spawn_watcher()
         print(f"armed for {args.window:g}s")
         return 0
     if args.cmd == "watch":
@@ -359,6 +459,12 @@ def main(argv: list[str] | None = None) -> int:
         if backend is None:
             return 1
         watch(base, backend)
+        return 0
+    if args.cmd == "daemon":
+        backend = platform_backend()
+        if backend is None:
+            return 1
+        daemon(base, backend)
         return 0
     return 1
 

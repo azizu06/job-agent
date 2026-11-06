@@ -1,3 +1,4 @@
+import plistlib
 import sys
 import tempfile
 import unittest
@@ -92,3 +93,52 @@ class AutoAllowTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class LaunchAgentTests(unittest.TestCase):
+    def test_plist_runs_daemon_at_load_and_keeps_alive(self):
+        base = Path("/Users/x/.job-agent/auto-allow")
+        d = plistlib.loads(aa.launch_agent_plist(base, "/usr/bin/python3", Path("/r/auto_allow.py")))
+        self.assertEqual(d["Label"], aa.LAUNCH_LABEL)
+        self.assertTrue(d["Label"].endswith(".job-agent.auto-allow"))
+        self.assertEqual(d["ProgramArguments"], ["/usr/bin/python3", "/r/auto_allow.py", "daemon"])
+        self.assertTrue(d["RunAtLoad"])
+        self.assertTrue(d["KeepAlive"])
+        self.assertEqual(d["EnvironmentVariables"]["JOB_AGENT_HOME"], "/Users/x/.job-agent")
+
+    def test_plist_path_is_per_user(self):
+        p = aa.launch_agent_path(Path("/Users/x"))
+        self.assertEqual(p, Path(f"/Users/x/Library/LaunchAgents/{aa.LAUNCH_LABEL}.plist"))
+
+    def test_install_and_remove_use_launchctl_and_file(self):
+        calls = []
+
+        class R:
+            returncode = 0
+            stdout = stderr = ""
+
+        def fake(*args):
+            calls.append(args)
+            return R()
+
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp) / "ws" / "auto-allow"
+            plist = Path(tmp) / "LaunchAgents" / "a.plist"
+            aa.install_launch_agent(base, plist, launchctl=fake)
+            self.assertTrue(plist.exists())
+            self.assertEqual(calls[-1][0], "bootstrap")
+            aa.remove_launch_agent(plist, launchctl=fake)
+            self.assertFalse(plist.exists())
+            self.assertEqual(calls[-1][0], "bootout")
+
+    def test_daemon_clicks_only_while_armed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp) / "auto-allow"
+            base.mkdir()
+            aa.paths(base)["enabled"].write_text("on")
+            hits = []
+            backend = lambda n: hits.append(n) or ["Google Chrome"]
+            self.assertEqual(aa.daemon(base, backend, sleep=lambda s: None, max_loops=2), 0)
+            self.assertEqual(hits, [])
+            aa.arm(base, 15, "t")
+            self.assertEqual(aa.daemon(base, backend, sleep=lambda s: None, max_loops=3), 1)
