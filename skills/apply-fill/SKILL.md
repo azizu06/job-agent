@@ -28,12 +28,13 @@ Read `references/ats-gotchas.md` before touching a Workday, Greenhouse, Lever, P
 5. **Upload the resume through the file input** with `upload_file`. If that fails, fall back in order: CDP `DOM.setFileInputFiles` on the input node, then a base64 `File` assigned through `DataTransfer` and a dispatched `change` event. Confirm the attached filename or size is shown.
 6. **After every click or step,** check that the URL is not a thanks, confirmation or "application received" page.
 7. **Unknown multi-step ATS:** some (Phenom and similar) record the application before the final step. On an unfamiliar flow, stop after step 1, report the step count, and after each Next search email for a receipt before claiming "not submitted".
-8. **Sign-in, account and verification walls** go to the `portal-auth` skill (SSO first, then saved credentials, then account creation or reset if allowed; email codes through Gmail, SMS codes on macOS if allowed).
+8. **Sign-in, account and verification walls** go to the `portal-auth` skill, which tries, in order: Sign in with Google, then Microsoft, then LinkedIn, then saved credentials, then account creation or password reset if allowed. Email codes come through Gmail, SMS codes on macOS if allowed. If `portal-auth` returns parked, this job is parked: stop work on it (rule 10).
 9. **CAPTCHA or bot check: park, never solve.** Leave the tab open and filled, set the tracker row to `Needs you: captcha`, send a notification with `../job-run/scripts/notify.py`, report the page id and URL, and stop work on this job so the run moves on. Park the same way for anything else only the human can do (SSN or payment requests, codes the agent cannot read, consent beyond basic sign-in).
-10. **Essay and free-text questions** ("why us", "tell us about a project"): leave empty and report the exact question, limit, and whether it is required. Short factual boxes (URLs, dates, yes or no, location) you fill from standing answers.
-11. **Salary boxes:** use the posted number (or midpoint, per `pay_expectation`) and report where it came from.
-12. **Never invent answers.** A blank standing answer means stop and ask. Do not write motives or metrics for the user.
-13. **Before calling a form ready,** take a fresh snapshot and check: no required-field error text, every required radio group has a choice, every required consent box is checked, the resume shows as attached, conditional fields that appeared after earlier answers are filled.
+10. **A step you decline or cannot do: park it the same way.** Some agents will not type passwords, create accounts or enter verification codes, because of their own policies or the user's tool settings, and some tools cannot do a step (an upload, a widget that ignores input). That is expected. Park exactly as for a CAPTCHA: keep the tab open and filled, set the tracker row to `Needs you: <reason>` (for example `Needs you: sign-in`, `Needs you: create account`, `Needs you: email code`, `Needs you: resume upload`), notify, report, and stop work on this job. Try the step once; never retry it in a loop, never wait in chat for approval, and never stop or fail the whole run. A parked job is a normal result.
+11. **Essay and free-text questions** ("why us", "tell us about a project"): leave empty and report the exact question, limit, and whether it is required. Short factual boxes (URLs, dates, yes or no, location) you fill from standing answers.
+12. **Salary boxes:** use the posted number (or midpoint, per `pay_expectation`) and report where it came from.
+13. **Never invent answers.** A blank standing answer means stop and ask. Do not write motives or metrics for the user.
+14. **Before calling a form ready,** take a fresh snapshot and check: no required-field error text, every required radio group has a choice, every required consent box is checked, the resume shows as attached, conditional fields that appeared after earlier answers are filled.
 
 ## Submit
 
@@ -49,4 +50,4 @@ Opt-in (`auto_submit: true`), all guardrails still apply:
 
 ## Report
 
-Status (`ready`, `submitted`, `parked: <reason>`, or `blocked: <reason>`), page id and URL, every field set (question and answer), resume attached (filename), essays left empty (text and limits), blockers, the exact label of the final control and whether it was pressed, and a screenshot path.
+Status (`ready`, `submitted`, `parked: <reason>`, or `blocked: <reason>`; a step you declined or could not do is `parked`, never an error), page id and URL, every field set (question and answer), resume attached (filename), essays left empty (text and limits), blockers, the exact label of the final control and whether it was pressed, and a screenshot path.

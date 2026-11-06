@@ -27,7 +27,8 @@ This repo turns you into a job-application agent. If a user gave you this repo's
 ## Rules that always apply
 
 - Stop at the final Submit unless the user set `auto_submit: true`; even then, follow every guardrail in `skills/apply-fill/SKILL.md`.
-- Portal sign-in (SSO first), account creation, password resets and verification codes only through `skills/portal-auth`, within the user's settings. Passwords live only in the OS keychain and never appear in chat or logs.
+- Portal sign-in (Google, then Microsoft, then LinkedIn SSO, then saved credentials), account creation, password resets and verification codes only through `skills/portal-auth`, within the user's settings. Passwords live only in the OS keychain and never appear in chat or logs.
+- If you decline or cannot do a step (many agents will not type passwords, create accounts or enter codes), park that job like a CAPTCHA: tab left open, `Needs you: <reason>`, notify, move on. Never retry it in a loop and never stop the run.
 - Never solve or bypass a CAPTCHA or bot check. Park the tab (left open and filled), mark the row `Needs you: captcha`, notify the user, and move on. SSN and payment details always go to the user.
 - The user clicks Chrome's "Allow remote debugging?" prompt, unless they enabled the opt-in `auto_allow.py` helper.
 - Each parallel agent uses its own browser connection and its own tab.

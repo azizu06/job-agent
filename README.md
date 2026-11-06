@@ -63,7 +63,7 @@ Then:
 | Gate | `job-gate` | Filters by title, term, pay floor, location and posting age. Skips jobs already in your tracker |
 | Tailor | `tailor-resume` | Copies your master, picks the best entries and bullets, reports keyword coverage before and after, asks you about missing terms |
 | Fill | `apply-fill` | Fills the form in its own tab with real clicks and typing, uploads the resume, checks every field |
-| Sign in | `portal-auth` | Prefers Sign in with Google, else saved passwords; creates or resets accounts only if you allowed it; reads email and (macOS) SMS codes |
+| Sign in | `portal-auth` | Tries Sign in with Google, then Microsoft, then LinkedIn, then saved passwords; creates or resets accounts only if you allowed it; reads email and (macOS) SMS codes. Parks the job if the agent declines or cannot do a step |
 | Run | `job-run` | Runs the loop, one applier per job, each with its own browser connection, then re-checks every form |
 | Track | `tracker` | Local CSV by default, or Notion or Google Sheets. Finds the receipt email after a submit |
 | Sync | `status-sync` | Reads new email for assessments, interviews, offers and rejections and updates each row |
@@ -103,6 +103,7 @@ Chrome asks every time a new debugging connection starts. Each applier opens its
 The agent will never:
 
 - solve or get around a CAPTCHA or bot check. It parks that job instead: the tab stays open and filled, the tracker row says `Needs you: captcha`, you get a notification, and the run moves on. The run ends with a list of parked tabs so you clear them in one sitting.
+- stall or crash on a step it will not or cannot do. Some agents refuse to type passwords, create accounts or enter codes under their own policies. The agent parks that job the same way (`Needs you: sign-in`, `Needs you: create account` and so on), does not retry it, and moves on.
 - enter an SSN or payment details, or approve an authenticator or push 2FA request.
 - use Sign in with Google, create a portal account or reset a password unless you allowed it in setup. With Google it picks only your own matching account and continues only past consent screens that ask for basic profile and email. Generated passwords go to your OS keychain and never appear in chat or logs.
 - press Enter or Escape inside a form, or reload a filled tab. It answers fields with real clicks and typing.
