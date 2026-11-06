@@ -46,7 +46,7 @@ Opt-in (`auto_submit: true`), all guardrails still apply:
 - Daily cap: `tracker_csv.py count --status Submitted --date today` must be below `caps.daily_submit_cap`.
 - Per-company cap: count for the company within its window must be below the cap.
 - Never submit on a page with a CAPTCHA (park it instead), a sign-in wall, a GenAI ban, an empty required essay, or any unresolved error.
-- Pre-submit read-back: snapshot the form, write every question and answer to `state/submissions/<job_key>.json`, and put its path in the tracker `notes`.
+- Pre-submit read-back: snapshot the form, write every question and answer to `state/submissions/<job_key>.json`, and put its path in the tracker `notes` as exactly `read-back: <path>` (that prefix, with the hyphen; status-sync and the checks look for it).
 - Then click the final control once. Confirm by URL change and an email receipt (see `tracker`), not by on-page "thank you" text alone.
 
 ## Report

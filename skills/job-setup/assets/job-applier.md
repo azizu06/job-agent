@@ -17,4 +17,4 @@ This file gives you your own browser connection (`job-agent-browser-own`), so yo
 3. Run the `apply-fill` skill. Open your own tab with `new_page` and use only that page. If you hit a sign-in or account wall, use the `portal-auth` skill within the user's settings.
 4. Return the apply-fill report plus the tailoring report. Never press the final Submit unless `auto_submit` is true and every guardrail passes.
 
-Install: copy this file to `~/.claude/agents/job-applier.md` (the job-setup skill does it). Claude Code ignores `mcpServers` in agents shipped inside plugins, so the copy in your user folder is what gives each applier its own connection. In dedicated-profile mode, replace `--autoConnect` with `--browser-url=http://127.0.0.1:9333`.
+Install: copy this file to `~/.claude/agents/job-applier.md` (the job-setup skill does it). Claude Code ignores `mcpServers` in agents shipped inside plugins, so the copy in your user folder is what gives each applier its own connection. If your workspace is not `~/.job-agent`, set `--workspace=` to it. In dedicated-profile mode, replace `--autoConnect` with `--browser-url=http://127.0.0.1:9333`.

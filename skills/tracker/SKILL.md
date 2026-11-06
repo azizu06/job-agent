@@ -7,7 +7,7 @@ description: Record job applications for job-agent in a pluggable tracker (local
 
 ## Columns and statuses
 
-Columns: `company, role, req_id, link, date, resume_used, status, receipt_id, notes`.
+Columns: `company, role, req_id, link, date, resume_used, status, receipt_id, notes`. For submitted jobs, `notes` starts with `read-back: <path to state/submissions/<job_key>.json>`; add later notes after it with ` | `.
 
 Statuses: `Ready` (filled, waiting for the user to submit), `Submitted`, `Assessment`, `Interview`, `Offer`, `Rejected`, `Withdrawn`, and `Needs you: <reason>` for a parked job.
 
