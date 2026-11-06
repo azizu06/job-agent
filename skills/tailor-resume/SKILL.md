@@ -7,7 +7,7 @@ description: Build a one-page tailored resume for one job from the user's master
 
 ## The model
 
-The master resume (path in `preferences.yaml` as `master_resume`) holds everything the user has done, with alternate bullets under each entry. A tailored resume is a new copy built from it for one posting. The master is never edited during tailoring. Layout and rules: `templates/master-resume.md` in this repo.
+The master resume (path in `preferences.yaml` as `master_resume`) holds everything the user has done, with alternate bullets under each entry. A tailored resume is a new copy built from it for one posting. The master is never edited during tailoring. Layout and rules: `../job-setup/assets/master-resume.md` (next to this skill's folder).
 
 ## Hard rules
 

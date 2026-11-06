@@ -1,12 +1,10 @@
-# Real user data. Only the *.example.yaml files are tracked.
+# Real user data, in case JOB_AGENT_HOME points at a clone of this repo.
 profile/*.yaml
-!profile/*.example.yaml
 resumes/
 state/
 chrome-profile/
 tracker.csv
 *.pdf
-!templates/*.pdf
 run.sh
 chrome.log
 

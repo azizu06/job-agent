@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Text-level checks for a tailored resume against its master. Stdlib only.
 
-Works on the Markdown layout in templates/master-resume.md: each entry is a
+Works on the Markdown layout in skills/job-setup/assets/master-resume.md: each entry is a
 `###` heading and each bullet is a line starting with `- `. Lines inside
 `<!-- alt -->` ... `<!-- /alt -->` blocks are alternates and are skipped.
 

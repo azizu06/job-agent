@@ -8,51 +8,42 @@ Skills that turn your coding agent (Claude Code, Codex, Cursor and others) into 
 
 By default it stops at the final Submit button. You review and click it.
 
-## Install
+## You need
 
-Pick one. All three use this same repo.
+> - **Google Chrome 144 or later, stable channel.** Not Edge, Brave or Arc.
+> - **Node.js 20.19 or later** (for `npx chrome-devtools-mcp`).
+> - **Python 3.9 or later.** On Windows, use `py -3` wherever these docs say `python3`.
+> - **A JobRight account**, or the Indeed MCP connector as the job source.
+> - **A resume.** Setup turns it into a master resume.
+> - **For the resume PDF:** `pandoc` or `tectonic`, and `pdftoppm` from poppler. On macOS: `brew install pandoc tectonic poppler`.
 
-**1. Paste the link (quickest, any agent).** Send your agent this:
+## Quickstart (Claude Code)
 
-```
-https://github.com/azizu06/job-agent  set this up
-```
+1. Install the plugin:
 
-It reads [`AGENTS.md`](AGENTS.md), installs the skills, and runs setup with you.
+   ```
+   /plugin marketplace add azizu06/job-agent
+   /plugin install job-agent@job-agent
+   /reload-plugins
+   ```
 
-**2. Claude Code plugin.**
+2. Run setup: `/job-agent:setup`. It asks about 10 questions and takes about 10 minutes. It writes nothing until you say yes.
+3. In Chrome, open `chrome://inspect/#remote-debugging` and turn remote debugging on. When Chrome asks "Allow remote debugging?", click Allow.
+4. Try it: `/job-agent:run dry-run`. It scans, tailors and fills forms, and never presses Submit, even if you turn on auto-submit later. With the default settings a plain `/job-agent:run` also stops at Submit; the two differ only once `auto_submit` is on.
 
-```
-/plugin marketplace add azizu06/job-agent
-/plugin install job-agent@job-agent
-/job-agent:setup
-```
+### Other agents
 
-**3. Skills CLI** (Codex, Cursor and [many other agents](https://github.com/vercel-labs/skills); it asks which agents to install into).
+- **Paste the link.** Send your agent `https://github.com/azizu06/job-agent  set this up`. It reads [`AGENTS.md`](AGENTS.md), installs the skills, and runs setup with you.
+- **Skills CLI** (Codex, Cursor and [many other agents](https://github.com/vercel-labs/skills)): `npx skills add azizu06/job-agent`, then add the browser MCP yourself (see [Browser](#browser)) and ask your agent to set up job-agent. The CLI writes `skills-lock.json` into your project; add it to `.gitignore` unless you want to commit it.
 
-```
-npx skills add azizu06/job-agent
-```
-
-Then ask your agent to "run the job-setup skill".
-
-## Setup is one command
-
-`/job-agent:setup` (or "run the job-setup skill") does everything in one pass:
+## What setup does
 
 - asks what jobs you want and your standard application answers, and records your master resume
 - attaches to the Chrome you already use, so it starts with the logins you already have
 - checks which MCPs you have (Gmail, Notion, Sheets, Indeed) and what each adds
 - offers the optional auto-allow helper for walk-away runs
-- asks whether the agent may use Sign in with Google, Microsoft or LinkedIn on job portals and click Sign In on logins Chrome already saved, and offers the optional credential mode (off by default)
+- asks whether the agent may use Sign in with Google, Microsoft or LinkedIn on job portals (setup asks, default yes) and click Sign In on logins Chrome already saved, and offers the optional credential mode (off by default)
 - sets up a notification (macOS, ntfy.sh or Slack) for jobs that need you
-
-Then:
-
-```
-/job-agent:run dry-run     # fills forms, never presses Submit
-/job-agent:run
-```
 
 ## How it works
 
@@ -72,7 +63,7 @@ Your data stays in `~/.job-agent/` (or `$JOB_AGENT_HOME`): profile, resumes, tra
 
 ### The master resume
 
-Keep one long master resume with everything you have done and several alternate bullets per entry. Each job gets a new copy built from it. The agent never adds a metric, tool or experience that is not in the master, and it lists the job's keywords you still lack so you decide. Start from [`templates/master-resume.md`](templates/master-resume.md) (a LaTeX version is in `templates/`). The checks are plain Python with no dependencies:
+Keep one long master resume with everything you have done and several alternate bullets per entry. Each job gets a new copy built from it. The agent never adds a metric, tool or experience that is not in the master, and it lists the job's keywords you still lack so you decide. Start from [`skills/job-setup/assets/master-resume.md`](skills/job-setup/assets/master-resume.md) (a LaTeX version sits next to it). The checks are plain Python with no dependencies. From a clone of this repo:
 
 ```
 python3 skills/tailor-resume/scripts/keyword_coverage.py --jd jd.txt --resume tailored.md --before master.md
@@ -86,17 +77,17 @@ python3 skills/tailor-resume/scripts/resume_check.py --master master.md --resume
 1. Use Chrome 144 or later. Open `chrome://inspect/#remote-debugging` once and turn remote debugging on.
 2. When the agent connects, Chrome asks "Allow remote debugging?". Click Allow.
 
-Chrome asks every time a new debugging connection starts. Each applier opens its own connection so agents never get in each other's way, which means one prompt per applier. During a session Chrome shows a banner that it is being controlled by automated software. The Claude Code plugin sets up the MCP for you (chrome-devtools-mcp 1.10.1, the version this repo was tested with); for other agents, add `npx -y chrome-devtools-mcp@1.10.1 --autoConnect --workspace=$HOME/.job-agent`. The `--workspace` folder is where the browser server may read files, so it can upload your tailored resumes; use your `JOB_AGENT_HOME` if you set one. For parallel appliers in Claude Code, setup copies [`templates/claude-agents/job-applier.md`](templates/claude-agents/job-applier.md) to `~/.claude/agents/` (plugins cannot give a subagent its own MCP connection). Without it, jobs run one at a time.
+Chrome asks every time a new debugging connection starts. Each applier opens its own connection so agents never get in each other's way, which means one prompt per applier. During a session Chrome shows a banner that it is being controlled by automated software. The Claude Code plugin sets up the MCP for you (chrome-devtools-mcp 1.10.1, the version this repo was tested with); for other agents, add `npx -y chrome-devtools-mcp@1.10.1 --autoConnect --no-usage-statistics --workspace=$HOME/.job-agent` (Codex: `codex mcp add job-agent-browser -- npx -y chrome-devtools-mcp@1.10.1 --autoConnect --no-usage-statistics --workspace=$HOME/.job-agent`). `--no-usage-statistics` turns off the MCP's usage reporting to Google. The `--workspace` folder is where the browser server may read files, so it can upload your tailored resumes; use your `JOB_AGENT_HOME` if you set one. For parallel appliers in Claude Code, setup copies [`skills/job-setup/assets/job-applier.md`](skills/job-setup/assets/job-applier.md) to `~/.claude/agents/` (plugins cannot give a subagent its own MCP connection). Without it, jobs run one at a time.
 
 **Optional, off by default: auto-allow.** For runs with nobody at the keyboard, [`auto_allow.py`](skills/job-setup/scripts/auto_allow.py) presses Allow for the agent.
 
 - It only acts while armed. Each agent arms a 15 second window right before its own connect. While any window is open, the helper clicks each Chrome prompt that appears, logs the click to `~/.job-agent/auto-allow.log`, and closes one window per click. When no window is open it is not running.
 - What it does: it approves the agent's own connections.
 - What turning it on means: Chrome's prompt does not say who is asking, so any other program on your computer that connects to Chrome while a window is open is approved too.
-- macOS: grant Accessibility to the app that runs your agent (System Settings > Privacy & Security > Accessibility). Windows: **beta, untested**, needs `pip install pywinauto`. Linux: not available; click Allow yourself or use a separate profile.
-- Turn it on with `python3 skills/job-setup/scripts/auto_allow.py enable`, off with `disable`.
+- macOS only. Grant Accessibility to the app that runs your agent (System Settings > Privacy & Security > Accessibility). It finds Chrome's prompt by its English text, so it works only when Chrome's language is English. Windows: not supported yet. Linux: not available; click Allow yourself or use a separate profile.
+- To turn it on, ask your agent: "turn on auto-allow". To turn it off: "turn off auto-allow". (From a clone: `python3 skills/job-setup/scripts/auto_allow.py enable` or `disable`.)
 
-**Alternative: a separate profile.** If you want the agent isolated from your main browser, `python3 skills/job-setup/scripts/launch_chrome.py` starts Chrome with its own profile (`--remote-debugging-port=9222 --user-data-dir=~/.job-agent/chrome-profile`) on macOS, Linux or Windows. Point the MCP at it with `--browser-url=http://127.0.0.1:9222` and set `browser.mode: dedicated`. There are no prompts, but you sign in to your job sites once in that window. While it runs, any program on your computer can control that profile through the port.
+**Alternative: a separate profile.** If you want the agent isolated from your main browser, ask your agent to "start the job-agent Chrome profile" (from a clone: `python3 skills/job-setup/scripts/launch_chrome.py`). It starts Chrome with its own profile (`--remote-debugging-port=9222 --user-data-dir=~/.job-agent/chrome-profile`) on macOS, Linux or Windows. On Linux with a snap or flatpak Chrome, set `CHROME_BIN` to the Chrome command first. Point the MCP at it with `--browser-url=http://127.0.0.1:9222` and set `browser.mode: dedicated`. There are no prompts, but you sign in to your job sites once in that window. While it runs, any program on your computer can control that profile through the port.
 
 ## Safety
 
@@ -137,11 +128,9 @@ The trade-off: auto-submit saves you the review step, but a wrong answer, a bad 
 
 ## Requirements
 
-- A coding agent that supports skills or can read Markdown instructions.
-- Google Chrome 144 or later, Node.js (for `npx chrome-devtools-mcp`), and Python 3.9 or later.
-- Optional: `pip install keyring` (portal passwords), `pip install pywinauto` (auto-allow on Windows).
+- A coding agent that supports skills or can read Markdown instructions, plus everything in [You need](#you-need).
+- Optional: `pip install keyring` (credential mode passwords). On Linux, the clipboard helpers need `wl-copy` (Wayland) or `xclip`.
 - Optional MCPs: Gmail (receipts, account verification, status sync), Notion or Google Sheets (tracker), Indeed (fallback job source).
-- Optional for rendering resumes: `pandoc` or `tectonic`, and `pdftoppm`.
 
 ## Scheduling
 

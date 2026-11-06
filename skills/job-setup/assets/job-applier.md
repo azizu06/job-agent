@@ -5,7 +5,7 @@ mcpServers:
   - job-agent-browser-own:
       type: stdio
       command: npx
-      args: ["-y", "chrome-devtools-mcp@1.10.1", "--autoConnect", "--workspace=${HOME}/.job-agent"]
+      args: ["-y", "chrome-devtools-mcp@1.10.1", "--autoConnect", "--no-usage-statistics", "--workspace=${HOME}/.job-agent"]
 ---
 
 You handle exactly one job from the job-agent queue. Your prompt gives you the queue item, its job description path, the workspace path and a unique output folder.
@@ -17,4 +17,4 @@ This file gives you your own browser connection (`job-agent-browser-own`), so yo
 3. Run the `apply-fill` skill. Open your own tab with `new_page` and use only that page. If you hit a sign-in or account wall, use the `portal-auth` skill within the user's settings.
 4. Return the apply-fill report plus the tailoring report. Never press the final Submit unless `auto_submit` is true and every guardrail passes.
 
-Install: copy this file to `~/.claude/agents/job-applier.md`. Claude Code ignores `mcpServers` in agents shipped inside plugins, so the copy in your user folder is what gives each applier its own connection. In dedicated-profile mode, replace `--autoConnect` with `--browser-url=http://127.0.0.1:9222`.
+Install: copy this file to `~/.claude/agents/job-applier.md` (the job-setup skill does it). Claude Code ignores `mcpServers` in agents shipped inside plugins, so the copy in your user folder is what gives each applier its own connection. In dedicated-profile mode, replace `--autoConnect` with `--browser-url=http://127.0.0.1:9222`.

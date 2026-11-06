@@ -71,6 +71,6 @@ A headless run cannot answer permission prompts. Pre-approve what the run uses, 
 }
 ```
 
-Leave out the `portal_creds.py` and `sms_code.py` lines if those features are off. Allow only what you use.
+On Windows, write `py -3` instead of `python3` in each `Bash(...)` line, or add both forms. Leave out the `portal_creds.py` and `sms_code.py` lines unless credential mode is on. Allow only what you use.
 
-Unattended runs: in `main` mode every connection raises a Chrome prompt, so walk-away runs need the opt-in auto-allow helper (macOS, Windows beta). Without it, a run started while nobody is at the keyboard waits at the prompt and then fails that job. The `dedicated` mode never prompts. Keep `auto_submit: false` for unattended runs unless the user has read the README trade-off and set caps. A headless run that hits a CAPTCHA or another human-only step parks that job (tab left open, tracker row `Needs you: ...`, notification sent) and moves on; nothing waits for input.
+Unattended runs: in `main` mode every connection raises a Chrome prompt, so walk-away runs need the opt-in auto-allow helper (macOS only; Windows not supported yet). Without it, a run started while nobody is at the keyboard waits at the prompt and then fails that job. The `dedicated` mode never prompts. Keep `auto_submit: false` for unattended runs unless the user has read the README trade-off and set caps. A headless run that hits a CAPTCHA or another human-only step parks that job (tab left open, tracker row `Needs you: ...`, notification sent) and moves on; nothing waits for input.

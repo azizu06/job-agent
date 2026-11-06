@@ -27,8 +27,10 @@ Never write user data into the plugin or skill folder. If `JOB_AGENT_HOME` point
 
 ## Steps
 
+Script commands below say `python3`; on Windows use `py -3`.
+
 1. **Existing files.** If `profile/preferences.yaml` exists, summarize it and ask what to change instead of starting over.
-2. **Preferences.** Follow the keys and comments in `profile/preferences.example.yaml` (repo root; reproduce the same keys if the file is not at hand):
+2. **Preferences.** Follow the keys and comments in `assets/preferences.example.yaml` in this skill's folder:
    - target roles and title words to exclude; seniority, and for internships the term (for example Summer 2027)
    - pay floor with units, and what to do when pay is missing (default: check the live posting)
    - locations, remote, relocation; sectors and interests (ranking only)
@@ -36,18 +38,18 @@ Never write user data into the plugin or skill folder. If `JOB_AGENT_HOME` point
    - tracker backend: csv (default), notion, or sheets, plus its URL
    - `auto_submit` (default false), `dry_run`, daily cap. Explain the README "Auto-submit" trade-off before they choose true.
    - `skip_if_genai_banned` (default true)
-3. **Standing answers.** Follow `profile/standing-answers.example.yaml`. EEO answers are optional; default each to "Decline to self-identify". Never guess; a blank means the agent asks later.
-4. **Master resume.** Ask for its path (Markdown or LaTeX). If they only have a one-page resume, offer to start a master from `templates/master-resume.md` and ask for extra entries and alternate bullets. Record `master_resume`.
+3. **Standing answers.** Follow `assets/standing-answers.example.yaml` in this skill's folder. EEO answers are optional; default each to "Decline to self-identify". Never guess; a blank means the agent asks later.
+4. **Master resume.** Ask for its path (Markdown or LaTeX). If they only have a one-page resume, offer to start a master from `assets/master-resume.md` (LaTeX: `assets/master-resume.tex`) and ask for extra entries and alternate bullets. Record `master_resume`.
 5. **Browser: attach to the user's main Chrome (default).** The agent uses the Chrome they already use, with their existing logins, so they do not sign in to JobRight or Gmail again. Portals that need a new sign-in may still park for them.
    - Needs Chrome 144 or later and Node.js (for `npx chrome-devtools-mcp`). Ask the user to open `chrome://inspect/#remote-debugging` and turn remote debugging on. That is a one-time switch.
-   - The Claude Code plugin ships the `job-agent-browser` MCP server (chrome-devtools MCP with `--autoConnect`). For other agents, add chrome-devtools MCP with `--autoConnect` to their MCP config, and show the user the exact snippet for their agent.
+   - The Claude Code plugin ships the `job-agent-browser` MCP server (chrome-devtools MCP with `--autoConnect --no-usage-statistics --workspace=${HOME}/.job-agent`). If the skills were installed with `npx skills add` (they live in `.agents/skills/`), add the browser MCP yourself: `npx -y chrome-devtools-mcp@1.10.1 --autoConnect --no-usage-statistics --workspace=<workspace>` (Codex: `codex mcp add job-agent-browser -- npx -y chrome-devtools-mcp@1.10.1 --autoConnect --no-usage-statistics --workspace=<workspace>`). Show the user the exact snippet for their agent. `--workspace` lets the browser server read the tailored resumes for upload.
    - Test it: call `list_pages`. Chrome shows "Allow remote debugging?". The user clicks Allow. Chrome asks again for every new connection, and each parallel applier opens its own connection, so a run raises one prompt per applier.
-   - Claude Code parallel appliers: copy `templates/claude-agents/job-applier.md` to `~/.claude/agents/job-applier.md` (in dedicated mode, swap `--autoConnect` for `--browser-url=http://127.0.0.1:9222` in the copy). That subagent starts its own chrome-devtools MCP connection, so appliers never share a selected tab. Tell the user you did it. If the file already exists and differs, show the difference and ask before replacing it.
+   - Claude Code parallel appliers: copy `assets/job-applier.md` from this skill's folder to `~/.claude/agents/job-applier.md` (in dedicated mode, swap `--autoConnect` for `--browser-url=http://127.0.0.1:9222` in the copy). That subagent starts its own chrome-devtools MCP connection, so appliers never share a selected tab. Tell the user you did it. If the file already exists and differs, show the difference and ask before replacing it.
    - Alternative for people who want the agent isolated from their main browser: `python3 scripts/launch_chrome.py` starts a separate profile with `--remote-debugging-port=9222 --user-data-dir=<workspace>/chrome-profile` (macOS, Linux, Windows). No prompts, but they sign in to JobRight, Gmail and job portals once in that window. Set `browser.mode: dedicated` and point the MCP at `--browser-url=http://127.0.0.1:9222` instead of `--autoConnect`.
 6. **Walk-away runs: the auto-allow helper (recommended for unattended runs, off by default).** Offer it, explain it, and enable it only if the user says yes:
    - What it does: right before each agent's own connect, that agent arms a 15 second window. While any window is open, `scripts/auto_allow.py` presses Allow on Chrome's prompt, logs each click to `<workspace>/auto-allow.log`, and closes one window per click. With no open window it is not running.
    - What it means: the prompt does not say who is asking, so any local program that connects to Chrome inside an open window is approved too.
-   - macOS: grant Accessibility to the app that runs the agent (System Settings > Privacy & Security > Accessibility). Windows: beta and untested, needs `pip install pywinauto`. Linux: not available.
+   - macOS only: grant Accessibility to the app that runs the agent (System Settings > Privacy & Security > Accessibility). It finds Chrome's prompt by its English text, so Chrome must be in English. Windows: not supported yet. Linux: not available.
    - If yes: run `python3 scripts/auto_allow.py enable` and set `browser.auto_allow: true`.
 7. **Portal accounts.** Ask each once and store under `portal_accounts`:
    - "Allow the agent to use Sign in with Google, Microsoft or LinkedIn on job portals, with an account already signed in to your Chrome?" Default yes. It tries Google, then Microsoft, then LinkedIn, picks only the user's own matching account, and only continues past consent screens that ask for basic profile and email.

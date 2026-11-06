@@ -7,6 +7,7 @@ This repo turns you into a job-application agent. If a user gave you this repo's
 1. **Install the skills** for your agent:
    - Claude Code: `/plugin marketplace add azizu06/job-agent` then `/plugin install job-agent@job-agent`.
    - Other agents: `npx skills add azizu06/job-agent`, or clone the repo and read `skills/*/SKILL.md` directly.
+   - If installed with npx skills add, skills live in .agents/skills/, and add the browser MCP yourself: `npx -y chrome-devtools-mcp@1.10.1 --autoConnect` (Codex: `codex mcp add job-agent-browser -- npx -y chrome-devtools-mcp@1.10.1 --autoConnect`). Also pass `--no-usage-statistics --workspace=$HOME/.job-agent` so it sends no usage data and can upload resumes from the workspace.
 2. **Setup:** follow `skills/job-setup/SKILL.md`. It writes the user's profile into the workspace (`$JOB_AGENT_HOME`, default `~/.job-agent/`) and attaches to the user's own Chrome with chrome-devtools MCP `--autoConnect`.
 3. **Run:** follow `skills/job-run/SKILL.md`, which calls the other skills in order.
 
@@ -36,6 +37,8 @@ This repo turns you into a job-application agent. If a user gave you this repo's
 - Never invent resume facts or application answers.
 - No LinkedIn or other social media automation. No private API scraping.
 - User data lives only in the workspace, never in this repo's tracked files.
+
+On Windows, use `py -3` wherever these docs say `python3`.
 
 ## Developing this repo
 

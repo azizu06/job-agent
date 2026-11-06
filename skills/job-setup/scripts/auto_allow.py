@@ -22,8 +22,10 @@ Platforms:
   macOS    System Events UI scripting through osascript. Grant Accessibility
            to the app that runs your agent (System Settings > Privacy &
            Security > Accessibility).
-  Windows  BETA, untested. UI Automation through pywinauto
-           (`pip install pywinauto`).
+  Windows  not supported yet. An untested pywinauto backend exists; it runs
+           only with JOB_AGENT_AUTO_ALLOW_WINDOWS=1 (`pip install pywinauto`).
+
+The prompt is found by its English text, so Chrome must be in English.
   Linux    not supported; click Allow yourself or use the dedicated profile.
 
 Commands:
@@ -32,7 +34,7 @@ Commands:
   status
   watch                     internal: the watcher loop
 
-Standard library only (plus pywinauto on Windows).
+Standard library only (plus pywinauto for the untested Windows backend).
 """
 
 from __future__ import annotations
@@ -230,7 +232,7 @@ def mac_click(max_clicks: int) -> list[str]:
     return [line for line in out.stdout.splitlines() if line.strip()]
 
 
-def windows_click(max_clicks: int) -> list[str]:  # BETA, untested
+def windows_click(max_clicks: int) -> list[str]:  # untested; opt-in only
     from pywinauto import Desktop  # type: ignore
 
     clicked: list[str] = []
@@ -254,7 +256,7 @@ def windows_click(max_clicks: int) -> list[str]:  # BETA, untested
 def platform_backend():
     if sys.platform == "darwin":
         return mac_click
-    if sys.platform == "win32":
+    if sys.platform == "win32" and os.environ.get("JOB_AGENT_AUTO_ALLOW_WINDOWS") == "1":
         return windows_click
     return None
 
@@ -322,7 +324,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.cmd == "enable":
         if platform_backend() is None:
-            print("auto-allow supports macOS and Windows (beta) only.", file=sys.stderr)
+            print("auto-allow supports macOS only (Windows is not supported yet).", file=sys.stderr)
             return 1
         base.mkdir(parents=True, exist_ok=True)
         p["enabled"].write_text("on\n", encoding="utf-8")
