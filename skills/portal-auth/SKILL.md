@@ -24,7 +24,7 @@ Setup asks once about each permission. If a setting is false, that path is skipp
 
 ## Order of attempts
 
-Try these in this exact order. Skip any step whose setting is false or that the portal does not offer. Try each step at most once per job. If a step fails or you decline it, go to the next step; when no step is left, park the job (see Parking).
+Try these in this exact order. Skip any step whose setting is false, that the portal does not offer, or whose provider account is not signed in to this Chrome. Try each step at most once per job. If a step is tried and does not get you in (for example a saved password is rejected), go to the next step. If you decline a step or cannot do it, park the job now instead (see When you decline or cannot do a step); the later steps need the same kind of action. When no step is left, park the job (see Parking).
 
 1. **Sign in with Google** (`allow_sso`).
 2. **Sign in with Microsoft** (`allow_sso`).
