@@ -55,6 +55,6 @@ python3 tests/e2e/rig.py inject --workspace $W --kind rejection --company "Acme 
 python3 tests/e2e/rig.py check  --workspace $W --stage final
 ```
 
-A pass means: Acme Robotics and Globex were submitted once each with the fake identity and have receipt IDs from the mock inbox; Globex was entered through Sign in with Google; Initech is `Needs you: captcha` with a notification; Umbrella and Hooli have no rows; the required essay was drafted within its limit; no Enter, Escape or CAPTCHA click happened; after the syncs the rows read Assessment then Rejected (Acme) and Interview (Globex), with the read-back path still in `notes`.
+A pass means: Acme Robotics and Globex were submitted once each with the fake identity and have receipt IDs from the mock inbox; Globex was entered through Sign in with Google; Initech is `Needs you: captcha` with a notification; Umbrella and Hooli have no rows; each row's `resume_used` is the absolute path of the uploaded PDF and exists; the required essay was drafted within its limit and names no number, employer or tool absent from the master resume; no Enter, Escape or CAPTCHA click happened; after the syncs the rows read Assessment then Rejected (Acme) and Interview (Globex), with the read-back path still in `notes`.
 
 Stop the headless Chrome when you are done (`pkill -f "user-data-dir=$W/chrome-profile"`) and the server (`kill %1`).

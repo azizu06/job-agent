@@ -86,5 +86,77 @@ class CliTests(unittest.TestCase):
             self.assertEqual(path.read_text().splitlines()[0], ",".join(tc.COLUMNS))
 
 
+class RecordSubmitTests(unittest.TestCase):
+    """Pass 4 regression: empty receipt_id and a relative, missing resume_used."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.d = Path(self.tmp.name)
+        self.csv = self.d / "tracker.csv"
+        self.pdf = self.d / "resumes" / "acme" / "Test_Applicant_Acme.pdf"
+        self.pdf.parent.mkdir(parents=True)
+        self.pdf.write_bytes(b"%PDF-1.4\n")
+        self.inbox = self.d / "inbox"
+        import mock_inbox
+        self.msg = mock_inbox.add(self.inbox, "no-reply@acme.mock", "test@example.com",
+                                  "Thank you for applying to Acme Robotics", "We have received your application for GH-1001.")
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def cli(self, *args):
+        return subprocess.run([sys.executable, str(SCRIPT), "--file", str(self.csv), *args], capture_output=True, text=True)
+
+    def rec(self, resume, *extra):
+        return self.cli("record-submit", "--company", "Acme Robotics", "--req-id", "GH-1001", "--role", "SWE Intern",
+                        "--resume-used", str(resume), "--read-back", str(self.d / "state/submissions/a1.json"), *extra)
+
+    def test_receipt_comes_from_inbox(self):
+        out = self.rec(self.pdf, "--inbox", str(self.inbox))
+        self.assertEqual(out.returncode, 0, out.stdout + out.stderr)
+        row = tc.load(self.csv)[0]
+        self.assertEqual(row["receipt_id"], self.msg["id"])
+        self.assertEqual(row["status"], "Submitted")
+        self.assertEqual(row["resume_used"], str(self.pdf))
+        self.assertTrue(row["notes"].startswith("read-back: "))
+        self.assertEqual(self.cli("audit").returncode, 0)
+
+    def test_existing_ready_row_is_upgraded_not_duplicated(self):
+        self.cli("add", "--company", "Acme Robotics", "--req-id", "GH-1001", "--status", "Ready", "--notes", "filled")
+        self.rec(self.pdf, "--inbox", str(self.inbox))
+        rows = tc.load(self.csv)
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["receipt_id"], self.msg["id"])
+        self.assertIn("filled", rows[0]["notes"])
+
+    def test_relative_resume_rejected(self):
+        out = self.rec("resumes/acme/Test_Applicant_Acme.pdf", "--inbox", str(self.inbox))
+        self.assertEqual(out.returncode, 1)
+        self.assertIn("absolute", out.stdout)
+        self.assertFalse(self.csv.exists())
+
+    def test_missing_resume_rejected(self):
+        out = self.rec(self.d / "nope.pdf")
+        self.assertEqual(out.returncode, 1)
+        self.assertIn("does not exist", out.stdout)
+        out = self.cli("add", "--company", "X", "--resume-used", "rel.pdf")
+        self.assertEqual(out.returncode, 1)
+
+    def test_no_receipt_is_noted(self):
+        out = self.rec(self.pdf)
+        self.assertFalse(json.loads(out.stdout)["receipt_found"])
+        self.assertIn("no receipt yet", tc.load(self.csv)[0]["notes"])
+        self.assertEqual(self.cli("audit").returncode, 0)
+
+    def test_audit_flags_pass4_rows(self):
+        tc.save(self.csv, [{"company": "Acme Robotics", "req_id": "GH-1001", "status": "Rejected", "receipt_id": "",
+                            "resume_used": "resumes/a1/resume.pdf", "notes": "read-back: x.json"}])
+        out = self.cli("audit")
+        self.assertEqual(out.returncode, 1)
+        probs = json.loads(out.stdout)["problems"]
+        self.assertTrue(any("receipt_id is empty" in p for p in probs))
+        self.assertTrue(any("absolute" in p for p in probs))
+
+
 if __name__ == "__main__":
     unittest.main()

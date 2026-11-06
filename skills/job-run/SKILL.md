@@ -22,21 +22,23 @@ description: Run the full job-agent loop. Scans for new jobs, gates them, then s
    - Each new connection raises a Chrome "Allow remote debugging?" prompt. Tell the user to expect one per applier, unless auto-allow is enabled.
    Keep concurrent fills at or below `browser.max_parallel_tabs` (default 3). Never run a shared tab-switching helper for several agents; each works only through its own page id.
 4. **Collect reports.** A `parked` report is a normal result: record it and keep going. If an applier crashes, returns nothing, or says it declined a step, treat that job as parked (`Needs you: <reason>`, or `Needs you: applier failed` when there is no reason), leave its tab alone, and continue with the rest of the queue. Never retry a parked job in the same run. Do not trust a subagent's "ready". For each tab, take your own snapshot by page id and re-read every live field: required errors, empty required fields, resume attached, consent boxes. Fix or flag.
-5. **Track.** Use the `tracker` skill: add or update each row (`Ready`, or `Submitted` when auto-submit pressed the final control), resume path, link, date. For submitted ones, look for the receipt email.
+5. **Track.** Use the `tracker` skill. `Ready` and parked jobs: `add` or `update` the row. Every job whose final control was pressed: one `tracker_csv.py record-submit` call with the absolute path of the PDF the applier uploaded (from its report; check the file exists), the read-back path, and the receipt (`--inbox <email.mock_inbox>` when `email.receipts: mock`; with Gmail, search per `tracker` and pass `--receipt-id`). Then run `tracker_csv.py audit`; it must exit 0 before you summarize. Fix each problem it lists; a receipt that never came is fine only as "no receipt yet".
 6. **Summarize** for the user: counts per stage, each job with status and the final control label, missing-term questions from tailoring (one batch), drafted written answers with their inferred sentences to check, and essays left for them.
 7. **Parked tabs.** End with one list of every parked job so the user can clear them in one sitting: company, role, reason (`Needs you: captcha` and similar), and the tab URL. These tabs stay open and filled; tell the user not to close them. After the user clears one, re-read that tab's live form (step 4) before treating it as ready. If anything was parked, send one summary notification with `scripts/notify.py`.
 
 ## Running every N hours
 
+The interval is `schedule.every_hours` in preferences (default 3 when the schedule is enabled). Read it and use it as `N` below; the examples show N=3.
+
 Claude Code:
-- In a session: `/loop 4h /job-agent:run` repeats while the session is open.
-- Scheduled tasks or cloud routines (`/schedule`) can start a run on a cron. A browser-driving run needs this machine and its Chrome, so use a local scheduled task, not a cloud one.
+- In a session: `/loop <N>h /job-agent:run` (for example `/loop 3h /job-agent:run`) repeats while the session is open.
+- Scheduled tasks or cloud routines (`/schedule`) can start a run on a cron every `schedule.every_hours` hours. A browser-driving run needs this machine and its Chrome, so use a local scheduled task, not a cloud one.
 
 Other agents, or plain cron, using a headless CLI:
 
 ```
-# crontab -e: every 4 hours at minute 5
-5 */4 * * * $HOME/.job-agent/run.sh >> $HOME/.job-agent/state/cron.log 2>&1
+# crontab -e: every schedule.every_hours (here 3) hours at minute 5
+5 */3 * * * $HOME/.job-agent/run.sh >> $HOME/.job-agent/state/cron.log 2>&1
 ```
 
 with `run.sh` along the lines of:

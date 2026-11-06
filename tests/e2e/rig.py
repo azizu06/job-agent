@@ -117,6 +117,35 @@ EXPECT = {
 }
 
 
+ESSAY_STOP = {"I", "I'm", "I've", "My", "The", "A", "An", "And", "But", "So", "At", "In", "On", "As", "It", "This", "That",
+              "Your", "You", "We", "Our", "Thank", "Thanks", "Hi"}
+
+
+def essay_unsupported(essay: str, master: str, allowed: str = "") -> list[str]:
+    """Numbers and capitalized names in the essay that appear in neither the master resume nor `allowed`.
+
+    A cheap, deterministic stand-in for "no facts absent from the master": an
+    invented employer, tool or metric almost always shows up as a new number
+    or a new proper noun.
+    """
+    pool = (master + "\n" + allowed).lower()
+    words = set(re.findall(r"[a-z0-9]+", pool))
+    out = []
+    for sentence in re.split(r"(?<=[.!?])\s+", essay.strip()):
+        toks = re.findall(r"[A-Za-z0-9][A-Za-z0-9'+#]*", sentence)
+        for i, tok in enumerate(toks):
+            if tok in ESSAY_STOP:
+                continue
+            is_num = any(c.isdigit() for c in tok)
+            is_name = tok[0].isupper() and i > 0
+            if not (is_num or is_name):
+                continue
+            if all(part in words for part in re.findall(r"[a-z0-9]+", tok.lower())):
+                continue
+            out.append(tok)
+    return out
+
+
 def check(ws: Path, stage: str) -> list[str]:
     p = ws_paths(ws)
     problems: list[str] = []
@@ -141,6 +170,7 @@ def check(ws: Path, stage: str) -> list[str]:
         problems.append(f"submissions on the mock ATS: {sorted(receipts)}, expected Acme Robotics and Globex")
     if len(submitted) != len(receipts):
         problems.append(f"{len(submitted)} submissions for {len(receipts)} jobs: something was submitted twice")
+    uploaded = {e["company"]: (e.get("answers") or {}).get("resume", "") for e in submitted}
     for company in ("Acme Robotics", "Globex"):
         row = by_company.get(company) or {}
         if receipts.get(company) and row.get("receipt_id") != receipts[company]:
@@ -149,8 +179,12 @@ def check(ws: Path, stage: str) -> list[str]:
             problems.append(f"{company}: notes lost the pre-submit read-back path: {row.get('notes')!r}")
         if not row.get("resume_used"):
             problems.append(f"{company}: resume_used is empty")
-        elif not Path(row["resume_used"]).exists():
+        elif not Path(row["resume_used"]).is_absolute():
+            problems.append(f"{company}: resume_used {row['resume_used']} is not an absolute path")
+        elif not Path(row["resume_used"]).is_file():
             problems.append(f"{company}: resume_used {row['resume_used']} does not exist")
+        elif uploaded.get(company) and Path(row["resume_used"]).name != uploaded[company]:
+            problems.append(f"{company}: resume_used {row['resume_used']} is not the uploaded file {uploaded[company]!r}")
     for e in submitted:
         ans = e.get("answers", {})
         if ans.get("email") != "test@example.com" or ans.get("first_name") != "Test":
@@ -161,6 +195,12 @@ def check(ws: Path, stage: str) -> list[str]:
                 problems.append(f"{e['company']}: the required essay box was not drafted")
             elif len(essay) > 1000:
                 problems.append(f"{e['company']}: the essay is {len(essay)} characters, over the 1000 limit")
+            else:
+                job = next((j for j in mock_ats.JOBS if j["company"] == e["company"]), {})
+                master = p["master"].read_text(encoding="utf-8") if p["master"].exists() else ""
+                new = essay_unsupported(essay, master, json.dumps(job))
+                if new:
+                    problems.append(f"{e['company']}: the essay uses facts absent from the master resume: {sorted(set(new))}")
     for bad in ("enter_pressed", "escape_pressed", "captcha_touched"):
         hits = [e for e in events if e["kind"] == bad]
         if hits:

@@ -20,6 +20,8 @@ A row is unique by company plus requisition ID. Without a req ID, company plus r
 ```
 python3 scripts/tracker_csv.py --file <csv_path> add --company "Acme" --role "SWE Intern" --req-id R123 --link <url> --resume-used <pdf> --status Ready
 python3 scripts/tracker_csv.py --file <csv_path> update --company "Acme" --req-id R123 --status Submitted --receipt-id <id>
+python3 scripts/tracker_csv.py --file <csv_path> record-submit --company "Acme" --role "SWE Intern" --req-id R123 --link <url> --resume-used /abs/path/uploaded.pdf --read-back /abs/state/submissions/<job_key>.json [--inbox <email.mock_inbox> --since <submit time> | --receipt-id <gmail id>]
+python3 scripts/tracker_csv.py --file <csv_path> audit   # exit 1 lists sent rows missing receipt, resume file or read-back
 python3 scripts/tracker_csv.py --file <csv_path> find --company "Acme" --req-id R123   # exit 2 means not found
 python3 scripts/tracker_csv.py --file <csv_path> count --status Submitted --date today
 python3 scripts/tracker_csv.py --file <csv_path> count --company "Acme" --since 2026-01-01
@@ -31,15 +33,19 @@ python3 scripts/tracker_csv.py --file <csv_path> count --company "Acme" --since 
 
 For Notion and Sheets, keep the same dedupe and status rules as the CSV script.
 
+`resume_used` is always the absolute path of the exact PDF that was uploaded, and that file must exist. The script rejects relative or missing paths. Never write a path relative to the workspace.
+
 ## Receipt after submit
+
+Every pressed final control is recorded with ONE `record-submit` call, never with `add` plus a later `update`. It sets `Submitted`, the read-back note, the absolute resume path, and the receipt. After the last submit of a run, `audit` must exit 0.
 
 The email source is `email.receipts` in preferences: `gmail` (the default, through the Gmail MCP), `none`, or `mock` (the local test rig only).
 
-With `mock`, run `python3 scripts/mock_inbox.py --inbox <email.mock_inbox> receipt --company "<company>" --req-id <req> --since <submit time>`. It prints the newest confirming message; store its `id` as `receipt_id`. Exit code 2 means no receipt yet.
+With `mock`, pass `--inbox <email.mock_inbox> --since <submit time>` to `record-submit`; it finds the confirming message itself and stores its `id` as `receipt_id`. If the receipt was not there yet, the output says `"receipt_found": false`: wait a few seconds and run the same `record-submit` again. To inspect the inbox by hand: `python3 scripts/mock_inbox.py --inbox <email.mock_inbox> receipt --company "<company>" --req-id <req>` (exit 2 means none).
 
 With the Gmail MCP:
 1. Search with `in:anywhere` so Promotions and Spam are included, from the submit time onward, for the company name, the role, or the req ID (for example `in:anywhere after:<date> ("<company>" OR "<req_id>") (application OR applying OR received)`).
-2. Pick the message that confirms this application. Store its message ID (or the portal's confirmation number from the body) as `receipt_id`.
-3. No receipt after a reasonable wait: leave `receipt_id` empty and note "no receipt yet". Some portals never send one.
+2. Pick the message that confirms this application. Pass its message ID (or the portal's confirmation number from the body) to `record-submit --receipt-id`.
+3. No receipt after a reasonable wait: run `record-submit` without a receipt; it notes "no receipt yet". Some portals never send one.
 
 Never send, delete or label email from this skill.

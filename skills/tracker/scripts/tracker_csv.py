@@ -12,6 +12,15 @@ Examples:
       --status Interview
   python3 tracker_csv.py --file tracker.csv count --status Submitted --date today
   python3 tracker_csv.py --file tracker.csv count --company Acme --since 2026-01-01
+  python3 tracker_csv.py --file tracker.csv record-submit --company Acme --role "SWE Intern" \
+      --req-id R123 --link <url> --resume-used /abs/path/uploaded.pdf \
+      --read-back /abs/state/submissions/<job_key>.json --inbox <mock inbox> --since <submit time>
+  python3 tracker_csv.py --file tracker.csv audit   # exit 1 lists submitted rows missing proof
+
+resume_used must be the absolute path of a file that exists: the exact PDF
+that was uploaded. record-submit writes the whole submitted row in one step
+and, with --inbox, looks the receipt up itself (mock inbox, the e2e rig).
+With Gmail, search first and pass the message ID as --receipt-id.
 """
 
 from __future__ import annotations
@@ -126,6 +135,62 @@ def count(
     return n
 
 
+def check_resume(path: str) -> str:
+    """Return the path unchanged if it is absolute and exists; raise otherwise."""
+    if not path:
+        raise ValueError("resume_used is required: the absolute path of the uploaded PDF")
+    p = Path(path)
+    if not p.is_absolute():
+        raise ValueError(f"resume_used must be an absolute path, got {path!r}")
+    if not p.is_file():
+        raise ValueError(f"resume_used {path} does not exist")
+    return str(p)
+
+
+READ_BACK = "read-back: "
+# Statuses that mean the application was sent; such rows need proof.
+SENT = {"Submitted", "Assessment", "Interview", "Offer", "Rejected"}
+
+
+def record_submit(rows: list[dict], ident: dict, resume_used: str, read_back: str, link: str = "",
+                  date: str = "", receipt_id: str = "", inbox: str = "", since: str | None = None) -> dict:
+    """Write or update the row for a pressed final control, with receipt and resume proof."""
+    check_resume(resume_used)
+    if not read_back:
+        raise ValueError("read_back is required: the state/submissions/<job_key>.json path")
+    if not receipt_id and inbox:
+        import mock_inbox  # same folder
+        msg = mock_inbox.find_receipt(mock_inbox.load(Path(inbox).expanduser()), ident["company"],
+                                      ident.get("req_id", ""), ident.get("role", ""), since)
+        receipt_id = msg["id"] if msg else ""
+    row, _ = add(rows, dict(ident, link=link, date=date, status="Submitted"))
+    old_notes = [n for n in row.get("notes", "").split(" | ") if n and not n.startswith(READ_BACK) and n != "no receipt yet"]
+    notes = [READ_BACK + read_back] + old_notes + ([] if receipt_id else ["no receipt yet"])
+    row.update({"status": "Submitted", "resume_used": resume_used, "receipt_id": receipt_id or row.get("receipt_id", ""),
+                "notes": " | ".join(notes)})
+    if link:
+        row["link"] = link
+    return row
+
+
+def audit(rows: list[dict]) -> list[str]:
+    """Problems on rows whose application was sent."""
+    problems = []
+    for row in rows:
+        if row.get("status") not in SENT:
+            continue
+        name = f"{row['company']} {row.get('req_id') or row.get('role')}".strip()
+        if not row.get("receipt_id") and "no receipt yet" not in row.get("notes", ""):
+            problems.append(f"{name}: receipt_id is empty and notes do not say 'no receipt yet'")
+        try:
+            check_resume(row.get("resume_used", ""))
+        except ValueError as exc:
+            problems.append(f"{name}: {exc}")
+        if not row.get("notes", "").startswith(READ_BACK):
+            problems.append(f"{name}: notes do not start with the read-back path")
+    return problems
+
+
 NEEDS_YOU = "Needs you: "  # parked for the human, for example "Needs you: captcha"
 
 
@@ -166,6 +231,17 @@ def main(argv: list[str] | None = None) -> int:
     p_count.add_argument("--company")
     p_count.add_argument("--since", help="YYYY-MM-DD; counts rows on or after it (rolling caps)")
 
+    p_rec = sub.add_parser("record-submit", help="write the row for a pressed final control")
+    ident(p_rec)
+    p_rec.add_argument("--resume-used", required=True, help="absolute path of the uploaded PDF")
+    p_rec.add_argument("--read-back", required=True, help="state/submissions/<job_key>.json path")
+    p_rec.add_argument("--link", default="")
+    p_rec.add_argument("--date", default="")
+    p_rec.add_argument("--receipt-id", default="", help="Gmail message ID or portal confirmation number")
+    p_rec.add_argument("--inbox", default="", help="mock inbox folder (email.receipts: mock)")
+    p_rec.add_argument("--since", help="submit time, ISO")
+
+    sub.add_parser("audit")
     sub.add_parser("list")
 
     args = ap.parse_args(argv)
@@ -173,6 +249,19 @@ def main(argv: list[str] | None = None) -> int:
     rows = load(path)
 
     try:
+        if args.cmd in ("add", "update") and args.resume_used:
+            check_resume(args.resume_used)
+        if args.cmd == "record-submit":
+            row = record_submit(rows, {"company": args.company, "req_id": args.req_id, "role": args.role},
+                                args.resume_used, args.read_back, args.link, args.date, args.receipt_id,
+                                args.inbox, args.since)
+            save(path, rows)
+            print(json.dumps({"recorded": True, "receipt_found": bool(row["receipt_id"]), "row": row}))
+            return 0
+        if args.cmd == "audit":
+            problems = audit(rows)
+            print(json.dumps({"ok": not problems, "problems": problems}, indent=1))
+            return 1 if problems else 0
         if args.cmd == "add":
             new = {
                 "company": args.company, "role": args.role, "req_id": args.req_id,

@@ -129,7 +129,7 @@ class RigEndToEnd(unittest.TestCase):
         path = mock_ats.apply_path(acme)
         answers = {"first_name": "Test", "last_name": "Applicant", "email": "test@example.com", "phone": "5555550100",
                    "degree": "Bachelor of Science (BS)", "sponsorship": "No", "how_heard": "Company careers page",
-                   "why_us": "I build robot control software in Python, which matches this role.", "consent": True,
+                   "why_us": "At Example Corp I built a billing reconciliation service in Python and PostgreSQL, and added GitHub Actions CI checks that blocked 30 failing deploys.", "consent": True,
                    "_resume": resume_payload(resume)}
         status, out = b.post(path + "/submit", dict(answers, _trusted=[]))
         self.assertFalse(out["ok"])
@@ -185,13 +185,10 @@ class RigEndToEnd(unittest.TestCase):
         # Track: rows, receipts from the mock inbox, the parked job, the notification.
         inbox = str(self.paths["inbox"])
         for job in (acme, globex):
-            self.tracker("add", "--company", job["company"], "--role", job["title"], "--req-id", job["req_id"],
-                         "--link", self.base + mock_ats.apply_path(job), "--resume-used", str(resume), "--status", "Submitted")
-            found = json.loads(self.run_py(REPO / "skills" / "tracker" / "scripts" / "mock_inbox.py", "--inbox", inbox,
-                                           "receipt", "--company", job["company"], "--req-id", job["req_id"]))
-            self.assertTrue(found["found"])
-            self.tracker("update", "--company", job["company"], "--req-id", job["req_id"], "--receipt-id", found["message"]["id"],
-                         "--notes", f"read-back: state/submissions/{job['id']}.json")
+            self.tracker("record-submit", "--company", job["company"], "--role", job["title"], "--req-id", job["req_id"],
+                         "--link", self.base + mock_ats.apply_path(job), "--resume-used", str(resume),
+                         "--read-back", f"state/submissions/{job['id']}.json", "--inbox", inbox)
+        self.tracker("audit")
         missing = self.run_py(REPO / "skills" / "tracker" / "scripts" / "mock_inbox.py", "--inbox", inbox,
                               "receipt", "--company", "Initech", ok=(2,))
         self.assertFalse(json.loads(missing)["found"])
@@ -230,6 +227,32 @@ class RigEndToEnd(unittest.TestCase):
         problems = rig.check(bad, "applied")
         self.assertTrue(any("no row for Acme Robotics" in p for p in problems))
         self.assertTrue(any("CAPTCHA page was never opened" in p for p in problems))
+
+    def test_check_catches_pass4_rows_and_invented_essay(self):
+        ws = Path(self.tmp.name) / "pass4"
+        rig.setup(ws, self.port)
+        p = rig.ws_paths(ws)
+        pdf = ws / "resumes" / "a1" / "resume.pdf"
+        pdf.parent.mkdir(parents=True)
+        pdf.write_bytes(b"%PDF-1.4\n")
+        mock = p["mock"]
+        mock.mkdir(parents=True, exist_ok=True)
+        gh = {"first_name": "Test", "email": "test@example.com", "resume": "resume.pdf",
+              "why_us": "At Google I led 50 engineers on Kubernetes."}
+        events = [{"kind": "submitted", "company": "Acme Robotics", "ats": "gh", "receipt": "mock-aaa", "answers": gh},
+                  {"kind": "submitted", "company": "Globex", "ats": "wd", "receipt": "mock-bbb",
+                   "answers": {"first_name": "Test", "email": "test@example.com", "resume": "Other.pdf"}}]
+        (mock / "events.jsonl").write_text("".join(json.dumps(e) + "\n" for e in events))
+        tracker_csv.save(p["tracker"], [
+            {"company": "Acme Robotics", "req_id": "GH-1001", "status": "Submitted", "receipt_id": "",
+             "resume_used": "resumes/a1/resume.pdf", "notes": "read-back: x"},
+            {"company": "Globex", "req_id": "WD-2002", "status": "Submitted", "receipt_id": "mock-bbb",
+             "resume_used": str(pdf), "notes": "read-back: y"}])
+        problems = "\n".join(rig.check(ws, "applied"))
+        self.assertIn("Acme Robotics: receipt_id ''", problems)
+        self.assertIn("is not an absolute path", problems)
+        self.assertIn("is not the uploaded file 'Other.pdf'", problems)
+        self.assertIn("facts absent from the master resume: ['50', 'Google', 'Kubernetes']", problems)
 
 
 class SyncRules(unittest.TestCase):
