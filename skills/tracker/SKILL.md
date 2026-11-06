@@ -9,7 +9,7 @@ description: Record job applications for job-agent in a pluggable tracker (local
 
 Columns: `company, role, req_id, link, date, resume_used, status, receipt_id, notes`.
 
-Statuses: `Ready` (filled, waiting for the user to submit), `Submitted`, `Assessment`, `Interview`, `Offer`, `Rejected`, `Withdrawn`.
+Statuses: `Ready` (filled, waiting for the user to submit), `Submitted`, `Assessment`, `Interview`, `Offer`, `Rejected`, `Withdrawn`, and `Needs you: <reason>` for a parked job.
 
 A row is unique by company plus requisition ID. Without a req ID, company plus role. Never dedupe on company alone.
 
@@ -20,7 +20,7 @@ A row is unique by company plus requisition ID. Without a req ID, company plus r
 ```
 python3 scripts/tracker_csv.py --file <csv_path> add --company "Acme" --role "SWE Intern" --req-id R123 --link <url> --resume-used <pdf> --status Ready
 python3 scripts/tracker_csv.py --file <csv_path> update --company "Acme" --req-id R123 --status Submitted --receipt-id <id>
-python3 scripts/tracker_csv.py --file <csv_path> find --company "Acme" --req-id R123
+python3 scripts/tracker_csv.py --file <csv_path> find --company "Acme" --req-id R123   # exit 2 means not found
 python3 scripts/tracker_csv.py --file <csv_path> count --status Submitted --date today
 python3 scripts/tracker_csv.py --file <csv_path> count --company "Acme" --since 2026-01-01
 ```

@@ -5,7 +5,7 @@ mcpServers:
   - job-agent-browser-own:
       type: stdio
       command: npx
-      args: ["-y", "chrome-devtools-mcp@1.10.1", "--autoConnect"]
+      args: ["-y", "chrome-devtools-mcp@1.10.1", "--autoConnect", "--workspace=${HOME}/.job-agent"]
 ---
 
 You handle exactly one job from the job-agent queue. Your prompt gives you the queue item, its job description path, the workspace path and a unique output folder.

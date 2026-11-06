@@ -8,6 +8,12 @@ Examples:
   python3 keyword_coverage.py --jd jd.txt --resume tailored.md
   python3 keyword_coverage.py --jd jd.txt --resume tailored.md --before master.md
   python3 keyword_coverage.py --jd jd.txt --resume tailored.md --terms terms.txt --json
+  python3 keyword_coverage.py --jd jd.txt --resume tailored.md --company "Acme"
+
+Acronyms found only by their shape (for example IT, AI, S3) match case-sensitively,
+so the English word "it" never counts as the acronym "IT". URLs and email
+addresses in the posting are ignored. --company drops extracted words that
+contain the employer's name (for example AcmeLabs).
 
 A terms file has one term per line. Aliases follow on the same line after
 `|`, for example `Kubernetes | k8s`. Lines starting with `#` are ignored.
@@ -118,6 +124,14 @@ STOP_ACRONYMS = {
     "ON", "AT", "AN", "IS", "AS", "BE", "WE", "YOU", "OUR", "ALL", "ANY",
     "NEW", "NOT", "ADA", "FAQ", "ID", "OK", "AM", "PM", "EST", "PST", "UTC",
     "Q1", "Q2", "Q3", "Q4", "FTE", "LLC", "INC", "LTD", "USD", "K", "M",
+    # Hiring, legal and benefits boilerplate.
+    "HQ", "CV", "VEVRAA", "OFCCP", "EEOC", "DEI", "ADEA", "FMLA", "LGBTQ", "EO",
+    "AA", "HMO", "PPO", "HSA", "FSA", "OTE", "DOE", "WFH", "ASAP", "FAQS", "TBD",
+    # US state and territory codes.
+    "AL", "AK", "AZ", "AR", "CT", "DE", "DC", "GA", "HI", "ID", "IA", "KS", "KY",
+    "ME", "MD", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NC",
+    "ND", "OH", "OK", "PA", "RI", "SC", "SD", "TN", "UT", "VT", "VA", "WV", "WI",
+    "WY", "PR",
 }
 
 _BOUNDARY_BEFORE = r"(?<![a-z0-9+#])"
@@ -128,20 +142,25 @@ _BOUNDARY_AFTER = r"(?![a-z0-9+#])"
 class Term:
     name: str
     variants: tuple[str, ...] = field(default_factory=tuple)
+    case_sensitive: bool = False
 
     def spellings(self) -> tuple[str, ...]:
         return (self.name.lower(),) + tuple(v.lower() for v in self.variants)
 
 
-def normalize(text: str) -> str:
-    """Lowercase, strip LaTeX markup, and collapse whitespace."""
+def strip_markup(text: str) -> str:
+    """Strip LaTeX markup and collapse whitespace, keeping letter case."""
     text = re.sub(r"(?<!\\)%.*$", " ", text, flags=re.MULTILINE)
     text = re.sub(r"\\([%&#_$])", r"\1", text)
     text = re.sub(r"\\[a-zA-Z@]+\*?", " ", text)
     text = text.replace("{", " ").replace("}", " ").replace("~", " ")
-    text = text.lower()
     text = re.sub(r"\s+", " ", text)
     return text
+
+
+def normalize(text: str) -> str:
+    """Lowercase, strip LaTeX markup, and collapse whitespace."""
+    return strip_markup(text).lower()
 
 
 def _pattern(spelling: str) -> re.Pattern[str]:
@@ -149,7 +168,17 @@ def _pattern(spelling: str) -> re.Pattern[str]:
     return re.compile(_BOUNDARY_BEFORE + escaped + _BOUNDARY_AFTER)
 
 
-def has_term(normalized_text: str, term: Term) -> bool:
+def _exact_pattern(spelling: str) -> re.Pattern[str]:
+    escaped = r"\s+".join(re.escape(part) for part in spelling.split())
+    return re.compile(r"(?<![A-Za-z0-9+#])" + escaped + r"(?![A-Za-z0-9+#])")
+
+
+def has_term(normalized_text: str, term: Term, cased_text: str | None = None) -> bool:
+    """normalized_text comes from normalize(). Case-sensitive terms are matched
+    against cased_text (from strip_markup()) when it is given."""
+    if term.case_sensitive and cased_text is not None:
+        spellings = (term.name,) + tuple(term.variants)
+        return any(_exact_pattern(s).search(cased_text) for s in spellings)
     return any(_pattern(s).search(normalized_text) for s in term.spellings())
 
 
@@ -166,8 +195,13 @@ def _canonical_lookup() -> dict[str, str]:
     return lookup
 
 
+_URL_OR_EMAIL = re.compile(r"https?://\S+|www\.\S+|\S+@\S+\.\S+|\b[\w-]+\.(?:com|io|org|net|ai|co)(?:/\S*)?\b")
+_SURNAME = re.compile(r"^Ma?c[A-Z][a-z]+$")  # McLean, MacArthur: names, not tools
+
+
 def _tech_tokens(raw_text: str) -> list[str]:
     """Words that look like tool names even when they are not in VOCAB."""
+    raw_text = _URL_OR_EMAIL.sub(" ", raw_text)
     found: list[str] = []
     # CamelCase or mixed case with an inner capital: PyTorch, GraphQL, FastAPI.
     found += re.findall(r"\b[A-Z][a-z]+[A-Z][A-Za-z]*\b", raw_text)
@@ -178,21 +212,30 @@ def _tech_tokens(raw_text: str) -> list[str]:
     return found
 
 
-def extract_terms(jd_text: str) -> list[Term]:
-    """Terms from the job description: known vocabulary plus tool-like words."""
-    norm = normalize(jd_text)
+def extract_terms(jd_text: str, company: str | None = None) -> list[Term]:
+    """Terms from the job description: known vocabulary plus tool-like words.
+
+    company: the employer's name. Extracted words that contain it (AcmeLabs,
+    TeamAcme) are dropped. Vocabulary terms are never dropped.
+    """
+    norm = normalize(_URL_OR_EMAIL.sub(" ", jd_text))
     terms = [t for t in _vocab_terms() if has_term(norm, t)]
     seen = {t.name for t in terms}
     lookup = _canonical_lookup()
+    company_words = [w.lower() for w in re.findall(r"[A-Za-z]{3,}", company or "")]
     for token in _tech_tokens(jd_text):
-        if token.upper() in STOP_ACRONYMS or token.isdigit():
+        if token.upper() in STOP_ACRONYMS or token.isdigit() or _SURNAME.match(token):
             continue
         low = token.lower()
+        if any(w in low for w in company_words):
+            continue
         canonical = lookup.get(low, low)
         if canonical in seen:
             continue
         seen.add(canonical)
-        terms.append(Term(token))
+        # A bare acronym (IT, AI, S3) must match in capitals; "it" is not "IT".
+        cased = token.isupper() and canonical not in VOCAB
+        terms.append(Term(token, case_sensitive=cased))
     return terms
 
 
@@ -209,7 +252,8 @@ def parse_terms_file(text: str) -> list[Term]:
 
 def coverage(resume_text: str, terms: list[Term]) -> dict:
     norm = normalize(resume_text)
-    matched = [t.name for t in terms if has_term(norm, t)]
+    cased = strip_markup(resume_text)
+    matched = [t.name for t in terms if has_term(norm, t, cased)]
     missing = [t.name for t in terms if t.name not in matched]
     total = len(terms)
     pct = round(100.0 * len(matched) / total, 1) if total else 0.0
@@ -239,12 +283,13 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--before", help="earlier resume (for example the master) for a before/after report")
     ap.add_argument("--terms", help="terms file that replaces automatic extraction")
     ap.add_argument("--also", help="terms file added on top of automatic extraction")
+    ap.add_argument("--company", help="employer name; drops extracted words that contain it")
     ap.add_argument("--min", type=float, help="exit 1 when coverage is below this percent")
     ap.add_argument("--json", action="store_true", help="print JSON instead of text")
     args = ap.parse_args(argv)
 
     jd_text = _read(args.jd)
-    terms = parse_terms_file(_read(args.terms)) if args.terms else extract_terms(jd_text)
+    terms = parse_terms_file(_read(args.terms)) if args.terms else extract_terms(jd_text, args.company)
     if args.also:
         have = {t.name.lower() for t in terms}
         terms += [t for t in parse_terms_file(_read(args.also)) if t.name.lower() not in have]

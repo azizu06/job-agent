@@ -61,6 +61,37 @@ class ExtractionTests(unittest.TestCase):
         self.assertEqual(names.count("aws"), 1)
 
 
+class LiveJdNoiseTests(unittest.TestCase):
+    """Noise seen on a real Greenhouse posting during the 2026-11 dry run."""
+
+    LIVE = """Raft (https://TeamRaft.com) is hiring. Onsite at Raft HQ in McLean, VA.
+    Apply at job-boards.greenhouse.io. Work in RaftLabs with Linux, Git and Bash.
+    Send your CV. VEVRAA federal contractor. AI/ML and IT infrastructure."""
+
+    def test_drops_urls_states_boilerplate_and_surnames(self):
+        names = {t.name for t in kc.extract_terms(self.LIVE)}
+        for noise in ("greenhouse.io", "VA", "HQ", "CV", "VEVRAA", "McLean"):
+            self.assertNotIn(noise, names)
+        for real in ("linux", "git", "bash", "AI", "IT"):
+            self.assertIn(real, names)
+
+    def test_company_flag_drops_company_words(self):
+        names = {t.name for t in kc.extract_terms(self.LIVE, company="Raft")}
+        self.assertNotIn("TeamRaft", names)
+        self.assertNotIn("RaftLabs", names)
+        self.assertIn("linux", names)
+
+    def test_shape_acronyms_match_case_sensitively(self):
+        terms = [t for t in kc.extract_terms(self.LIVE) if t.name in ("IT", "AI")]
+        self.assertEqual(len(terms), 2)
+        self.assertEqual(kc.coverage("I shipped it and kept it fast", terms)["matched"], [])
+        self.assertEqual(sorted(kc.coverage("Ran IT support and AI evals", terms)["matched"]), ["AI", "IT"])
+
+    def test_vocab_terms_stay_case_insensitive(self):
+        terms = kc.extract_terms("Experience with AWS and SQL")
+        self.assertEqual(kc.coverage("aws lambda, sql", terms)["percent"], 100.0)
+
+
 class CoverageTests(unittest.TestCase):
     def setUp(self):
         self.terms = [kc.Term("python"), kc.Term("aws"), kc.Term("kubernetes", ("k8s",)), kc.Term("graphql")]

@@ -23,7 +23,8 @@
       "args": [
         "-y",
         "chrome-devtools-mcp@1.10.1",
-        "--autoConnect"
+        "--autoConnect",
+        "--workspace=${HOME}/.job-agent"
       ]
     }
   },

@@ -8,6 +8,8 @@ Field notes from real application runs. Read the section for the ATS you are on 
 - An on-page "thank you" regex is not proof of submission. Survey and EEO text often say "thank you". Confirm by URL change plus an email receipt.
 - Some portals send no receipt at all. Record that in the tracker notes instead of waiting.
 - Conditional fields appear after answers. Take a new snapshot after each answer that could reveal more fields.
+- Chrome autofill and job extensions (Simplify, JobRight and similar) can write the user's saved values into a field the first time it gets focus, racing your own typing. In one dry run the Email box read back as the saved Gmail address with the intended address appended. Read back every field after filling it, and fill it again if it does not match exactly. Never click an extension's or the portal's "Autofill" button.
+- Extension panels sit on top of the page and show the user's real name and resume. Crop screenshots to the form.
 
 ## Workday
 
@@ -19,6 +21,9 @@ Field notes from real application runs. Read the section for the ATS you are on 
 
 ## Greenhouse
 
+- The newer `job-boards.greenhouse.io` form labels the phone country picker "Country", with options like "United States +1". It is not a country-of-residence question.
+- Option text often adds an abbreviation, for example "Bachelor of Science (BS)" for a standing answer of "Bachelor of Science". That is the same answer, not a near match. A school that is not in the list is a near match problem: leave it empty and report it.
+- Forms carry an invisible reCAPTCHA (`g-recaptcha-response`). It can challenge only when Submit is pressed. Under auto-submit, a challenge after Submit is a CAPTCHA: park.
 - Dropdowns are react-select. Type to filter, scroll the option into view, recompute its rectangle, hit-test the center with `document.elementFromPoint` to make sure the option is on top, click it, then read the selected value back. Option lists for schools load asynchronously; wait a few seconds before deciding an option is absent. Never pick a near match.
 - Conditional fields appear, for example a race question after "Hispanic or Latino" = No. Rescan after each answer.
 - The cover letter "Enter manually" button has the same label as the resume one. Scope to the `#cover_letter` container.
