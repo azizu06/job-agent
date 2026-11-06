@@ -59,7 +59,17 @@ Script commands below say `python3`; on Windows use `py -3`.
    - SMS codes (macOS only): explain that it reads `~/Library/Messages/chat.db` read-only for a code from the last 5 minutes, and needs Full Disk Access for the app running the agent (System Settings > Privacy & Security > Full Disk Access) plus Text Message Forwarding from their iPhone. On Windows say SMS codes come back to them (Phone Link has no stable API).
    If credential mode is on with sign-in, creation or reset, check `python3 -c "import keyring"`; if missing, ask before running `pip install keyring`. Explain that CAPTCHAs and bot checks are never solved: the agent parks that tab, filled and open, and tells them.
 8. **Notifications for parked jobs.** Ask how to reach them when a tab needs them: macOS notification, an ntfy.sh topic (suggest a long random topic name, since anyone who knows it can read it), a Slack incoming webhook, or none. Write `<workspace>/state/notify.json` (shapes in `../job-run/scripts/notify.py`), set `notify.method` in preferences, and send a test with `notify.py --title "job-agent" --message "test"`.
-9. **JobRight feed.** Ask the user to open JobRight, go to recommended jobs, sort by Most Recent, and paste that URL; save it as `sources.jobright.feed_url`.
+9. **JobRight feed.** Capture it yourself; do not ask the user to paste a URL.
+   - With your browser MCP, open `https://jobright.ai/jobs/recommend` in a new tab with `new_page` (or reuse a JobRight tab the user already has open, read-only). Take a snapshot.
+   - Signed in: the page shows job cards, or a profile avatar, and the URL stays under `/jobs`. Signed out: it redirects to a landing or sign-in page, or shows "Sign in", "Log in" or "Sign up" with no job cards.
+   - If signed out, give the user these steps and wait until they say done:
+     1. Go to https://jobright.ai and create a free account (Sign in with Google works).
+     2. Finish the job preferences it asks for: roles, locations, experience level, job type.
+     3. Open **Jobs** in the left menu.
+     4. Sort the list by **Most Recent**.
+     Then snapshot the tab again. Never create the account or type credentials for them.
+   - Once signed in with Most Recent selected (select it yourself if the sort control shows another option), read the tab's URL and save it as `sources.jobright.feed_url`. Confirm by checking the snapshot lists job cards. Tell the user the URL you saved.
+   - Dedicated-profile mode: do this in that profile's window, where the user signs in once.
 10. **Optional connectors.** Check which MCPs exist and say what each enables: Gmail (receipts, account verification, status sync), Notion or Google Sheets (tracker), Indeed (fallback job source). Missing ones are fine.
 11. **Write and confirm.** Write both YAML files, print a short summary (no secrets, no full contact details), and suggest `/job-agent:run dry-run` (other agents: "run the job-run skill in dry-run mode") for the first run.
 

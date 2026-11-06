@@ -248,8 +248,8 @@ def gh_form(job: dict) -> str:
             + select_field("degree", "Degree", DEGREES)
             + select_field("sponsorship", "Will you now or in the future require sponsorship to work in the United States?", YES_NO)
             + select_field("how_heard", "How did you hear about us?", HEARD)
-            + "<div class=field><label for=why_us>Why do you want to work at " + html.escape(job["company"]) + "? (optional, 1000 characters max)</label>"
-              "<textarea id=why_us name=why_us rows=4 maxlength=1000></textarea></div>"
+            + "<div class=field><label for=why_us>Why do you want to work at " + html.escape(job["company"]) + "? * (1000 characters max)</label>"
+              "<textarea id=why_us name=why_us rows=4 maxlength=1000 required aria-required=true></textarea></div>"
             + "<div class=field><label><input type=checkbox id=consent name=consent required> I have read and agree to the privacy notice *</label>"
               "<div class=error id=consent-error></div></div>"
             + "<div id=form-errors class=error role=alert></div>"
@@ -515,7 +515,9 @@ document.getElementById('step-form').addEventListener('submit', async ev => {
         if job.get("captcha"):
             return self.json({"ok": False, "errors": [["form", "captcha required"]]}, 403)
         data = self.body_json()
-        errors = validate(data, ["first_name", "last_name", "email", "phone"], ["degree", "sponsorship", "how_heard"], True, True)
+        errors = validate(data, ["first_name", "last_name", "email", "phone", "why_us"], ["degree", "sponsorship", "how_heard"], True, True)
+        if len(str(data.get("why_us", ""))) > 1000:
+            errors.append(["why_us", "Keep this under 1000 characters"])
         if errors:
             self.state.event("submit_rejected", company=job["company"], errors=errors)
             return self.json({"ok": False, "errors": errors})

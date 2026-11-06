@@ -13,7 +13,7 @@ By default it stops at the final Submit button. You review and click it.
 > - **Google Chrome 144 or later, stable channel.** Not Edge, Brave or Arc.
 > - **Node.js 20.19 or later** (for `npx chrome-devtools-mcp`).
 > - **Python 3.9 or later.** On Windows, use `py -3` wherever these docs say `python3`.
-> - **A JobRight account**, or the Indeed MCP connector as the job source.
+> - **A free JobRight account** (setup walks you through it), or the Indeed MCP connector as the job source.
 > - **A resume.** Setup turns it into a master resume.
 > - **For the resume PDF:** `pandoc` or `tectonic`, and `pdftoppm` from poppler. On macOS: `brew install pandoc tectonic poppler`.
 
@@ -98,7 +98,7 @@ The agent will never:
 - enter an SSN or payment details, or approve an authenticator or push 2FA request.
 - use Sign in with Google, Microsoft or LinkedIn unless you allowed it in setup. It picks only your own matching account and continues only past consent screens that ask for basic profile and email.
 - press Enter or Escape inside a form, or reload a filled tab. It answers fields with real clicks and typing.
-- write answers to essay questions. It leaves them empty and lists them for you.
+- invent facts in written answers. It drafts essay and free-text answers only from your resume, standing answers and the job description, lists any inferred sentence for you to check, and skips postings that ban AI-written answers. Set `written_answers: leave` to have it leave them empty instead.
 - touch a browser tab it did not open.
 - automate LinkedIn or any social media site.
 

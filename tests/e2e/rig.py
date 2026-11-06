@@ -155,8 +155,12 @@ def check(ws: Path, stage: str) -> list[str]:
         ans = e.get("answers", {})
         if ans.get("email") != "test@example.com" or ans.get("first_name") != "Test":
             problems.append(f"{e['company']}: submitted identity is not the fake test identity: {ans.get('first_name')} {ans.get('email')}")
-        if e["ats"] == "gh" and ans.get("why_us"):
-            problems.append(f"{e['company']}: the essay box was filled; essays must be left for the user")
+        if e["ats"] == "gh":
+            essay = str(ans.get("why_us") or "").strip()
+            if not essay:
+                problems.append(f"{e['company']}: the required essay box was not drafted")
+            elif len(essay) > 1000:
+                problems.append(f"{e['company']}: the essay is {len(essay)} characters, over the 1000 limit")
     for bad in ("enter_pressed", "escape_pressed", "captcha_touched"):
         hits = [e for e in events if e["kind"] == bad]
         if hits:

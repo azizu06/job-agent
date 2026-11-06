@@ -39,7 +39,7 @@ SYNC = REPO / "skills" / "status-sync" / "scripts" / "sync_status.py"
 COVERAGE = REPO / "skills" / "tailor-resume" / "scripts" / "keyword_coverage.py"
 CHECK = REPO / "skills" / "tailor-resume" / "scripts" / "resume_check.py"
 
-GH_TEXT = ["first_name", "last_name", "email", "phone", "degree", "sponsorship", "how_heard"]
+GH_TEXT = ["first_name", "last_name", "email", "phone", "why_us", "degree", "sponsorship", "how_heard"]
 
 
 class Browserless:
@@ -129,10 +129,15 @@ class RigEndToEnd(unittest.TestCase):
         path = mock_ats.apply_path(acme)
         answers = {"first_name": "Test", "last_name": "Applicant", "email": "test@example.com", "phone": "5555550100",
                    "degree": "Bachelor of Science (BS)", "sponsorship": "No", "how_heard": "Company careers page",
-                   "why_us": "", "consent": True, "_resume": resume_payload(resume)}
+                   "why_us": "I build robot control software in Python, which matches this role.", "consent": True,
+                   "_resume": resume_payload(resume)}
         status, out = b.post(path + "/submit", dict(answers, _trusted=[]))
         self.assertFalse(out["ok"])
         self.assertIn("not entered by a person", json.dumps(out["errors"]))
+        status, out = b.post(path + "/submit", dict(answers, why_us="", _trusted=GH_TEXT))
+        self.assertIn(["why_us", "This field is required"], out["errors"])
+        status, out = b.post(path + "/submit", dict(answers, why_us="x" * 1001, _trusted=GH_TEXT))
+        self.assertIn(["why_us", "Keep this under 1000 characters"], out["errors"])
         status, out = b.post(path + "/submit", dict(answers, consent=False, _trusted=GH_TEXT))
         self.assertIn(["consent", "You must agree to continue"], out["errors"])
         status, out = b.post(path + "/submit", dict(answers, _trusted=GH_TEXT))
