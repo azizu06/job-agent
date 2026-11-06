@@ -1,0 +1,17 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "job-agent",
+  "description": "Job application agent: scan, gate, tailor, fill, track.",
+  "owner": {
+    "name": "Aziz Umarov",
+    "url": "https://github.com/azizu06"
+  },
+  "plugins": [
+    {
+      "name": "job-agent",
+      "description": "Find jobs, tailor a resume from your master, fill applications in your browser, and track them.",
+      "source": "./",
+      "category": "productivity"
+    }
+  ]
+}

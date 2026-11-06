@@ -1,0 +1,46 @@
+# Answers the agent reuses on every application. The setup skill writes your
+# real copy to <workspace>/profile/standing-answers.yaml (gitignored).
+# Leave a value blank to have the agent stop and ask you.
+
+contact:
+  full_name: Jane Doe
+  preferred_name: Jane
+  email: jane@example.com
+  phone: ""             # digits as you want them typed
+  location: City, ST, Country
+
+links:
+  linkedin: https://www.linkedin.com/in/example
+  github: https://github.com/example
+  website: https://example.com
+  other_links_policy: only the links above   # what goes in generic "Websites" boxes
+
+work_authorization:
+  authorized_to_work: "Yes"
+  needs_sponsorship_now_or_future: "No"
+  willing_to_relocate: "Yes"
+  onsite_ok: "Yes"
+  available_from: 2027-05-15
+
+education:
+  - school: Example University
+    degree: Bachelor of Science
+    major: Computer Science
+    start: 2024-08
+    end: 2028-05
+    gpa: ""              # optional; blank means leave GPA fields empty unless required
+
+how_heard_default: Company careers page
+referral: none
+previously_employed_here: "No"
+pay_expectation: posted_midpoint   # posted_midpoint | a number with units
+
+# Optional. Leave blank or "Decline to self-identify" to use the decline option.
+eeo:
+  gender: Decline to self-identify
+  race_ethnicity: Decline to self-identify
+  hispanic_or_latino: Decline to self-identify
+  veteran_status: Decline to self-identify
+  disability_status: Decline to self-identify
+
+consent_boxes: tick_required_only   # tick_required_only | ask

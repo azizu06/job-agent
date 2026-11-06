@@ -1,0 +1,81 @@
+# job-agent preferences. The setup skill writes your real copy to
+# <workspace>/profile/preferences.yaml (gitignored). Every value is yours to edit.
+
+target_roles:            # matched against the job title first
+  - Software Engineer
+  - Backend Engineer
+exclude_title_words:     # a title containing any of these is cut
+  - Senior
+  - Staff
+  - Principal
+  - Manager
+seniority: internship    # internship | new-grad | junior | mid | senior
+term: Summer 2027        # internships: stated term must match; blank for full-time
+
+pay_floor:
+  amount: 30             # compared with the midpoint of the posted range
+  unit: hour             # hour | year
+  missing_pay: check_live  # check_live | allow | cut. Aggregators often drop pay; check the real posting first
+
+locations:
+  - New York, NY
+  - Remote (US)
+remote_ok: true
+relocate_ok: true
+
+sectors_and_interests:   # used to rank, not to cut
+  - developer tools
+  - healthcare
+companies_to_skip:
+  - Example Corp
+
+max_posting_age_days: 3  # measured from the date the agent first saw the posting
+caps:
+  daily_submit_cap: 10   # applies only when auto_submit is true
+  per_company_default: 3
+  per_company:           # optional overrides; window_days makes it a rolling window
+    # Example Corp: { max: 2, window_days: 180 }
+
+master_resume: ~/.job-agent/resumes/master.md   # set by setup
+resume_format: markdown  # markdown | latex
+
+sources:
+  jobright:
+    enabled: true
+    feed_url: ""         # paste the URL of your JobRight recommendations page sorted by Most Recent
+  indeed:
+    enabled: true        # fallback, used when the Indeed MCP connector is available
+    queries:
+      - software engineer intern
+
+browser:
+  mode: main             # main: your own signed-in Chrome (--autoConnect) | dedicated: separate job-agent profile
+  port: 9222             # dedicated mode only
+  auto_allow: false      # opt-in helper that presses Chrome's Allow prompt for the agent's own connects. Read the README first
+  max_parallel_tabs: 3
+
+portal_accounts:
+  allow_sso: true        # prefer "Sign in with Google/Microsoft/LinkedIn" with the account already in Chrome
+  allow_sign_in: true    # use credentials from the OS keychain or the browser
+  allow_create: false    # create portal accounts (Workday: one per company) with a generated password
+  allow_password_reset: false
+  email: ""              # blank: use contact.email from standing answers
+  email_code_minutes: 10 # how far back to look for an emailed verification code
+  sms_codes: false       # macOS only: read SMS codes from Messages (needs Full Disk Access)
+
+notify:
+  method: none           # none | macos | ntfy | slack. Setup writes the details to state/notify.json
+
+tracker:
+  backend: csv           # csv | notion | sheets
+  csv_path: ~/.job-agent/tracker.csv
+  notion_database_url: ""
+  sheets_url: ""
+
+email:
+  receipts: gmail        # gmail | none. Uses the Gmail MCP when present
+
+# Submitting. Read the README section "Auto-submit" before changing this.
+auto_submit: false       # false: the agent stops at the final Submit and you click it
+dry_run: false           # true: fill and read back, never press Submit even when auto_submit is true
+skip_if_genai_banned: true  # skip postings that ask applicants not to use AI tools

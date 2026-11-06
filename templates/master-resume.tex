@@ -1,0 +1,53 @@
+% Master resume, LaTeX variant. Same idea as master-resume.md:
+% every entry you have, with alternates. Alternates live inside \iffalse ... \fi
+% blocks so they never print. A tailored copy moves the chosen bullets out.
+% Build with any LaTeX engine, for example: tectonic master-resume.tex
+\documentclass[10pt,letterpaper]{article}
+\usepackage[margin=0.5in]{geometry}
+\usepackage[hidelinks]{hyperref}
+\usepackage{enumitem}
+\setlist[itemize]{leftmargin=1.2em,itemsep=1pt,topsep=2pt}
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+
+\newcommand{\entry}[2]{\textbf{#1}\hfill #2\\[-6pt]}
+\newcommand{\sect}[1]{\vspace{6pt}{\large\textbf{#1}}\\[-8pt]\rule{\linewidth}{0.4pt}\\[-4pt]}
+
+\begin{document}
+
+\begin{center}
+{\LARGE\textbf{Jane Doe}}\\
+City, ST \textbar{} jane@example.com \textbar{}
+\href{https://linkedin.com/in/example}{linkedin.com/in/example} \textbar{}
+\href{https://github.com/example}{github.com/example}
+\end{center}
+
+\sect{Education}
+\entry{Example University, B.S. Computer Science}{Aug 2024 -- May 2028}
+
+\sect{Experience}
+\entry{Example Corp, Software Engineer Intern}{May 2026 -- Aug 2026}
+\begin{itemize}
+  \item Built a billing reconciliation service in Python and PostgreSQL that cut invoice mismatches by 40\%
+  \item Moved 12 nightly cron jobs onto a Redis queue, removing 5 hours a week of manual reruns
+  \item Added CI checks in GitHub Actions that blocked 30 failing deploys before production
+\iffalse % alternates
+  \item Designed REST APIs for the billing service used by 3 internal teams
+  \item Containerized the service with Docker and deployed it to AWS ECS
+\fi
+\end{itemize}
+
+\sect{Projects}
+\entry{\href{https://github.com/example/trailmap}{Trailmap}}{TypeScript, React Native}
+\begin{itemize}
+  \item A hiking app that plans day routes from public trail data, used by 2,000 people in its first month
+  \item Built the route search with an A* search over a trail graph
+  \item Cached tiles on device so routes load offline in under 1 second
+\end{itemize}
+
+\sect{Skills}
+\textbf{Languages:} Python, TypeScript, JavaScript, SQL, Java\\
+\textbf{Frameworks:} React, React Native, Node.js, FastAPI\\
+\textbf{Cloud and tools:} AWS, Docker, GitHub Actions, Git, Linux
+
+\end{document}

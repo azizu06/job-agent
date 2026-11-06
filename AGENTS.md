@@ -1,0 +1,43 @@
+# job-agent: instructions for coding agents
+
+This repo turns you into a job-application agent. If a user gave you this repo's link and said "set this up" (or similar), do all of it for them: install, setup, then offer a dry run.
+
+## What to do
+
+1. **Install the skills** for your agent:
+   - Claude Code: `/plugin marketplace add azizu06/job-agent` then `/plugin install job-agent@job-agent`.
+   - Other agents: `npx skills add azizu06/job-agent`, or clone the repo and read `skills/*/SKILL.md` directly.
+2. **Setup:** follow `skills/job-setup/SKILL.md`. It writes the user's profile into the workspace (`$JOB_AGENT_HOME`, default `~/.job-agent/`) and attaches to the user's own Chrome with chrome-devtools MCP `--autoConnect`.
+3. **Run:** follow `skills/job-run/SKILL.md`, which calls the other skills in order.
+
+## Skills
+
+| Skill | Purpose |
+| --- | --- |
+| `skills/job-setup` | Interview the user, write preferences and standing answers, connect the browser |
+| `skills/job-scan` | Read new postings from JobRight (or Indeed MCP) up to the saved checkpoint |
+| `skills/job-gate` | Filter by preferences, dedupe against the tracker, write the queue |
+| `skills/tailor-resume` | Build a truthful one-page copy from the master resume, with coverage before and after |
+| `skills/apply-fill` | Fill one application in its own tab and stop at Submit |
+| `skills/job-run` | Run the loop, one subagent per job, then re-verify and track |
+| `skills/tracker` | CSV, Notion or Sheets tracker plus Gmail receipts |
+| `skills/status-sync` | Update statuses from assessment, interview, offer and rejection emails |
+| `skills/portal-auth` | Sign in to the user's job-portal accounts; create or reset them only if allowed |
+
+## Rules that always apply
+
+- Stop at the final Submit unless the user set `auto_submit: true`; even then, follow every guardrail in `skills/apply-fill/SKILL.md`.
+- Portal sign-in (SSO first), account creation, password resets and verification codes only through `skills/portal-auth`, within the user's settings. Passwords live only in the OS keychain and never appear in chat or logs.
+- Never solve or bypass a CAPTCHA or bot check. Park the tab (left open and filled), mark the row `Needs you: captcha`, notify the user, and move on. SSN and payment details always go to the user.
+- The user clicks Chrome's "Allow remote debugging?" prompt, unless they enabled the opt-in `auto_allow.py` helper.
+- Each parallel agent uses its own browser connection and its own tab.
+- Work only in tabs you opened. In the default mode this is the user's real browser.
+- Never invent resume facts or application answers.
+- No LinkedIn or other social media automation. No private API scraping.
+- User data lives only in the workspace, never in this repo's tracked files.
+
+## Developing this repo
+
+- Tests: `python3 -m unittest discover -s tests` (standard library only).
+- Plugin check: `claude plugin validate .`
+- Keep prose plain: no em dashes, no hype words.

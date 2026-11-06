@@ -1,0 +1,31 @@
+{
+  "name": "job-agent",
+  "displayName": "Job Agent",
+  "version": "0.1.0",
+  "description": "Turns a coding agent into a job-application agent: find postings, tailor a resume from a master, fill applications in your own browser, and track the results.",
+  "author": {
+    "name": "Aziz Umarov",
+    "url": "https://github.com/azizu06"
+  },
+  "homepage": "https://github.com/azizu06/job-agent",
+  "repository": "https://github.com/azizu06/job-agent",
+  "license": "MIT",
+  "keywords": [
+    "jobs",
+    "job-search",
+    "resume",
+    "applications",
+    "browser-automation"
+  ],
+  "mcpServers": {
+    "job-agent-browser": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "chrome-devtools-mcp@1.10.1",
+        "--autoConnect"
+      ]
+    }
+  },
+  "icon": "./assets/icon.png"
+}
