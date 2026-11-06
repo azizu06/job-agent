@@ -13,7 +13,14 @@ MCP at it with --browser-url=http://127.0.0.1:<port>.
 
 Works on macOS, Linux and Windows. Standard library only.
 
-Usage: launch_chrome.py [--port 9222] [--profile DIR] [--headless]
+Usage: launch_chrome.py [--port 9333] [--profile DIR] [--headless]
+
+The default port is 9333, not 9222: Chrome's own remote-debugging switch
+(chrome://inspect) usually serves the main profile on 9222. If something
+already answers on the port, the launcher reuses it only when that browser
+is the one this launcher started for this profile (a marker file in the
+profile holds its port and process ID);
+otherwise it stops, so the agent never drives the main browser by mistake.
 
 Security: while this Chrome runs, any program on this computer can control it
 through the port, including sites you are signed into in this profile. The
@@ -23,6 +30,7 @@ port listens on 127.0.0.1. Quit this Chrome when you are not using the agent.
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import shutil
 import subprocess
@@ -57,6 +65,31 @@ def find_chrome() -> str | None:
     return None
 
 
+MARKER = "job-agent-chrome.json"
+
+
+def pid_alive(pid: int) -> bool:
+    if sys.platform == "win32":
+        out = subprocess.run(["tasklist", "/FI", f"PID eq {pid}", "/NH"], capture_output=True, text=True)
+        return str(pid) in out.stdout
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def profile_owns_port(profile: Path, port: int) -> bool:
+    """True when this launcher started the Chrome that serves the port, for this profile."""
+    try:
+        info = json.loads((profile / MARKER).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return False
+    return info.get("port") == port and isinstance(info.get("pid"), int) and pid_alive(info["pid"])
+
+
 def port_alive(port: int) -> bool:
     try:
         with urllib.request.urlopen(f"http://127.0.0.1:{port}/json/version", timeout=1):
@@ -67,7 +100,7 @@ def port_alive(port: int) -> bool:
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--port", type=int, default=int(os.environ.get("JOB_AGENT_CHROME_PORT", 9222)))
+    ap.add_argument("--port", type=int, default=int(os.environ.get("JOB_AGENT_CHROME_PORT", 9333)))
     ap.add_argument("--profile", default=os.environ.get("JOB_AGENT_CHROME_PROFILE"))
     ap.add_argument("--headless", action="store_true")
     args = ap.parse_args(argv)
@@ -77,8 +110,12 @@ def main(argv: list[str] | None = None) -> int:
     flag = f"--browser-url=http://127.0.0.1:{args.port}"
 
     if port_alive(args.port):
-        print(f"A browser already answers on port {args.port}.\nMCP flag: {flag}")
-        return 0
+        if profile_owns_port(profile, args.port):
+            print(f"The job-agent Chrome profile is already up on port {args.port}.\nMCP flag: {flag}")
+            return 0
+        print(f"Another browser already answers on port {args.port} (it may be your main Chrome). "
+              "Pick a free port with --port and set browser.port to match.", file=sys.stderr)
+        return 1
 
     chrome = find_chrome()
     if not chrome:
@@ -103,7 +140,8 @@ def main(argv: list[str] | None = None) -> int:
         kwargs["creationflags"] = subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP
     else:
         kwargs["start_new_session"] = True
-    subprocess.Popen(cmd, **kwargs)
+    proc = subprocess.Popen(cmd, **kwargs)
+    (profile / MARKER).write_text(json.dumps({"port": args.port, "pid": proc.pid}), encoding="utf-8")
 
     for _ in range(30):
         if port_alive(args.port):

@@ -33,6 +33,10 @@ For Notion and Sheets, keep the same dedupe and status rules as the CSV script.
 
 ## Receipt after submit
 
+The email source is `email.receipts` in preferences: `gmail` (the default, through the Gmail MCP), `none`, or `mock` (the local test rig only).
+
+With `mock`, run `python3 scripts/mock_inbox.py --inbox <email.mock_inbox> receipt --company "<company>" --req-id <req> --since <submit time>`. It prints the newest confirming message; store its `id` as `receipt_id`. Exit code 2 means no receipt yet.
+
 With the Gmail MCP:
 1. Search with `in:anywhere` so Promotions and Spam are included, from the submit time onward, for the company name, the role, or the req ID (for example `in:anywhere after:<date> ("<company>" OR "<req_id>") (application OR applying OR received)`).
 2. Pick the message that confirms this application. Store its message ID (or the portal's confirmation number from the body) as `receipt_id`.

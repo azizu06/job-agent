@@ -87,7 +87,7 @@ Chrome asks every time a new debugging connection starts. Each applier opens its
 - macOS only. Grant Accessibility to the app that runs your agent (System Settings > Privacy & Security > Accessibility). It finds Chrome's prompt by its English text, so it works only when Chrome's language is English. Windows: not supported yet. Linux: not available; click Allow yourself or use a separate profile.
 - To turn it on, ask your agent: "turn on auto-allow". To turn it off: "turn off auto-allow". (From a clone: `python3 skills/job-setup/scripts/auto_allow.py enable` or `disable`.)
 
-**Alternative: a separate profile.** If you want the agent isolated from your main browser, ask your agent to "start the job-agent Chrome profile" (from a clone: `python3 skills/job-setup/scripts/launch_chrome.py`). It starts Chrome with its own profile (`--remote-debugging-port=9222 --user-data-dir=~/.job-agent/chrome-profile`) on macOS, Linux or Windows. On Linux with a snap or flatpak Chrome, set `CHROME_BIN` to the Chrome command first. Point the MCP at it with `--browser-url=http://127.0.0.1:9222` and set `browser.mode: dedicated`. There are no prompts, but you sign in to your job sites once in that window. While it runs, any program on your computer can control that profile through the port.
+**Alternative: a separate profile.** If you want the agent isolated from your main browser, ask your agent to "start the job-agent Chrome profile" (from a clone: `python3 skills/job-setup/scripts/launch_chrome.py`). It starts Chrome with its own profile (`--remote-debugging-port=9333 --user-data-dir=~/.job-agent/chrome-profile`) on macOS, Linux or Windows. On Linux with a snap or flatpak Chrome, set `CHROME_BIN` to the Chrome command first. Point the MCP at it with `--browser-url=http://127.0.0.1:9333` and set `browser.mode: dedicated`. There are no prompts, but you sign in to your job sites once in that window. While it runs, any program on your computer can control that profile through the port.
 
 ## Safety
 
@@ -142,6 +142,8 @@ Run it every few hours with `/loop 4h /job-agent:run` in Claude Code, a local sc
 python3 -m unittest discover -s tests
 claude plugin validate .
 ```
+
+The tests include an end-to-end rig: a mock job feed, Greenhouse-shaped and Workday-shaped forms, mocked Google sign-in, a CAPTCHA posting and a mock inbox, all on localhost. It also runs the full loop through a real agent with auto-submit on. See [`tests/e2e/README.md`](tests/e2e/README.md).
 
 ## License
 

@@ -12,7 +12,7 @@ Examples:
 
 Acronyms found only by their shape (for example IT, AI, S3) match case-sensitively,
 so the English word "it" never counts as the acronym "IT". URLs and email
-addresses in the posting are ignored. --company drops extracted words that
+addresses in the posting are ignored, and so are requisition IDs (GH-1001). --company drops extracted words that
 contain the employer's name (for example AcmeLabs).
 
 A terms file has one term per line. Aliases follow on the same line after
@@ -197,11 +197,12 @@ def _canonical_lookup() -> dict[str, str]:
 
 _URL_OR_EMAIL = re.compile(r"https?://\S+|www\.\S+|\S+@\S+\.\S+|\b[\w-]+\.(?:com|io|org|net|ai|co)(?:/\S*)?\b")
 _SURNAME = re.compile(r"^Ma?c[A-Z][a-z]+$")  # McLean, MacArthur: names, not tools
+_ID_LIKE = re.compile(r"\b[A-Z]{1,6}[-_]?\d{2,}[A-Z0-9-]*\b")  # requisition IDs: GH-1001, R2630672, JR0286834
 
 
 def _tech_tokens(raw_text: str) -> list[str]:
     """Words that look like tool names even when they are not in VOCAB."""
-    raw_text = _URL_OR_EMAIL.sub(" ", raw_text)
+    raw_text = _ID_LIKE.sub(" ", _URL_OR_EMAIL.sub(" ", raw_text))
     found: list[str] = []
     # CamelCase or mixed case with an inner capital: PyTorch, GraphQL, FastAPI.
     found += re.findall(r"\b[A-Z][a-z]+[A-Z][A-Za-z]*\b", raw_text)

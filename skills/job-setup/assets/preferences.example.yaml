@@ -50,7 +50,7 @@ sources:
 
 browser:
   mode: main             # main: your own signed-in Chrome (--autoConnect) | dedicated: separate job-agent profile
-  port: 9222             # dedicated mode only
+  port: 9333             # dedicated mode only; not 9222, which your main Chrome may use
   auto_allow: false      # opt-in helper that presses Chrome's Allow prompt for the agent's own connects. Read the README first
   max_parallel_tabs: 3
 
@@ -77,7 +77,8 @@ tracker:
   sheets_url: ""
 
 email:
-  receipts: gmail        # gmail | none. Uses the Gmail MCP when present
+  receipts: gmail        # gmail | none | mock. gmail uses the Gmail MCP (the real default); mock is for the test rig only
+  mock_inbox: ""         # mock only: folder of JSON messages read by skills/tracker/scripts/mock_inbox.py
 
 # Submitting. Read the README section "Auto-submit" before changing this.
 auto_submit: false       # false: the agent stops at the final Submit and you click it

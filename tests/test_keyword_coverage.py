@@ -75,6 +75,13 @@ class LiveJdNoiseTests(unittest.TestCase):
         for real in ("linux", "git", "bash", "AI", "IT"):
             self.assertIn(real, names)
 
+    def test_requisition_ids_are_not_terms(self):
+        names = {t.name for t in kc.extract_terms("Requisition GH-1001 (also WD-2002, JR0286834). Uses AWS and S3.")}
+        for noise in ("GH", "WD", "JR0286834"):
+            self.assertNotIn(noise, names)
+        self.assertIn("aws", names)
+        self.assertIn("S3", names)
+
     def test_company_flag_drops_company_words(self):
         names = {t.name for t in kc.extract_terms(self.LIVE, company="Raft")}
         self.assertNotIn("TeamRaft", names)

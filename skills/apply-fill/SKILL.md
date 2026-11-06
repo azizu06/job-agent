@@ -10,11 +10,12 @@ Read `references/ats-gotchas.md` before touching a Workday, Greenhouse, Lever, P
 ## Inputs
 
 - One queue item (`apply_url`, `company`, `req_id`, `job_key`), the tailored resume PDF path, `profile/standing-answers.yaml` and `profile/preferences.yaml` from the workspace (`$JOB_AGENT_HOME` or `~/.job-agent/`).
-- Your own browser MCP connection: chrome-devtools MCP with `--autoConnect` (the user's main Chrome) or `--browser-url=http://127.0.0.1:9222` (dedicated profile). In main mode this is the user's real browser: touch nothing but your own tab.
+- Your own browser MCP connection: chrome-devtools MCP with `--autoConnect` (the user's main Chrome) or `--browser-url=http://127.0.0.1:9333` (dedicated profile). In main mode this is the user's real browser: touch nothing but your own tab.
 
 ## Tab discipline
 
 - Open the application once with `new_page` (background). Note your tab's page id from the result or `list_pages`. Pass it as `pageId` on every tool that takes one (chrome-devtools-mcp 1.10.1 requires it on click, fill, type_text, press_key, take_snapshot, upload_file and evaluate_script). Never select, close or navigate a tab you did not open.
+- Page ids are numbered per MCP connection. Two appliers can both have a page 5 that are different tabs; never pass a page id from one connection to another.
 - One writer per tab. When several agents run, each needs its own browser MCP connection with an explicit target (`--autoConnect` or `--browser-url`), or the MCP may launch a throwaway browser. Never share one tab-switching helper or one MCP connection across parallel agents.
 - Background tabs can drop input. If typed values do not register, enable focus emulation on your page (CDP `Emulation.setFocusEmulationEnabled` with `enabled: true`) before filling.
 - Before every write, confirm the page URL still belongs to this job.
