@@ -94,7 +94,14 @@ Script commands say `python3`; on Windows use `py -3`.
    - Ask what they have: (a) a PDF or Word file, (b) pasted LinkedIn profile text (About, Experience, Education, Skills, Projects), (c) a Markdown or LaTeX master, or (d) nothing.
    - (a) and (b): read the file or text and convert it to the `assets/master-resume.md` layout (`##` sections, `###` entries, `- ` bullets). Show it and ask what is missing.
    - (c): record the path.
-   - (d), or thin input: offer "I can build it by asking you questions, about 10 minutes. Yes?" If yes, ask one block at a time and fill the template: Header; Education; each job (title, company, dates, what you built, tools, numbers you can defend); each project (one line "A <thing> that <does what> for <whom>", stack, result, link); Skills (only tools you have used); awards and clubs. After each entry ask "any other way to say this?" and store answers as alternates in `<!-- alt -->` blocks. Never add a metric or tool they did not state.
+   - (d) **No resume at all**, or thin input. This is common for students, so never stop here. Say: "No problem. I will build one with you from questions, about 10 minutes. I only write down what you tell me." Then ask one block at a time and fill `assets/master-resume.md`:
+     1. Header: name, email, phone (optional), city, links (GitHub, portfolio, LinkedIn URL).
+     2. Education: school, degree, major, expected graduation, GPA only if they want it, relevant courses.
+     3. Each job, internship or part-time role, including non-tech work (title, place, dates, what you did, tools, numbers you can defend).
+     4. Each project, class project or hackathon (one line "A <thing> that <does what> for <whom>", stack, result, link).
+     5. Clubs, volunteering, awards.
+     6. Skills: only tools they have used, and where.
+     Turn each answer into bullets in their words. Mark every bullet you wrote with a trailing `<!-- confirm -->`, then show the whole draft and ask them to confirm or fix each marked bullet. Remove the mark only when they confirm it. After each entry ask "any other way to say this?" and store answers as alternates in `<!-- alt -->` blocks. Never add a metric, tool, employer, date or title they did not state; if a section is empty, leave it out rather than fill it. `tailor-resume` refuses to use a bullet that still carries `<!-- confirm -->`.
    - Save to `<workspace>/resumes/master.md`, set `master_resume` and `resume_format`. LaTeX users start from `assets/master-resume.tex`.
 
 8. **Preferences** (id `preferences`). Follow `assets/preferences.example.yaml`:
