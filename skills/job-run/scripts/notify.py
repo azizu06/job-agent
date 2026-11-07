@@ -61,6 +61,13 @@ def build_request(cfg: dict, title: str, message: str, url: str | None):
     return "none", None
 
 
+def unsupported_reason(cfg: dict, platform: str = sys.platform) -> str | None:
+    """Why this method cannot work on this OS, or None when it can."""
+    if cfg.get("method") == "macos" and platform != "darwin":
+        return "method macos needs macOS; use ntfy or slack in state/notify.json"
+    return None
+
+
 def send(cfg: dict, title: str, message: str, url: str | None = None) -> bool:
     kind, payload = build_request(cfg, title, message, url)
     if kind == "command":
@@ -83,6 +90,10 @@ def main(argv: list[str] | None = None) -> int:
     if cfg.get("method", "none") == "none":
         print("notifications are off (no state/notify.json)")
         return 0
+    reason = unsupported_reason(cfg)
+    if reason:
+        print(f"notification failed: {reason}", file=sys.stderr)
+        return 1
     try:
         ok = send(cfg, args.title, args.message, args.url)
     except Exception as exc:  # network or permission problems should not stop a run

@@ -36,6 +36,7 @@ caps:
   per_company:           # optional overrides; window_days makes it a rolling window
     # Example Corp: { max: 2, window_days: 180 }
 
+python_cmd: python3     # set by setup: python3 on macOS and Linux, py -3 on Windows
 master_resume: ~/.job-agent/resumes/master.md   # set by setup
 resume_format: markdown  # markdown | latex
 

@@ -5,6 +5,8 @@ description: Record job applications for job-agent in a pluggable tracker (local
 
 # tracker
 
+Python: commands below say `python3`. Use `python_cmd` from `profile/preferences.yaml` instead when it is set (setup writes `py -3` on Windows).
+
 ## Columns and statuses
 
 Columns: `company, role, req_id, link, date, resume_used, status, receipt_id, notes`. For submitted jobs, `notes` starts with `read-back: <path to state/submissions/<job_key>.json>`; add later notes after it with ` | `.

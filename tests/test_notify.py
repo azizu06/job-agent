@@ -26,6 +26,11 @@ class NotifyTests(unittest.TestCase):
         kind, req = nt.build_request({"method": "slack", "webhook_url": "https://hooks.example.com/x"}, "T", "M", None)
         self.assertEqual(json.loads(req.data)["text"], "*T*\nM")
 
+    def test_macos_only_on_darwin(self):
+        self.assertIsNone(nt.unsupported_reason({"method": "macos"}, "darwin"))
+        self.assertIn("macOS", nt.unsupported_reason({"method": "macos"}, "linux"))
+        self.assertIsNone(nt.unsupported_reason({"method": "ntfy"}, "win32"))
+
     def test_none(self):
         self.assertEqual(nt.build_request({}, "T", "M", None), ("none", None))
 

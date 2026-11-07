@@ -5,6 +5,8 @@ description: Get the user into their own job-portal accounts during an applicati
 
 # portal-auth
 
+Python: commands below say `python3`. Use `python_cmd` from `profile/preferences.yaml` instead when it is set (setup writes `py -3` on Windows).
+
 Many portals require an account, and Workday makes a separate account per company. This skill gets the user into accounts they already have where it can, and parks the job for the user where it cannot. It does not promise to get past every sign-in wall; parking is a normal, expected result.
 
 ## Settings (from `profile/preferences.yaml`)

@@ -5,6 +5,8 @@ description: Fill one job application in the user's Chrome through a browser MCP
 
 # apply-fill
 
+Python: commands below say `python3`. Use `python_cmd` from `profile/preferences.yaml` instead when it is set (setup writes `py -3` on Windows).
+
 Read `references/ats-gotchas.md` before touching a Workday, Greenhouse, Lever, Phenom, Ashby or iCIMS form.
 
 ## Inputs

@@ -5,6 +5,8 @@ description: Build a one-page tailored resume for one job from the user's master
 
 # tailor-resume
 
+Python: commands below say `python3`. Use `python_cmd` from `profile/preferences.yaml` instead when it is set (setup writes `py -3` on Windows).
+
 ## The model
 
 The master resume (path in `preferences.yaml` as `master_resume`) holds everything the user has done, with alternate bullets under each entry. A tailored resume is a new copy built from it for one posting. The master is never edited during tailoring. Layout and rules: `../job-setup/assets/master-resume.md` (next to this skill's folder).

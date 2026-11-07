@@ -5,6 +5,8 @@ description: Update job-agent tracker statuses from new email (Gmail MCP by defa
 
 # status-sync
 
+Python: commands below say `python3`. Use `python_cmd` from `profile/preferences.yaml` instead when it is set (setup writes `py -3` on Windows).
+
 ## Inputs
 
 - Email, per `email.receipts` in preferences: the Gmail MCP (default, read only for this skill), or with `mock` the folder in `email.mock_inbox` (the e2e rig).

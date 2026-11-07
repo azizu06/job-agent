@@ -5,6 +5,8 @@ description: Run the full job-agent loop. Scans for new jobs, gates them, then s
 
 # job-run
 
+Python: commands below say `python3`. Use `python_cmd` from `profile/preferences.yaml` instead when it is set (setup writes `py -3` on Windows).
+
 ## Preconditions
 
 - Workspace (`$JOB_AGENT_HOME` or `~/.job-agent/`) has `profile/preferences.yaml` and `profile/standing-answers.yaml`. If not, run `job-setup`.
