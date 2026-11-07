@@ -1,6 +1,6 @@
 # How job-agent works
 
-The README is the short version. This page has the detail: each skill, the browser modes, sign-in, safety rules, auto-submit and scheduling.
+The README is the short version. This page has the detail: each skill, the browser modes, sign-in, safety rules, auto-submit, scheduling and trackers. See also [your-voice.md](your-voice.md), [troubleshooting.md](troubleshooting.md) and [faq.md](faq.md).
 
 - [The skills](#the-skills)
 - [Your data](#your-data)
@@ -10,6 +10,7 @@ The README is the short version. This page has the detail: each skill, the brows
 - [Portal sign-in](#portal-sign-in)
 - [Auto-submit](#auto-submit)
 - [Scheduling](#scheduling)
+- [Trackers](#trackers)
 - [Optional connectors](#optional-connectors)
 - [Development](#development)
 
@@ -126,6 +127,10 @@ The agent will never:
 
 Before it calls a form ready, it re-reads the live form for errors. Some portals record your application before the last step; on unfamiliar multi-step forms it stops after step 1 and checks your email after each step.
 
+**Terms of service.** Automating a website may break its terms, and a site may limit or close your account. The agent reads slowly in your own browser and uses no private APIs, which lowers the load but does not make automation allowed. You are responsible for how you use it.
+
+**Employer AI policies.** Some employers ask applicants not to use AI tools. The agent reads each full posting for that language, fills those forms as usual, flags them in its report and its ready notification, and never auto-submits them, so you decide. Set `genai_restriction: skip` to skip them instead. Read each posting before you submit.
+
 ## Portal sign-in
 
 By default the agent signs in to job portals only with an account already signed in to your Chrome (Google, then Microsoft, then LinkedIn) or a login Chrome already saved. If neither works, it parks the job: the tab stays open and you finish the sign-in.
@@ -154,6 +159,18 @@ The trade-off: auto-submit saves you the review step, but a wrong answer, a bad 
 Each run takes a lock, so two runs never overlap; a lock older than 3 hours is from a hung run and is replaced. A run fills at most `browser.max_forms_per_run` forms (default 10) and leaves the rest queued. A locked screen or a browser that does not attach logs `BLOCKED` and stops; two blocked runs in a row send you a notification. Each run ends with `READY: <forms>`, `ALERT: <assessment, interview or offer>` or `NOTHING READY`, and a notification goes out only for the first two.
 
 Walk-away runs on your main Chrome need auto-allow; the separate profile needs nothing. Headless runs need their tools pre-approved; the example allow-list is in [`skills/job-run/SKILL.md`](../skills/job-run/SKILL.md). Keep the computer on and awake while runs are due.
+
+## Trackers
+
+Every application gets a row: company, role, requisition ID, link, date, resume used, status and receipt.
+
+| Tracker | You need | Pick it if |
+| --- | --- | --- |
+| **CSV** (default) | Nothing | You want it to work now. Opens in Excel, Numbers or Google Sheets |
+| **Notion** | The Notion MCP connector | You already plan in Notion. Setup can create the database |
+| **Google Sheets** | A Google Sheets MCP connector | You want a live sheet you can share or open on your phone |
+
+Add the Gmail MCP to any of them and the agent finds receipt emails, then moves rows to Assessment, Interview, Offer or Rejected as replies arrive.
 
 ## Optional connectors
 

@@ -7,6 +7,7 @@ This page is for you if you have never set up a coding agent or a browser MCP. j
 - [3. Make a JobRight account](#3-make-a-jobright-account)
 - [4. Install job-agent and run setup](#4-install-job-agent-and-run-setup)
 - [5. Your first run](#5-your-first-run)
+- [What runs on its own](#what-runs-on-its-own)
 - [If something goes wrong](#if-something-goes-wrong)
 
 ## 1. Install the tools
@@ -36,9 +37,9 @@ Use Chrome itself, on the stable channel. Edge, Brave and Arc are built on Chrom
 job-agent is a set of instructions for a coding agent, so you need one:
 
 - [Claude Code](https://claude.com/claude-code): job-agent is built for it. The plugin wires up the browser for you and runs several applications at once.
-- Codex, Cursor or [another agent that reads skills](https://github.com/vercel-labs/skills) can load the skills and run one job at a time. Full support is on the [roadmap](../README.md#coming-next).
+- Codex, Cursor or [another agent that reads skills](https://github.com/vercel-labs/skills) can load the skills and run one job at a time. Full support is on the [roadmap](../README.md#roadmap).
 
-The agent's subscription or API usage is the real cost of job-agent. See the token question in the [README FAQ](../README.md#faq).
+The agent's subscription or API usage is the real cost of job-agent. See the token question in the [FAQ](faq.md#what-does-it-cost-in-tokens).
 
 ## 3. Make a JobRight account
 
@@ -53,7 +54,14 @@ Do this in the Chrome you will use with job-agent, so the agent finds you alread
 
 ## 4. Install job-agent and run setup
 
-Install with one route from the [README](../README.md#install). Then:
+Install with the command in the [README](../README.md#setup). Inside a running Claude Code session you can use these instead, then `/reload-plugins`:
+
+```text
+/plugin marketplace add azizu06/job-agent
+/plugin install job-agent@job-agent
+```
+
+Using another agent? `npx skills add azizu06/job-agent` loads the skills in Codex, Cursor and others, one job at a time. Then:
 
 1. Open `chrome://inspect/#remote-debugging` in Chrome and switch remote debugging on. This lets the agent drive Chrome. You do it once.
 2. Run setup. In Claude Code: `/job-agent:setup`. In other agents: "set up job-agent".
@@ -92,6 +100,18 @@ A dry run never presses Submit. Read a few filled forms. When they look right, r
 
 Your tracker is at `~/.job-agent/tracker.csv` unless you picked Notion or Sheets.
 
+## What runs on its own
+
+| You do once | It does every run | You still do sometimes |
+| --- | --- | --- |
+| Install the plugin or skills | Reads new postings in your JobRight feed | Clear parked tabs: CAPTCHAs, new sign-ins, codes |
+| Turn on Chrome remote debugging | Filters them by title, term, pay, location and age | Answer missing-keyword questions, once per term |
+| Mac only, for walk-away runs: grant Accessibility to the auto-allow helper | Builds a tailored resume for each job | Review filled forms, until you turn on auto-submit |
+| Create a free JobRight account and sort it by Most Recent | Fills each form in its own tab | Keep the computer on and awake during runs |
+| Give it your resume | Records every job in your tracker | |
+| Answer the setup wizard | Finds receipts and status emails | |
+| Sign in to optional connectors: Gmail, Notion, Sheets | Notifies you when a tab needs you | |
+
 ## If something goes wrong
 
 | Problem | Fix |
@@ -105,4 +125,4 @@ Your tracker is at `~/.job-agent/tracker.csv` unless you picked Notion or Sheets
 | The run stopped and asked for permission | Approve the tool, or pre-approve them for scheduled runs. The list is in [skills/job-run/SKILL.md](../skills/job-run/SKILL.md) |
 | Your agent refused to type a password | Expected. Some agents refuse. The job parks; finish it in the open tab |
 
-Still stuck? Open an issue with what you ran, what you expected and the exact error text. Leave out your name, email and resume.
+More fixes for problems during runs: [troubleshooting.md](troubleshooting.md). Still stuck? Open an issue with what you ran, what you expected and the exact error text. Leave out your name, email and resume.

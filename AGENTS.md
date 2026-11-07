@@ -11,7 +11,7 @@ This repo turns you into a job-application agent. If a user gave you this repo's
 2. **Setup:** follow `skills/job-setup/SKILL.md`. It writes the user's profile into the workspace (`$JOB_AGENT_HOME`, default `~/.job-agent/`) and attaches to the user's own Chrome with chrome-devtools MCP `--autoConnect`.
 3. **Run:** follow `skills/job-run/SKILL.md`, which calls the other skills in order.
 
-Before step 1, check the prerequisites yourself: `node --version` (20.19 or later), `python3 --version` (3.9 or later; `py -3` on Windows), and Chrome 144 or later. If one is missing, give the user the install line for their OS from `docs/getting-started.md` instead of failing. Answer user questions from the README FAQ and `docs/` first. Many users come from a short video and have never used a coding agent: explain each click only they can make (Chrome's remote debugging switch, the "Allow remote debugging?" prompt, parked tabs) in one plain sentence when it comes up.
+Before step 1, check the prerequisites yourself: `node --version` (20.19 or later), `python3 --version` (3.9 or later; `py -3` on Windows), and Chrome 144 or later. If one is missing, give the user the install line for their OS from `docs/getting-started.md` instead of failing. Answer user questions from `docs/faq.md` and the rest of `docs/` first. Many users come from a short video and have never used a coding agent: explain each click only they can make (Chrome's remote debugging switch, the "Allow remote debugging?" prompt, parked tabs) in one plain sentence when it comes up.
 
 ## Skills
 
@@ -48,5 +48,5 @@ On Windows, use `py -3` wherever these docs say `python3`.
 - Tests: `python3 -m unittest discover -s tests` (standard library only).
 - Plugin check: `claude plugin validate .`
 - Keep prose plain: no em dashes, no hype words.
-- Docs: `README.md` is the product page, `docs/how-it-works.md` holds the detail, `docs/getting-started.md` is for first-time users. Keep facts in sync across them when a skill changes.
+- Docs: `README.md` is the product page, `docs/how-it-works.md` holds the detail, `docs/getting-started.md` is for first-time users, and `docs/faq.md`, `docs/troubleshooting.md` and `docs/your-voice.md` hold the FAQ, fixes and answer-writing detail. Keep facts in sync across them when a skill changes.
 - README images: `assets/banner.png` and `assets/demo.gif`, built from `assets/src/`. The demo fills a live posting as the fictional applicant in `assets/src/demo-persona.json` and never submits; no real person's data may appear in any frame.
