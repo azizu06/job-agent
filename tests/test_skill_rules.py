@@ -26,5 +26,12 @@ class SetupJobRightStep(unittest.TestCase):
         self.assertNotIn("select Most Recent yourself", self.step)
 
 
+class SetupAutoAllowStep(unittest.TestCase):
+    def test_records_the_no_answer(self):
+        text = (SKILLS / "job-setup" / "SKILL.md").read_text(encoding="utf-8")
+        step = section(text, "**Hands-free Allow clicks**", "**Gmail and connectors**")
+        self.assertIn("If no: record `browser.auto_allow: false`", step)
+
+
 if __name__ == "__main__":
     unittest.main()

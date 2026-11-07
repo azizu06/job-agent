@@ -63,6 +63,7 @@ Progress file: `<workspace>/state/setup-progress.json`, like `{"done": ["chrome"
 3. **Hands-free Allow clicks** (id `autoallow`, macOS only, default no).
    - Why: without it you click Allow each time the agent connects.
    - Ask yes/no: "Let a small helper click Allow for the agent? Consequence: any local program that connects to Chrome in the same few seconds is approved too. Default: no."
+   - If no: record `browser.auto_allow: false` (in `state/setup-progress.json` under `browser` until `preferences.yaml` exists, then in the file).
    - If yes: run `python3 scripts/auto_allow.py enable`, set `browser.auto_allow: true`. Accessibility click path: System Settings > Privacy & Security > Accessibility > the **+** button > press Cmd-Shift-G > paste the Python path that `enable` printed > Open > switch it on. Chrome must be in English.
    - How it works: right before each agent's own connect, that agent arms a 15 second window. While any window is open, `scripts/auto_allow.py` presses Allow, logs each click to `<workspace>/auto-allow.log`, and closes one window per click. With no open window it clicks nothing. `enable` installs a per-user LaunchAgent (`~/Library/LaunchAgents/io.github.azizu06.job-agent.auto-allow.plist`); `disable` removes it. Never run the clicker from the agent's own shell (System Events is unreachable from a sandbox, AppleScript error -10827). (other setups: see end)
 
