@@ -169,4 +169,4 @@ claude plugin validate .
 
 The suite includes end-to-end tests that run the full loop, from feed to tracker, against local Greenhouse and Workday forms, Google sign-in, a CAPTCHA page and an inbox. See [`tests/e2e/README.md`](../tests/e2e/README.md).
 
-The README banner and demo are built from files in [`assets/src/`](../assets/src/): `banner.html` is rendered with headless Chrome at 1280x640. The demo frames are captured by `demo-capture.py` while job-agent fills a live Greenhouse application in Chrome (it never presses Submit), and `demo-compose.py` adds the cursor, status pill and contact blur, then writes `demo.gif` and `demo.mp4`.
+The README banner and demo are built from files in [`assets/src/`](../assets/src/): `banner.html` is rendered with headless Chrome at 1280x640. The demo frames are captured by `demo-capture.py` while job-agent fills a live Greenhouse application in Chrome as Jordan Lee, a fictional applicant (`demo-persona.json`, resume from `demo-resume.tex`), and it never presses Submit. `demo-compose.py` adds the cursor and status pill, then writes `demo.gif` and `demo.mp4`.

@@ -5,21 +5,26 @@ reads each field from the page, fills it, and saves a screenshot plus the field'
 bounding rect after every action. It never presses Submit or Enter: the last
 frame hovers the Submit button. demo-compose.py turns the frames into the GIF.
 
-    python3 demo-capture.py values.json <out_dir>
+    python3 demo-capture.py demo-persona.json <out_dir>
 
-values.json (kept out of the repo) holds the applicant's answers:
-    {"first": "...", "last": "...", "email": "...", "phone": "...",
-     "phone_shown": "(555) 555-0100", "city": "...", "school": "...",
-     "github": "...", "resume": "/abs/path.pdf", "why": "...", "project": "..."}
-Run it from a directory that contains the resume, so the browser MCP may upload it.
+demo-persona.json holds the answers of Jordan Lee, a fictional applicant: a
+555-01xx phone number, an email domain and GitHub username that were
+unregistered when it was written, and a resume built from demo-resume.tex.
+Build that resume into <out_dir> first ("resume" is resolved against it), and
+keep <out_dir> inside a directory the browser MCP may upload from.
+
+Open the posting in its own tab (chrome-devtools-axi newpage <url>) before
+running; the script works on the selected tab. Every field is select-all
+cleared before typing, so an autofill extension cannot leave its own data
+behind, and the read-back at the end fails if any field differs.
 """
 import json, os, re, subprocess, sys, time
 
 V = json.load(open(sys.argv[1]))
 OUTDIR = os.path.abspath(sys.argv[2])
-WORKSPACE = os.path.dirname(os.path.abspath(V["resume"]))
+WORKSPACE = OUTDIR
 HIDE = '(()=>{const kill=()=>{document.querySelectorAll(\'.simplify-jobs-shadow-root,speedyapply-modal,bettercanvas-reminders,[id*=simplify i]:not(script),[class*=simplify i],.grecaptcha-badge,iframe[src^="chrome-extension://"]\').forEach(e=>{if(e.classList&&e.classList.contains(\'grecaptcha-badge\')){e.style.visibility=\'hidden\';return}e.remove()});document.querySelectorAll(\'body > *\').forEach(e=>{if(e.shadowRoot&&!e.id?.startsWith(\'app\')){const s=getComputedStyle(e);if(s.position===\'fixed\'||e.tagName.includes(\'-\'))e.remove()}});document.documentElement.style.marginRight=\'0\';document.body.style.marginRight=\'0\';};kill();if(!window.__k){window.__k=new MutationObserver(kill);window.__k.observe(document.documentElement,{childList:true,subtree:true});const s=document.createElement(\'style\');s.textContent=\'.simplify-jobs-shadow-root,speedyapply-modal,bettercanvas-reminders,iframe[src^="chrome-extension://"]{display:none!important}.grecaptcha-badge{visibility:hidden!important}html,body{margin-right:0!important}html{scrollbar-width:none}::-webkit-scrollbar{display:none}\';document.head.appendChild(s);}return [...document.querySelectorAll(\'body > *\')].map(e=>e.tagName+\'#\'+e.id+\'.\'+String(e.className).slice(0,30)).join(\' ; \')})()'
-ENV = dict(os.environ, CHROME_DEVTOOLS_AXI_AUTO_CONNECT="1", CHROME_DEVTOOLS_AXI_SESSION="jobagent-demo")
+ENV = dict(os.environ, CHROME_DEVTOOLS_AXI_AUTO_CONNECT="1", CHROME_DEVTOOLS_AXI_SESSION=os.environ.get("CHROME_DEVTOOLS_AXI_SESSION", "jobagent-demo"))
 def run(*args, timeout=90):
     r = subprocess.run(["chrome-devtools-axi", *args], env=ENV, cwd=WORKSPACE, capture_output=True, text=True, timeout=timeout)
     return r.stdout + r.stderr
@@ -47,18 +52,38 @@ def uid_for(pattern, text=None):
 
 import json, re, time, os, sys
 CAP = os.path.join(OUTDIR, "frames"); os.makedirs(CAP, exist_ok=True)
-json.dump({"company": "Vercel", "role": "Software Engineering Intern"}, open(os.path.join(OUTDIR, "meta.json"), "w"))
+# A 660 CSS px viewport at 1.4545x renders 960x800 screenshots in which the
+# Greenhouse form column (about 625 CSS px wide) fills the frame. Rects are in
+# CSS px; demo-compose.py scales them by "dpr".
+VW, VH, DPR = 660, 550, 960 / 660
+json.dump({"company": "Vercel", "role": "Software Engineering Intern", "dpr": DPR}, open(os.path.join(OUTDIR, "meta.json"), "w"))
 MAN = []; N = [0]
-RESUME = os.path.abspath(V["resume"])
+RESUME = os.path.join(OUTDIR, V["resume"])
 RECTS_JS = """(()=>{const R=e=>{if(!e)return null;const r=e.getBoundingClientRect();return [r.x,r.y,r.width,r.height]};const q=s=>document.querySelector(s);
 const ctl=id=>{const e=document.getElementById(id);return e?(e.closest('.select__control')||e):null};
 const sel=%s;let t=null;if(sel){t=R(sel)}
 const menus=[...document.querySelectorAll('[id$=-listbox]')].map(R);
-return {t, masks:[R(q('#email')),R(q('#phone')),R(ctl('candidate-location'))].filter(Boolean), loc_menu:R(q('#react-select-candidate-location-listbox')), sy:scrollY}})()"""
+return {t, sy:scrollY}})()"""
 def rects(target_js="null"):
     return js(RECTS_JS % target_js)
+# Autofill (Chrome's or an extension's) can drop someone's saved details into
+# fields the script has not reached yet. Before every screenshot, clear any
+# field the script did not fill itself, check the filled ones still hold the
+# persona's values, and hide Greenhouse's "autofill with MyGreenhouse" toast.
+FILLED = {}; LIVE = [None]
+GUARD_JS = """(()=>{const exp=%s, live=%s, out={cleared:[], wrong:[]};
+document.querySelectorAll('form input:not([type=file]):not([type=hidden]):not([type=checkbox]):not([type=radio]),form textarea').forEach(e=>{
+ if(!e.id||e.id===live||e.id.startsWith('iti-'))return;
+ if(e.id in exp){if(e.value!==exp[e.id])out.wrong.push(e.id);return}
+ if(e.value!==''){const p=Object.getPrototypeOf(e);Object.getOwnPropertyDescriptor(p,'value').set.call(e,'');e.dispatchEvent(new Event('input',{bubbles:true}));out.cleared.push(e.id)}});
+[...document.querySelectorAll('body *')].filter(e=>e.childElementCount<6&&/^To autofill applications/.test((e.innerText||'').trim())).forEach(e=>{let a=e;while(a&&a!==document.body){const st=getComputedStyle(a).position;if(st==='fixed'||st==='absolute'||st==='sticky'){a.style.display='none';break}a=a.parentElement}if(!a||a===document.body)e.style.display='none'});
+return out})()"""
+def guard():
+    g = js(GUARD_JS % (json.dumps(FILLED), json.dumps(LIVE[0])))
+    if g["cleared"]: print("GUARD cleared", g["cleared"]); time.sleep(0.2)
+    if g["wrong"]: print("GUARD wrong", g["wrong"]); sys.exit(1)
 def shot(label, status, target_js="null", kind="frame", extra=None):
-    js(HIDE); time.sleep(0.25)
+    js(HIDE); guard(); time.sleep(0.25)
     info = rects(target_js)
     N[0] += 1
     f = f"{CAP}/f{N[0]:04d}.png"
@@ -71,8 +96,8 @@ def shot(label, status, target_js="null", kind="frame", extra=None):
 def ensure_view(target_js):
     r = js("(()=>{const e=%s;const r=e.getBoundingClientRect();return [r.y,r.height]})()" % target_js)
     y, h = r
-    if y < 150 or y + h > 620:
-        js("window.scrollTo({top:scrollY+%f-220,behavior:'instant'})" % y)
+    if y < 105 or y + h > 430:
+        js("window.scrollTo({top:scrollY+%f-150,behavior:'instant'})" % y)
         time.sleep(0.3)
         return True
     return False
@@ -81,27 +106,32 @@ def ctl(id_): return "(document.getElementById('%s').closest('.select__control')
 def chunks(s, n):
     k = max(1, -(-len(s)//n)); return [s[i:i+k] for i in range(0, len(s), k)]
 
-def text_field(id_, label_pat, value, status, n=4):
+def text_field(id_, label_pat, value, status, n=4, shown=None):
     t = el(id_)
+    LIVE[0] = id_
     if ensure_view(t): shot("scroll", status, t, "scroll")
     shot("move", status, t, "move")
     js("(()=>{const e=%s;e.scrollIntoView({block:'nearest',behavior:'instant'});e.focus();e.click();return 1})()" % t)
     assert js("document.activeElement.id") == id_, ("focus", id_, js("document.activeElement.id"))
-    js("(()=>{const e=%s;const p=Object.getPrototypeOf(e);Object.getOwnPropertyDescriptor(p,'value').set.call(e,'');e.dispatchEvent(new Event('input',{bubbles:true}));return 1})()" % t)
+    js("(()=>{const e=%s;try{e.select()}catch(_){};const p=Object.getPrototypeOf(e);Object.getOwnPropertyDescriptor(p,'value').set.call(e,'');e.dispatchEvent(new Event('input',{bubbles:true}));return 1})()" % t)
     typed = ""
     for c in chunks(value, n):
         assert js("document.activeElement.id") == id_, ("focus lost", id_)
         run("type", c); typed += c
+        if not shown and js(t + ".value") != typed:
+            print("TYPED VALUE DIFFERS", id_); sys.exit(1)
         shot("type", status, t, "type", dict(typed=len(typed)))
     v = js(t + ".value")
-    if v != value:
+    if v != (shown or value):
         print("MISMATCH", id_, repr(v)); print(run("fill", "@"+uid_for(label_pat), value)[:200])
         v = js(t + ".value"); print(" after fill:", repr(v))
         MAN[-1]["redo"]=True
         shot("type", status, t, "type")
+    FILLED[id_] = js(t + ".value"); LIVE[0] = None
 
 def combo(id_, label_pat, option, status, filt=None, wait=0.4):
     t = ctl(id_)
+    LIVE[0] = id_
     if ensure_view(t): shot("scroll", status, t, "scroll")
     shot("move", status, t, "move")
     for attempt in range(3):
@@ -123,24 +153,26 @@ def combo(id_, label_pat, option, status, filt=None, wait=0.4):
     print("PICK", id_, repr(got))
     if not got or (not filt and got != option):
         print("PICK FAILED", id_, got); sys.exit(1)
+    LIVE[0] = None
     shot("picked", status, t, "picked")
 
 S = "Filling"
 steps = sys.argv[1:] or ["all"]
-run("emulate","--viewport","960x800x1"); run("reload"); time.sleep(5)
+run("emulate","--viewport","%dx%dx%.6f" % (VW, VH, DPR)); run("reload"); time.sleep(5)
 js(HIDE)
 for _ in range(10):
     time.sleep(1); js(HIDE)
     pass
+guard()
 js("window.scrollTo({top:0,behavior:'instant'})"); time.sleep(0.3)
 shot("open", "Opening posting", "null", "hold")
-js("window.scrollTo({top:document.getElementById('first_name').getBoundingClientRect().top+scrollY-260,behavior:'instant'})"); time.sleep(0.3)
+js("window.scrollTo({top:document.getElementById('first_name').getBoundingClientRect().top+scrollY-180,behavior:'instant'})"); time.sleep(0.3)
 shot("read", "Reading form · 22 fields", "document.getElementById('application-form')||document.forms[0]", "read")
 text_field("first_name", r'textbox "First Name"', V["first"], "Contact details", 2)
 text_field("last_name", r'textbox "Last Name"', V["last"], "Contact details", 1)
 text_field("email", r'textbox "Email"', V["email"], "Contact details", 3)
 combo("country", "Country", "United States", "Contact details", filt="United States")
-text_field("phone", r'textbox "Phone"', V["phone"], "Contact details", 3)
+text_field("phone", r'textbox "Phone"', V["phone"], "Contact details", 3, shown=V["phone_shown"])
 combo("candidate-location", r"Location \(City\)", V["city"], "Contact details", filt=V["city"])
 # resume
 t = el("resume")
@@ -169,7 +201,10 @@ vals = js("""(()=>{const o={};document.querySelectorAll('form input,form textare
 json.dump(vals, open(os.path.join(OUTDIR, "readback.json"),"w"), indent=1)
 EXP = {"first_name":V["first"],"last_name":V["last"],"email":V["email"],"phone":V["phone_shown"],"end-year--0":"2028","question_19871188004":V["github"],"question_19908491004":V["why"],"question_19908511004":V["project"]}
 bad = {k:(vals.get(k),v) for k,v in EXP.items() if vals.get(k)!=v}
+for k in ("question_19871186004", "question_19871187004", "question_19871189004"):
+    if vals.get(k): bad[k] = (vals.get(k), "")
 print("READBACK", "OK" if not bad else bad, vals["singles"])
+if bad: sys.exit(1)
 sub = "([...document.querySelectorAll('button')].find(b=>/Submit application/.test(b.innerText)))"
 ensure_view(sub); shot("scroll", "Ready to submit", sub, "scroll")
 run("hover", "@"+uid_for(r'button "Submit application"'))

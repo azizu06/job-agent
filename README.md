@@ -38,7 +38,7 @@ Built for Claude Code on macOS.
 <p align="center">
   <img src="assets/demo.gif" alt="job-agent fills a Vercel Software Engineering Intern application on Greenhouse in Chrome: it reads the form, types each field, uploads the resume, answers every dropdown, writes the why-Vercel answer and stops at Submit." width="760">
   <br>
-  <sub>job-agent filling a Vercel internship application in Chrome, then stopping at Submit. Contact details are blurred.</sub>
+  <sub>A live run on Vercel's Greenhouse application, stopped at Submit. The applicant, Jordan Lee, is fictional.</sub>
 </p>
 
 ## How it works

@@ -1,0 +1,59 @@
+% Resume for the fictional demo applicant used in assets/demo.gif.
+% Jordan Lee is not a real person. The phone number is in the 555-01xx range
+% reserved for fiction, the email domain and GitHub username were unregistered
+% when this was written, and the employer below is invented.
+% Build: tectonic demo-resume.tex, then rename to Jordan-Lee-Resume.pdf
+\documentclass[10pt,letterpaper]{article}
+\usepackage[margin=0.5in]{geometry}
+\usepackage[hidelinks]{hyperref}
+\usepackage{enumitem}
+\setlist[itemize]{leftmargin=1.2em,itemsep=1pt,topsep=2pt}
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+
+\newcommand{\entry}[2]{\textbf{#1}\hfill #2\\[-6pt]}
+\newcommand{\sect}[1]{\vspace{6pt}{\large\textbf{#1}}\\[-8pt]\rule{\linewidth}{0.4pt}\\[-4pt]}
+
+\begin{document}
+
+\begin{center}
+{\LARGE\textbf{Jordan Lee}}\\
+Orlando, FL \textbar{} jordan@jordanleebuilds.com \textbar{} (407) 555-0142 \textbar{}
+\href{https://github.com/jordanleebuilds}{github.com/jordanleebuilds}
+\end{center}
+
+\sect{Education}
+\entry{University of Central Florida, B.S. Computer Science}{Aug 2024 -- May 2028}
+GPA 3.7 \textbar{} Coursework: Data Structures, Algorithms, Systems Software, Databases, Computer Networks
+
+\sect{Experience}
+\entry{Kestrelwave Labs, Software Engineering Intern}{May 2026 -- Aug 2026}
+\begin{itemize}
+  \item Moved data fetching for a customer analytics dashboard to edge functions, cutting p95 load time from 2.1 s to 600 ms
+  \item Built a usage export API in TypeScript and PostgreSQL that replaced a weekly manual CSV pull for 40 accounts
+  \item Added preview deployments and Playwright smoke tests to CI, catching 18 broken builds before they reached main
+\end{itemize}
+\entry{UCF Department of Computer Science, Undergraduate Teaching Assistant}{Jan 2026 -- Present}
+\begin{itemize}
+  \item Run weekly C lab sections for 35 students and wrote an autograder that returns test feedback in under a minute
+\end{itemize}
+
+\sect{Projects}
+\entry{Shuttle}{Next.js, TypeScript, Redis}
+\begin{itemize}
+  \item Live arrival times for campus shuttles, used by about 1,200 students each week
+  \item Polls the GPS feed every 15 seconds, caches it at the edge and streams updates to the page
+  \item Falls back to schedule-based estimates when the feed drops out, so arrivals stay accurate
+\end{itemize}
+\entry{deploylog}{TypeScript, GitHub Actions}
+\begin{itemize}
+  \item A GitHub Action that comments a summary of each preview deploy on its pull request: build time, bundle size and changed routes
+  \item Diffs bundle sizes against main and flags any route that grows more than 10\%
+\end{itemize}
+
+\sect{Skills}
+\textbf{Languages:} TypeScript, JavaScript, Python, C, SQL\\
+\textbf{Frameworks:} React, Next.js, Node.js, Tailwind CSS\\
+\textbf{Cloud and tools:} Vercel, PostgreSQL, Redis, Docker, GitHub Actions, Playwright, Git
+
+\end{document}

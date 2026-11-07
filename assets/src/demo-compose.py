@@ -1,8 +1,9 @@
 """Compose the README demo from frames captured by demo-capture.py.
 
 Adds an animated cursor with click ripples, a status pill, character-by-
-character typing reveals between captured frames, a blur over contact fields,
-and a closing card. Writes numbered PNG frames for ffmpeg.
+character typing reveals between captured frames, and a closing card. The
+applicant is fictional (see demo-persona.json), so nothing is blurred. Writes
+numbered PNG frames for ffmpeg.
 
     python3 demo-compose.py <capture_dir> <out_frames_dir> [--fps 20] [--encode <assets_dir>]
 """
@@ -12,7 +13,7 @@ import sys
 from pathlib import Path
 
 import numpy as np
-from PIL import Image, ImageDraw, ImageFilter, ImageFont
+from PIL import Image, ImageDraw, ImageFont
 
 CAP = Path(sys.argv[1])
 OUT = Path(sys.argv[2])
@@ -41,22 +42,12 @@ F_END2 = font(17, 500)
 
 meta = json.loads((CAP / "meta.json").read_text())
 COMPANY, ROLE = meta["company"], meta["role"]
+DPR = meta.get("dpr", 1.0)
 man = json.loads((CAP / "manifest.json").read_text())
-
-
-def blur_masks(img, e):
-    rects = list(e.get("masks", []))
-    if e.get("loc_menu"):
-        rects.append(e["loc_menu"])
-    for r in rects:
-        x, y, w, h = [int(round(v)) for v in r]
-        x0, y0, x1, y1 = max(x, 0), max(y, 0), min(x + w, img.width), min(y + h, img.height)
-        if x1 <= x0 or y1 <= y0:
-            continue
-        region = img.crop((x0, y0, x1, y1)).filter(ImageFilter.GaussianBlur(9))
-        region = region.filter(ImageFilter.GaussianBlur(9))
-        img.paste(region, (x0, y0))
-    return img
+for e in man:  # capture rects are CSS px; frames are device px
+    if e.get("t"):
+        e["t"] = [v * DPR for v in e["t"]]
+    e["sy"] = e.get("sy", 0) * DPR
 
 
 cache = {}
@@ -66,7 +57,7 @@ def load(i):
     if i not in cache:
         e = man[i]
         img = Image.open(e["img"]).convert("RGB")
-        cache[i] = blur_masks(img, e)
+        cache[i] = img
     return cache[i]
 
 
@@ -122,7 +113,7 @@ for i, e in enumerate(man):
     img = load(i)
     k, status = e["kind"], e["status"]
     tgt = e.get("t")
-    speed[0] = 0.6 if status in FAST else 1.0
+    speed[0] = 0.5 if status in FAST else 0.85
     if k == "hold":
         for _ in range(secs(0.8)):
             emit(img, cur, status)
