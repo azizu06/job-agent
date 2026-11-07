@@ -13,8 +13,16 @@ Usage:
   sync_status.py --tracker tracker.csv --messages found.json [--since ISO] [--apply] [--state status-sync.json]
   sync_status.py --tracker tracker.csv --inbox DIR [--since ISO] [--apply] [--state status-sync.json]
 
---since defaults to "last_sync" in --state, else 14 days ago. With --apply
-and --state, last_sync is saved only after every update succeeded.
+--since defaults to "last_sync" in --state, else 14 days ago, and always
+reaches back at least --overlap-days (default 2, the same window as a Gmail
+`newer_than:2d` search), so mail that arrived late or sat in Promotions or
+Spam is not missed. With --apply and --state, last_sync is saved only after
+every update succeeded.
+
+The report's "alerts" lists new Assessment, Interview and Offer changes: the
+only status changes worth a ping. An invite is not live status on its own:
+the newest message per req wins, so a later rejection on the same req
+replaces the invite and no alert is raised.
 Standard library only.
 """
 
@@ -40,6 +48,7 @@ RULES = [
     ("Interview", re.compile(r"\b(interview|schedule (a|your) (call|chat|conversation)|phone screen|meet with (our|the) team)\b", re.I)),
 ]
 FROZEN = {"Offer", "Withdrawn"}
+ALERT = {"Assessment", "Interview", "Offer"}
 
 
 def classify(msg: dict) -> str | None:
@@ -107,7 +116,9 @@ def plan(msgs: list[dict], rows: list[dict]) -> dict:
         changes.append({"company": row["company"], "role": row["role"], "req_id": row["req_id"], "old": old,
                         "new": status, "date": msg["date"], "matched_by": how, "message_id": msg.get("id"),
                         "subject": msg.get("subject")})
-    return {"changes": changes, "skipped": skipped}
+    alerts = [f"{c['new']} from {c['company']}" + (f" ({c['req_id']})" if c.get("req_id") else "")
+              for c in changes if c["new"] in ALERT]
+    return {"changes": changes, "skipped": skipped, "alerts": alerts}
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -119,6 +130,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--since")
     ap.add_argument("--state", help="status-sync.json holding last_sync")
     ap.add_argument("--apply", action="store_true")
+    ap.add_argument("--overlap-days", type=float, default=2,
+                    help="always read at least this many days back (default 2)")
     args = ap.parse_args(argv)
 
     state_path = Path(args.state).expanduser() if args.state else None
@@ -128,6 +141,9 @@ def main(argv: list[str] | None = None) -> int:
     if not since:
         since = (dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=14)).replace(microsecond=0).isoformat()
     started = dt.datetime.now(dt.timezone.utc).isoformat()
+    floor = (dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=args.overlap_days)).replace(microsecond=0)
+    if mbox.parse_time(since) > floor:
+        since = floor.isoformat()
 
     if args.messages:
         msgs = json.loads(Path(args.messages).read_text(encoding="utf-8"))

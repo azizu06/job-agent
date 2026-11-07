@@ -295,6 +295,15 @@ class SyncRules(unittest.TestCase):
         self.assertEqual(out["changes"], [])
         self.assertIn("ask the user", out["skipped"][0]["reason"])
 
+    def test_alerts_and_two_day_overlap(self):
+        msgs = [self.msg("Your Acme Robotics assessment", "GH-1001 please take the CodeSignal assessment", mid="oa"),
+                self.msg("Globex", "Unfortunately no", mid="rej")]
+        out = self.s.plan(msgs, self.rows)
+        self.assertEqual(out["alerts"], ["Assessment from Acme Robotics (GH-1001)"])
+        # a later rejection on the same req replaces the invite: no alert
+        late = self.msg("x", "GH-1001 Unfortunately we will not be moving forward", "2026-11-02T10:00:00+00:00", "late")
+        self.assertEqual(self.s.plan(msgs + [late], self.rows)["alerts"], [])
+
     def test_newest_message_wins(self):
         msgs = [self.msg("x", "GH-1001 Unfortunately no", "2026-11-02T10:00:00+00:00", "late"),
                 self.msg("x", "GH-1001 please take the CodeSignal assessment", "2026-11-01T10:00:00+00:00", "early")]
