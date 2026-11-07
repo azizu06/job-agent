@@ -192,4 +192,4 @@ claude plugin validate .
 
 The suite includes end-to-end tests that run the full loop, from feed to tracker, against local Greenhouse and Workday forms, Google sign-in, a CAPTCHA page and an inbox. See [`tests/e2e/README.md`](../tests/e2e/README.md).
 
-The README demo is a screen recording of a real run: Claude Code in the terminal beside Chrome, from the JobRight feed to a filled application, stopped at Submit.
+The README demo is a screen recording of a real run: Claude Code in the terminal beside Chrome, from the JobRight feed to a filled application.

@@ -14,9 +14,9 @@
 </p>
 
 <p align="center">
-  <a href="assets/demo.mp4"><img src="assets/demo.gif" alt="job-agent fills a job application in Chrome: it reads the form, types each field, uploads the tailored resume, answers the dropdowns and written questions, and stops at Submit." width="760"></a>
+  <a href="assets/demo.mp4"><img src="assets/demo.gif" alt="job-agent fills a job application in Chrome: it reads the form, types each field, uploads the tailored resume, answers the dropdowns and written questions, and reaches the Submit button." width="760"></a>
   <br>
-  <sub>A live run on a real posting, stopped at Submit. <a href="assets/demo.mp4">Watch the full video</a>.</sub>
+  <sub>A live run on a real posting. <a href="assets/demo.mp4">Watch the full video</a>.</sub>
 </p>
 
 <p align="center">
@@ -49,7 +49,7 @@ You need a Mac, [Claude Code](https://claude.com/claude-code), Google Chrome 144
 
    It takes about 10 minutes. It asks about the roles you want, your standard answers, your resume (any format), your tracker and your free [JobRight](https://jobright.ai) account. It writes nothing until you say yes.
 
-> **It stops at Submit.** job-agent fills each form and leaves the final click to you, unless you turn on `auto_submit`, and then only within your daily and per-company caps. CAPTCHAs, passwords and account creation are left to you: the agent parks that tab, filled and open, and notifies you.
+> **Auto-submit when you trust it.** Set `auto_submit: true` and job-agent presses the final button itself, within your daily and per-company caps. It is off by default, so your first runs fill each form and leave the click to you while you check the fills. CAPTCHAs, passwords and account creation stay with you: the agent parks that tab, filled and open, and notifies you.
 
 Optional: install `tectonic` and PyMuPDF (`pip install pymupdf`) so the agent can build the resume PDF and check its layout. Without them you get the resume source file to export yourself.
 
@@ -68,7 +68,7 @@ When Chrome asks "Allow remote debugging?", click Allow. Read a few filled forms
 /loop 4h /job-agent:run
 ```
 
-Each run ends with a summary: forms ready for your review, written answers to check, and parked tabs to clear in one sitting. Every application gets a row in your tracker: a local CSV by default, or [Notion or Google Sheets](docs/how-it-works.md#trackers). Add the Gmail connector and rows move to Assessment, Interview, Offer or Rejected as replies arrive.
+Each run ends with a summary: what it submitted or filled, written answers worth a second look, and parked tabs to clear in one sitting. Every application gets a row in your tracker: a local CSV by default, or [Notion or Google Sheets](docs/how-it-works.md#trackers). Add the Gmail connector and rows move to Assessment, Interview, Offer or Rejected as replies arrive.
 
 ## How it works
 
