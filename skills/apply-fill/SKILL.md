@@ -18,6 +18,11 @@ Read `references/ats-gotchas.md` before touching a Workday, Greenhouse, Lever, P
 
 - Open the application once with `new_page` (background). Note your tab's page id from the result or `list_pages`. Pass it as `pageId` on every tool that takes one (chrome-devtools-mcp 1.10.1 requires it on click, fill, type_text, press_key, take_snapshot, upload_file and evaluate_script). Never select, close or navigate a tab you did not open.
 - Page ids are numbered per MCP connection. Two appliers can both have a page 5 that are different tabs; never pass a page id from one connection to another.
+- Page ids can change under you. With `--autoConnect` and several connections open, chrome-devtools-mcp 1.10.1 can renumber every page mid-run (seen in QA: an applier's page 17 became page 8, and page 17 became the user's GitHub tab). Treat your page id as a guess you check, not a fact:
+  - Remember your tab by its URL (host and path), not only its id.
+  - Before every read or write (`take_snapshot`, `evaluate_script`, `type_text`, `press_key`, `upload_file`, `navigate_page`), check that the latest snapshot or tool result for that id shows your URL. `type_text` and `press_key` take no element uid, so they act on whatever tab the id now points to.
+  - On "No snapshot found for page N", or any result whose URL is not yours, stop, call `list_pages`, find your tab by URL, and continue with that id. If you cannot find it, park the job (`Needs you: lost tab`).
+  - Never run `evaluate_script` on a page whose URL you have not confirmed in the same step. Reading another tab is as much a breach as writing to it.
 - One writer per tab. When several agents run, each needs its own browser MCP connection with an explicit target (`--autoConnect` or `--browser-url`), or the MCP may launch a throwaway browser. Never share one tab-switching helper or one MCP connection across parallel agents.
 - Background tabs can drop input. If typed values do not register, enable focus emulation on your page (CDP `Emulation.setFocusEmulationEnabled` with `enabled: true`) before filling.
 - Before every write, confirm the page URL still belongs to this job.

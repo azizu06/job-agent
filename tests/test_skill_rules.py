@@ -59,5 +59,17 @@ class ApplierOwnConnection(unittest.TestCase):
         self.assertIn("return parked instead of using the orchestrator's", run)
 
 
+class PageIdsAreChecked(unittest.TestCase):
+    def test_apply_fill_rechecks_page_ids_by_url(self):
+        text = (SKILLS / "apply-fill" / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("Page ids can change under you", text)
+        self.assertIn("find your tab by URL", text)
+        self.assertIn("Never run `evaluate_script` on a page whose URL you have not confirmed", text)
+
+    def test_job_run_finds_tabs_by_url(self):
+        text = (SKILLS / "job-run" / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("find it by its URL with `list_pages`", text)
+
+
 if __name__ == "__main__":
     unittest.main()
