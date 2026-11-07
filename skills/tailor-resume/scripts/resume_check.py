@@ -12,6 +12,8 @@ Checks:
   VERB      the same opening verb starts more than --max-verb-repeats bullets
   IDENTITY  the first bullet under a project entry has no "<noun> that/for"
             phrase saying what the project is (a heuristic; read it yourself)
+  CONFIRM   a bullet still carries `<!-- confirm -->`: setup drafted it and the
+            user has not confirmed it yet
 
 Rendering checks (one page, no orphan lines, skills rows on one line) need
 the real PDF and a look at a PNG render. This script cannot do those.
@@ -73,6 +75,9 @@ def metrics(text: str) -> set[str]:
 
 def run_checks(master: str, resume: str, max_bullets: int, max_chars: int, max_verb_repeats: int) -> list[str]:
     problems: list[str] = []
+    for line in resume.splitlines():
+        if "<!-- confirm -->" in line:
+            problems.append(f"CONFIRM unconfirmed bullet from setup: {line.strip()[:60]}...")
     entries = parse_entries(resume)
     bullets = [b for e in entries for b in e["bullets"]]
 

@@ -37,6 +37,11 @@ class ResumeCheckTests(unittest.TestCase):
         entries = rc.parse_entries(MASTER)
         self.assertEqual(len(entries[0]["bullets"]), 1)
 
+    def test_flags_unconfirmed_bullet(self):
+        resume = "## Projects\n### Trailmap\n- A hiking app that plans routes from trail data <!-- confirm -->\n"
+        problems = rc.run_checks(MASTER, resume, 3, 210, 2)
+        self.assertTrue(any(p.startswith("CONFIRM") for p in problems))
+
     def test_flags_new_metric(self):
         resume = MASTER.replace("40%", "65%")
         problems = rc.run_checks(MASTER, resume, 3, 210, 2)
