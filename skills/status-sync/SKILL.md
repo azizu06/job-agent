@@ -15,7 +15,8 @@ Python: commands below say `python3`. Use `python_cmd` from `profile/preferences
 
 ## Steps
 
-1. Gmail: search with `in:anywhere after:<last_sync date>` plus terms such as `assessment OR "coding challenge" OR HackerRank OR CodeSignal OR interview OR "next steps" OR offer OR "unfortunately" OR "not moving forward" OR "other candidates"`.
+1. Gmail: search with `in:anywhere` (Inbox, Promotions and Spam; never `-category:promotions`) from `last_sync`, and never less than `newer_than:2d`, plus terms such as `assessment OR "coding challenge" OR HackerRank OR CodeSignal OR interview OR "next steps" OR offer OR "unfortunately" OR "not moving forward" OR "other candidates"`.
+   Also run a bare company-name search for each company with an open row, since status mail often has none of those words. If the user keeps a second inbox (a school or work account) open in a browser tab, read its message list there read-only, both tabs of a Focused/Other split, and add what you find; never click, reply or move mail in it.
    Write the messages you found to a JSON file as a list of `{id, from, subject, date, body}` (date as ISO time). Mock inbox: skip the search and pass `--inbox <email.mock_inbox>` instead of `--messages`.
 2. Preview: `python3 scripts/sync_status.py --tracker <csv_path> --messages <file> --state <workspace>/state/status-sync.json`. It classifies, matches and applies steps 3 to 5, and lists skipped messages with a reason. Read the plan; if a classification is wrong, drop that message from the file and run it again. Then run the same command with `--apply`, which saves `last_sync` only when every update succeeded. For Notion or Sheets, apply the printed plan by hand with the same rules.
    The rules the script follows (and that you follow by hand for Notion or Sheets):
@@ -24,12 +25,13 @@ Python: commands below say `python3`. Use `python_cmd` from `profile/preferences
 5. Update rules:
    - Never create a row from this skill. An unmatched message goes in the report.
    - Use the newest message per row. A later rejection on the same req overrides an older assessment invite, and a later interview overrides an older rejection only if it clearly refers to the same req.
+   - An assessment or interview invite proves the req was live on that date, nothing more. Before reporting one as waiting on the user, follow the chain forward on that req ID for a later rejection, and check for a completion email ("Completed", "thank you for completing") and the user's own notes on assessments already done or skipped (`state/assessments.md`, one line per req, kept by you when the user tells you).
    - Do not move `Offer` or `Withdrawn` to anything else without asking.
    - Add the message date and a short reason to `notes`, after what is already there. Never drop earlier notes: apply-fill keeps the path of the pre-submit read-back there.
 6. Save the new `last_sync` only after all updates succeed.
 
 ## Report
 
-Rows changed (company, role, old status, new status, message date), unmatched or ambiguous messages, and any deadline mentioned in an assessment or interview email.
+Rows changed (company, role, old status, new status, message date), unmatched or ambiguous messages, and any deadline mentioned in an assessment or interview email. The script's `alerts` lists new Assessment, Interview and Offer changes: the only status changes `job-run` sends a notification for. Rejections and receipts are reported, never pinged.
 
 Never reply to, send, delete, archive or label email.
