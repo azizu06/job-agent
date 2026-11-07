@@ -39,7 +39,7 @@ Try these in this exact order. Skip a step whose setting is false, that the port
 
 ### SSO (steps 1 to 3)
 
-- Click the SSO button. In the account chooser, pick the account whose email matches `portal_accounts.email` (or `contact.email`). Never pick a different account, never add an account, never type a provider password. If the provider asks for a password or a code, park with `Needs you: sign-in`.
+- Click the SSO button. In the account chooser, pick the account whose email matches `portal_accounts.email` (or `contact.email`). Never pick a different account, never add an account, never type a provider password. If the provider asks for a password or a code, park with `Needs you: sign-in`. If the chooser is ambiguous (no account matches exactly, or two look alike), park with `Needs you: pick account`.
 - On the consent screen, read it. Click Continue or Allow only when it asks for basic profile and email for sign-in to this employer's portal (check the app name and the portal host). If it asks for anything more (Drive, Gmail, contacts, calendar, "manage" anything) or names an unrelated app, park the job with `Needs you: sso consent`.
 - Confirm you landed back on the portal, signed in. If not, go to the next step.
 
@@ -86,8 +86,8 @@ Your own safety rules, or the user's tool settings, may stop you from typing pas
 Never solve, bypass or work around a CAPTCHA or bot check, and never use a solving service. Parking is the same for every reason, including a step you declined or could not do:
 
 1. Leave the tab open with everything filled so far. Do not reload or close it.
-2. Set the tracker row to `Needs you: <reason>`, for example `Needs you: captcha`, `Needs you: sign-in`, `Needs you: create account`, `Needs you: password reset`, `Needs you: email code`, `Needs you: sms code`, `Needs you: sso consent` or `Needs you: ssn or payment`.
-3. Send a notification: `python3 ../job-run/scripts/notify.py --title "job-agent: needs you" --message "<company> <role>: <reason>" --url <page url>`.
-4. Return a report with the page id, URL and reason so `job-run` lists it, and move on.
+2. Set the queue entry to `NEEDS YOU: <what the page asks for>` (`../job-gate/scripts/apply_queue.py set`), and the tracker row to `Needs you: <reason>` unless `tracker.rows_for_unsubmitted` is false, for example `Needs you: captcha`, `Needs you: sign-in`, `Needs you: create account`, `Needs you: password reset`, `Needs you: email code`, `Needs you: sms code`, `Needs you: sso consent` or `Needs you: ssn or payment`.
+3. If `notify.parked` is `each` (the default), send a notification: `python3 ../job-run/scripts/notify.py --title "job-agent: needs you" --message "<company> <role>: <reason>" --url <page url>`. With `summary` or `none`, send nothing here; `job-run` lists parked jobs at the end.
+4. Return a report with the page id, URL and reason (what exactly the page asks for) so `job-run` lists it, and move on to the next form.
 
 Always park: CAPTCHA or "verify you are human"; SMS codes the agent cannot read; authenticator or push 2FA; SSO consent beyond basic sign-in; any request for SSN, national ID, bank or payment details; a host that is not the employer's or its ATS; any step whose setting is false; any credential-mode step while `credential_mode` is false; and any step you decline or cannot do. A parked job is a normal result, not a failure: the run continues with the next job.

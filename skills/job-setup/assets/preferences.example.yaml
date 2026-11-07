@@ -112,7 +112,7 @@ portal_accounts:
 
 notify:
   method: none           # none | macos | ntfy | slack. Setup writes the details to state/notify.json
-  parked: each           # each: one notification per parked job | summary: one at the end of the run | none: list them in the run report only
+  parked: each           # each: one per parked job plus an end-of-run summary | summary: only the summary | none: list them in the run report only, no ping
   # Also sent: a form is ready (auto_submit false), a new assessment, interview or offer, and two blocked runs in a row
 
 tracker:
