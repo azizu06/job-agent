@@ -1,0 +1,816 @@
+{
+"_note": "Page model of skills/job-setup/assets/master-resume.tex built by tectonic. Refresh: REFRESH_FIXTURES=1 python3 -m unittest tests.test_tailor_e2e",
+"width": 612.0,
+"height": 792.0,
+"pages": 1,
+"rows": [
+{
+"base": 53.2,
+"parts": [
+[
+238.11,
+373.89,
+"JordanLee"
+]
+],
+"top": 33.22,
+"bot": 58.01,
+"size": 24.79,
+"label_bold": true
+},
+{
+"base": 66.2,
+"parts": [
+[
+65.33,
+546.67,
+"407-555-0142|jordan.lee@example.com|linkedin.com/in/jordan-lee-example|github.com/jordan-lee-example"
+]
+],
+"top": 58.12,
+"bot": 68.15,
+"size": 9.96,
+"label_bold": false
+},
+{
+"base": 92.0,
+"parts": [
+[
+36.0,
+98.87,
+"Education"
+]
+],
+"top": 82.35,
+"bot": 94.31,
+"size": 11.96,
+"label_bold": false
+},
+{
+"base": 111.9,
+"parts": [
+[
+46.8,
+206.75,
+"UniversityofCentralFlorida"
+],
+[
+511.16,
+570.6,
+"Orlando,FL"
+]
+],
+"top": 103.09,
+"bot": 114.0,
+"size": 10.91,
+"label_bold": true
+},
+{
+"base": 125.4,
+"parts": [
+[
+46.8,
+277.58,
+"BachelorofScienceinComputerScience|GPA:3.8"
+],
+[
+527.37,
+570.17,
+"May2028"
+]
+],
+"top": 117.41,
+"bot": 127.43,
+"size": 9.96,
+"label_bold": false
+},
+{
+"base": 150.0,
+"parts": [
+[
+36.0,
+104.08,
+"Experience"
+]
+],
+"top": 140.32,
+"bot": 152.27,
+"size": 11.96,
+"label_bold": false
+},
+{
+"base": 169.9,
+"parts": [
+[
+46.8,
+201.98,
+"SoftwareEngineeringIntern"
+],
+[
+462.43,
+570.6,
+"May2026\u2013Aug.2026"
+]
+],
+"top": 161.06,
+"bot": 171.97,
+"size": 10.91,
+"label_bold": true
+},
+{
+"base": 183.4,
+"parts": [
+[
+46.8,
+124.1,
+"TidewaterFreight"
+],
+[
+515.96,
+570.6,
+"Orlando,FL"
+]
+],
+"top": 175.37,
+"bot": 185.34,
+"size": 9.96,
+"label_bold": false
+},
+{
+"base": 194.9,
+"parts": [
+[
+61.53,
+569.67,
+"\u2022BuiltaPythonandPostgreSQLbillingreconciliationservicethatmatchedeverycarrierinvoicetoitsshipment"
+]
+],
+"top": 185.61,
+"bot": 196.87,
+"size": 9.96,
+"label_bold": false
+},
+{
+"base": 206.9,
+"parts": [
+[
+70.8,
+565.13,
+"andfuelrecords,cuttinginvoicemismatchesby40%across3regionalhubsand18,000+monthlyinvoices."
+]
+],
+"top": 198.87,
+"bot": 208.83,
+"size": 9.96,
+"label_bold": false
+},
+{
+"base": 218.9,
+"parts": [
+[
+61.53,
+567.47,
+"\u2022Moved12nightlycronjobsontoaRedisjobqueuewithretries,removing5hoursaweekofmanualreruns."
+]
+],
+"top": 209.76,
+"bot": 220.78,
+"size": 9.96,
+"label_bold": false
+},
+{
+"base": 230.8,
+"parts": [
+[
+61.53,
+575.99,
+"\u2022Blocked30failingdeploysbeforeproductionwithGitHubActionsCIchecksrunningtestsoneachpullrequest."
+]
+],
+"top": 221.71,
+"bot": 232.74,
+"size": 9.96,
+"label_bold": false
+},
+{
+"base": 246.3,
+"parts": [
+[
+46.8,
+237.51,
+"UndergraduateResearchAssistant"
+],
+[
+475.36,
+570.61,
+"Jan.2026\u2013Present"
+]
+],
+"top": 237.56,
+"bot": 248.46,
+"size": 10.91,
+"label_bold": true
+},
+{
+"base": 259.9,
+"parts": [
+[
+46.8,
+173.91,
+"UniversityofCentralFlorida"
+],
+[
+515.96,
+570.6,
+"Orlando,FL"
+]
+],
+"top": 251.87,
+"bot": 261.83,
+"size": 9.96,
+"label_bold": false
+},
+{
+"base": 271.4,
+"parts": [
+[
+61.53,
+574.48,
+"\u2022Cutlabelingtimefrom2weeksto3daysfor20,000+fieldimageswithaFastAPIreviewtoolthatpre-sorts"
+]
+],
+"top": 262.1,
+"bot": 273.37,
+"size": 9.96,
+"label_bold": false
+},
+{
+"base": 283.4,
+"parts": [
+[
+70.8,
+555.95,
+"photosbymodelconfidence,sothelab\u2019sannotatorschecktheleastcertainphotosfirstandskiptheclearones."
+]
+],
+"top": 275.36,
+"bot": 285.32,
+"size": 9.96,
+"label_bold": false
+},
+{
+"base": 295.3,
+"parts": [
+[
+61.53,
+575.47,
+"\u2022TrainedaPyTorchimageclassifierthatflagsinvasiveplantsindronephotos,raisingaccuracyfrom71%to89%."
+]
+],
+"top": 286.25,
+"bot": 297.28,
+"size": 9.96,
+"label_bold": false
+},
+{
+"base": 307.3,
+"parts": [
+[
+61.53,
+552.05,
+"\u2022Spedupnightlymodelevaluationfrom4hoursto35minutesbybatchinginferenceonthelab\u2019sNVIDIA"
+]
+],
+"top": 298.2,
+"bot": 309.23,
+"size": 9.96,
+"label_bold": false
+},
+{
+"base": 319.3,
+"parts": [
+[
+70.8,
+556.24,
+"GPUsandcachingimagefeaturesbetweenruns,soeachmodelchangegetsscoredbeforethenextlabmeeting."
+]
+],
+"top": 311.22,
+"bot": 321.19,
+"size": 9.96,
+"label_bold": false
+},
+{
+"base": 334.8,
+"parts": [
+[
+46.8,
+131.01,
+"WebDeveloper"
+],
+[
+461.07,
+570.6,
+"Aug.2025\u2013Dec.2025"
+]
+],
+"top": 326.0,
+"bot": 336.91,
+"size": 10.91,
+"label_bold": true
+},
+{
+"base": 348.3,
+"parts": [
+[
+46.8,
+160.96,
+"UCFStudentGovernment"
+],
+[
+515.96,
+570.6,
+"Orlando,FL"
+]
+],
+"top": 340.32,
+"bot": 350.28,
+"size": 9.96,
+"label_bold": false
+},
+{
+"base": 359.9,
+"parts": [
+[
+61.53,
+554.47,
+"\u2022RebuilttheclubfundingportalinReactandTypeScript,serving600+clubsand1,900+yearlyrequests."
+]
+],
+"top": 350.55,
+"bot": 361.82,
+"size": 9.96,
+"label_bold": false
+},
+{
+"base": 371.8,
+"parts": [
+[
+61.53,
+576.0,
+"\u2022Reducedpageloadtimefrom3.4sto900msbymovingreportstoserver-sidepaginationwithcachedSQLqueries."
+]
+],
+"top": 362.74,
+"bot": 373.77,
+"size": 9.96,
+"label_bold": false
+},
+{
+"base": 383.8,
+"parts": [
+[
+61.53,
+576.01,
+"\u2022Raisedon-timefundingrequestsby25%withautomateddeadlinereminderssentfromascheduledNode.jsworker"
+]
+],
+"top": 374.7,
+"bot": 385.73,
+"size": 9.96,
+"label_bold": false
+},
+{
+"base": 395.7,
+"parts": [
+[
+70.8,
+563.15,
+"thatreadseachclub\u2019sopenfundingrequestsandemailstheclubtreasurerthreedaysbeforeeachfundingcutoff."
+]
+],
+"top": 387.72,
+"bot": 397.68,
+"size": 9.96,
+"label_bold": false
+},
+{
+"base": 420.3,
+"parts": [
+[
+36.0,
+90.77,
+"Projects"
+]
+],
+"top": 410.65,
+"bot": 422.61,
+"size": 11.96,
+"label_bold": false
+},
+{
+"base": 439.6,
+"parts": [
+[
+46.8,
+371.65,
+"FloodWatch|Python,TypeScript,React,FastAPI,PostgreSQL,Mapbox"
+]
+],
+"top": 431.56,
+"bot": 441.58,
+"size": 9.96,
+"label_bold": true
+},
+{
+"base": 453.1,
+"parts": [
+[
+61.53,
+570.72,
+"\u2022Engineeredadashboardthatranksneighborhoodsbyfloodrisk,turningraingaugeandcountydrainagedatainto"
+]
+],
+"top": 443.79,
+"bot": 455.05,
+"size": 9.96,
+"label_bold": false
+},
+{
+"base": 465.1,
+"parts": [
+[
+70.8,
+548.35,
+"livestreet-levelalerts,winningtheBestCivicHackof180projectsatLakesideUniversity\u2019sLakeHacks."
+]
+],
+"top": 457.04,
+"bot": 467.01,
+"size": 9.96,
+"label_bold": false
+},
+{
+"base": 477.0,
+"parts": [
+[
+61.53,
+572.13,
+"\u2022Refreshedriskscoresevery5minutesfor40,000+addresseswithaFastAPIscoringserviceonPostgreSQL."
+]
+],
+"top": 467.93,
+"bot": 478.96,
+"size": 9.96,
+"label_bold": false
+},
+{
+"base": 489.0,
+"parts": [
+[
+61.53,
+576.01,
+"\u2022Loweredmaprendertimefrom6sto1.1sbyservingprecomputedvectortilestotheReactandMapboxfrontend."
+]
+],
+"top": 479.89,
+"bot": 490.92,
+"size": 9.96,
+"label_bold": false
+},
+{
+"base": 503.9,
+"parts": [
+[
+46.8,
+290.41,
+"Shuttle|TypeScript,Next.js,Redis,Vercel,Playwright"
+]
+],
+"top": 495.88,
+"bot": 505.9,
+"size": 9.96,
+"label_bold": true
+},
+{
+"base": 517.4,
+"parts": [
+[
+61.53,
+552.08,
+"\u2022Launchedawebappthatshowslivearrivaltimesforcampusshuttles,usedby1,200+studentseveryweek."
+]
+],
+"top": 508.11,
+"bot": 519.37,
+"size": 9.96,
+"label_bold": false
+},
+{
+"base": 529.4,
+"parts": [
+[
+61.53,
+575.99,
+"\u2022Keptarrivalestimateswithin1minutebypollingtheGPSfeedevery15secondsandcachingitattheedge,then"
+]
+],
+"top": 520.3,
+"bot": 531.33,
+"size": 9.96,
+"label_bold": false
+},
+{
+"base": 541.3,
+"parts": [
+[
+70.8,
+576.0,
+"streamingupdatestoeveryopenbrowserpageoverserver-senteventsinsteadofreloadingthewholerouteschedule."
+]
+],
+"top": 533.32,
+"bot": 543.28,
+"size": 9.96,
+"label_bold": false
+},
+{
+"base": 553.3,
+"parts": [
+[
+61.53,
+569.97,
+"\u2022PredictedarrivalsfromtherouteschedulewhentheGPSfeeddropped,keepingitusefulthrough98%ofoutages."
+]
+],
+"top": 544.21,
+"bot": 555.24,
+"size": 9.96,
+"label_bold": false
+},
+{
+"base": 568.2,
+"parts": [
+[
+46.8,
+269.15,
+"Ledgerline|Go,SQLite,Docker,GitHubActions"
+]
+],
+"top": 560.2,
+"bot": 570.22,
+"size": 9.96,
+"label_bold": true
+},
+{
+"base": 581.8,
+"parts": [
+[
+61.53,
+566.23,
+"\u2022Wroteacommand-linetoolthatturnsbankCSVexportsintomonthlybudgetreports,installedby300+users."
+]
+],
+"top": 572.43,
+"bot": 583.69,
+"size": 9.96,
+"label_bold": false
+},
+{
+"base": 593.7,
+"parts": [
+[
+61.53,
+554.01,
+"\u2022Parsedstatementsfrom9bankformatsintooneSQLiteschemawithapluggableimporterforeachformat."
+]
+],
+"top": 584.62,
+"bot": 595.65,
+"size": 9.96,
+"label_bold": false
+},
+{
+"base": 605.7,
+"parts": [
+[
+61.53,
+567.28,
+"\u2022PublishedsignedbinariesformacOS,LinuxandWindowsin8minutesfromoneGitHubActionspipeline."
+]
+],
+"top": 596.58,
+"bot": 607.6,
+"size": 9.96,
+"label_bold": false
+},
+{
+"base": 620.6,
+"parts": [
+[
+46.8,
+222.55,
+"StudyBuddy|Swift,SwiftUI,Firebase"
+]
+],
+"top": 612.57,
+"bot": 622.59,
+"size": 9.96,
+"label_bold": true
+},
+{
+"base": 634.1,
+"parts": [
+[
+61.53,
+551.85,
+"\u2022BuiltaniOSappthatturnsacoursesyllabusintoastudycalendarwithreminders,usedby400+students."
+]
+],
+"top": 624.79,
+"bot": 636.06,
+"size": 9.96,
+"label_bold": false
+},
+{
+"base": 646.1,
+"parts": [
+[
+61.53,
+549.0,
+"\u2022SyncedstudyplansacrossiPhoneandiPadinunder2secondswithFirebaseandoffline-firstlocalstorage."
+]
+],
+"top": 636.99,
+"bot": 648.01,
+"size": 9.96,
+"label_bold": false
+},
+{
+"base": 658.0,
+"parts": [
+[
+61.53,
+550.82,
+"\u2022PulledduedatesfromPDFsyllabiwithon-devicetextrecognition,fillingin90%ofcalendarsautomatically."
+]
+],
+"top": 648.94,
+"bot": 659.97,
+"size": 9.96,
+"label_bold": false
+},
+{
+"base": 682.6,
+"parts": [
+[
+36.0,
+138.71,
+"TechnicalSkills"
+]
+],
+"top": 672.94,
+"bot": 684.89,
+"size": 11.96,
+"label_bold": false
+},
+{
+"base": 701.9,
+"parts": [
+[
+46.8,
+414.49,
+"Languages:Python,TypeScript,JavaScript,Go,Java,C,SQL,Bash,HTML/CSS"
+]
+],
+"top": 693.83,
+"bot": 703.79,
+"size": 9.96,
+"label_bold": true
+},
+{
+"base": 713.8,
+"parts": [
+[
+46.8,
+480.27,
+"Frameworks:React,Next.js,Node.js,Express,FastAPI,Flask,Tailwind,Jest,Playwright,pytest"
+]
+],
+"top": 705.78,
+"bot": 715.75,
+"size": 9.96,
+"label_bold": true
+},
+{
+"base": 725.8,
+"parts": [
+[
+46.8,
+356.4,
+"Databases:PostgreSQL,MySQL,SQLite,Redis,MongoDB,Firebase"
+]
+],
+"top": 717.74,
+"bot": 727.7,
+"size": 9.96,
+"label_bold": true
+},
+{
+"base": 737.7,
+"parts": [
+[
+46.8,
+340.36,
+"AI/ML:PyTorch,scikit-learn,Pandas,NumPy,OpenCV,Jupyter"
+]
+],
+"top": 729.69,
+"bot": 739.66,
+"size": 9.96,
+"label_bold": true
+},
+{
+"base": 749.7,
+"parts": [
+[
+46.8,
+561.85,
+"Cloud:AWS,Docker,Linux,Git,CI/CD,Vercel,Nginx,Terraform,Grafana,Prometheus,GCP,Kafka,RESTAPIs"
+]
+],
+"top": 741.65,
+"bot": 751.61,
+"size": 9.96,
+"label_bold": true
+}
+],
+"rules": [
+[
+131.18,
+69.59,
+237.48,
+69.59
+],
+[
+246.89,
+70.04,
+401.9,
+70.04
+],
+[
+411.31,
+70.04,
+546.67,
+70.04
+],
+[
+36.0,
+96.37,
+576.0,
+96.37
+],
+[
+36.0,
+154.34,
+576.0,
+154.34
+],
+[
+36.0,
+424.67,
+576.0,
+424.67
+],
+[
+46.8,
+443.04,
+107.7,
+443.04
+],
+[
+46.8,
+507.36,
+82.91,
+507.36
+],
+[
+46.8,
+571.68,
+98.98,
+571.68
+],
+[
+46.8,
+624.04,
+109.69,
+624.04
+],
+[
+36.0,
+686.96,
+576.0,
+686.96
+]
+]
+}

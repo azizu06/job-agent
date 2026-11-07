@@ -87,7 +87,7 @@ def setup(ws: Path, port: int) -> None:
     p["prefs"].write_text(prefs, encoding="utf-8")
 
     master = (ASSETS / "master-resume.md").read_text(encoding="utf-8")
-    p["master"].write_text(master.replace("Jane Doe", "Test Applicant").replace("jane@example.com", "test@example.com"), encoding="utf-8")
+    p["master"].write_text(master.replace("Jordan Lee", "Test Applicant").replace("jordan.lee@example.com", "test@example.com"), encoding="utf-8")
     p["notify"].write_text(json.dumps({"method": "ntfy", "server": base + "/ntfy", "topic": "job-agent-e2e"}) + "\n", encoding="utf-8")
     seed_tracker(ws, p["tracker"])
 

@@ -74,7 +74,7 @@ flowchart LR
 - [ ] Python 3.9 or later
 - [ ] A free [JobRight](https://jobright.ai) account. Setup walks you through it
 - [ ] A resume, any format. Setup turns it into a master resume
-- [ ] Optional: `pandoc`, `tectonic` and `poppler` to build the resume PDF
+- [ ] Optional: `tectonic` and PyMuPDF (`pip install pymupdf`) to build the resume PDF and run its layout gate
 
 New to some of these? [docs/getting-started.md](docs/getting-started.md) installs each one.
 
@@ -166,7 +166,7 @@ Full rules: [docs/how-it-works.md](docs/how-it-works.md#safety-rules).
 | Jobs run one at a time | The `job-applier` subagent is missing. Run setup again; it copies the file to `~/.claude/agents/` |
 | A scheduled run stops at the first prompt | Headless runs need tools pre-approved. Copy the allow-list from [skills/job-run/SKILL.md](skills/job-run/SKILL.md) |
 | Auto-allow clicks nothing | Grant Accessibility to the Python path that `enable` printed, and set Chrome's language to English |
-| No resume PDF, only a `.md` or `.tex` file | Install `pandoc`, `tectonic` and `poppler`. Without them the agent hands you the source file |
+| No resume PDF, only a `.md` or `.tex` file | Install `tectonic` and PyMuPDF (`pip install pymupdf`). Without them the agent hands you the source file and cannot run the layout gate |
 | A form shows "needs corrections" after filling | The portal ignored a field. The agent re-reads every field before it calls a form ready; if it flags one, fix it by hand |
 | Most jobs park as `Needs you: sign-in` | Sign in to Google in that Chrome, and keep Sign in with Google allowed in setup. Workday needs one account per company |
 
@@ -219,7 +219,7 @@ Setup can start one with you from the [master resume template](skills/job-setup/
 <details>
 <summary><b>Will it lie on my resume or answers?</b></summary>
 
-No. It only rewords and selects from your master resume and your standing answers. A checker fails any tailored resume that contains a number not found in the master. Written answers are drafted from the same sources by the `your-voice` skill, and any sentence it had to infer is listed for you to check. Set `written_answers: leave` to write them yourself.
+No. It only rewords and selects from your master resume and your standing answers. A checker fails any tailored resume that contains a number not found in the master, and a layout gate checks the rendered PDF (one full page, every line filled, even spacing) before it is uploaded. Written answers are drafted from the same sources by the `your-voice` skill, and any sentence it had to infer is listed for you to check. Set `written_answers: leave` to write them yourself.
 </details>
 
 <details>

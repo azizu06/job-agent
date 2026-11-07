@@ -1,53 +1,245 @@
-% Master resume, LaTeX variant. Same idea as master-resume.md:
-% every entry you have, with alternates. Alternates live inside \iffalse ... \fi
-% blocks so they never print. A tailored copy moves the chosen bullets out.
-% Build with any LaTeX engine, for example: tectonic master-resume.tex
-\documentclass[10pt,letterpaper]{article}
-\usepackage[margin=0.5in]{geometry}
-\usepackage[hidelinks]{hyperref}
-\usepackage{enumitem}
-\setlist[itemize]{leftmargin=1.2em,itemsep=1pt,topsep=2pt}
-\pagestyle{empty}
-\setlength{\parindent}{0pt}
+%-------------------------
+% Master resume, LaTeX variant (the default template).
+% Based on Jake Gutierrez's resume (MIT), from https://github.com/sb2nov/resume,
+% with a uniform spacing model that skills/tailor-resume/scripts/layout_check.py checks.
+%
+% How the master works
+% - This file holds everything you have done. It renders to one page with your
+%   current best bullets; every other bullet, entry and skills row lives inside an
+%   \iffalse ... \fi block, so it never prints. A tailored copy moves the chosen
+%   alternates out of the block and drops what it does not use.
+% - Every number must be one you can explain in an interview. Tailoring never
+%   adds a metric, tool or experience that is not in this file.
+% - The first bullet of each project says what the project IS, as
+%   "<noun> that <does what>" near the start.
+% - Fix spacing only through the shared lengths below (\sectionabove, \bulletpitch,
+%   \entrygap, ...), never per entry, and never change the fonts or margins.
+% - Jordan Lee is a placeholder persona. Replace every line with your own.
+%
+% Build: tectonic master-resume.tex
+% Gate:  python3 skills/tailor-resume/scripts/resume_gate.py --pdf master-resume.pdf --resume master-resume.tex --master master-resume.tex
+%------------------------
 
-\newcommand{\entry}[2]{\textbf{#1}\hfill #2\\[-6pt]}
-\newcommand{\sect}[1]{\vspace{6pt}{\large\textbf{#1}}\\[-8pt]\rule{\linewidth}{0.4pt}\\[-4pt]}
+\documentclass[letterpaper,11pt]{article}
+
+\usepackage{latexsym}
+\usepackage[empty]{fullpage}
+\usepackage{titlesec}
+\usepackage{marvosym}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{verbatim}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{fancyhdr}
+\usepackage[english]{babel}
+\usepackage{tabularx}
+
+\pagestyle{fancy}
+\fancyhf{} % clear all header and footer fields
+\fancyfoot{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+% Adjust margins
+\addtolength{\oddsidemargin}{-0.5in}
+\addtolength{\evensidemargin}{-0.5in}
+\addtolength{\textwidth}{1in}
+\addtolength{\topmargin}{-.5in}
+\addtolength{\textheight}{1.0in}
+
+\urlstyle{same}
+
+\raggedbottom
+\raggedright
+\setlength{\tabcolsep}{0in}
+
+\newlength{\sectionabove}\setlength{\sectionabove}{3.1ex}
+\newlength{\sectionbelow}\setlength{\sectionbelow}{2.3ex}
+% Sections formatting
+\titleformat{\section}{
+  \vspace{-4pt}\scshape\raggedright\large
+}{}{0em}{}[\color{black}\titlerule \vspace{-5pt}]
+\titlespacing*{\section}{0pt}{\sectionabove}{\sectionbelow}
+
+% Ensure that generated PDF is machine readable/ATS parsable (pdflatex only)
+\ifdefined\pdfgentounicode
+  \input{glyphtounicode}
+  \pdfgentounicode=1
+\fi
+
+%-------------------------
+% Uniform spacing model: every gap of the same kind is one length. Bullet lines
+% (wrapped or not) share one pitch, every heading sits the same distance above its
+% first bullet, every entry the same distance below the previous one, and project
+% titles carry a descender phantom so every underline sits at the same depth.
+\newlength{\bulletpitch}\setlength{\bulletpitch}{12pt}
+\newlength{\headtobullet}\setlength{\headtobullet}{-4.5pt}
+\newlength{\entrygap}\setlength{\entrygap}{2pt}
+\newlength{\projpre}\setlength{\projpre}{-0.6pt}
+\newlength{\projadjust}\setlength{\projadjust}{2.0pt}
+\newlength{\skilltop}\setlength{\skilltop}{1.4pt}
+\newlength{\eduadjust}\setlength{\eduadjust}{0.4pt}
+\newcommand{\projtitle}[2]{\href{#1}{\underline{\textbf{#2}\vphantom{gjpqy}}}}
+
+\newcommand{\resumeItem}[1]{\item\fontsize{10}{\bulletpitch}\selectfont #1\par}
+
+\newcommand{\resumeSubheading}[4]{
+  \item
+    \begin{tabular*}{0.97\textwidth}[t]{l@{\extracolsep{\fill}}r}
+      \textbf{#1} & #2 \\
+      \textit{\small#3} & \textit{\small #4} \\
+    \end{tabular*}\par\vspace{\headtobullet}\prevdepth=0pt
+}
+
+\newcommand{\resumeSubSubheading}[2]{
+    \item
+    \begin{tabular*}{0.97\textwidth}{l@{\extracolsep{\fill}}r}
+      \textit{\small#1} & \textit{\small #2} \\
+    \end{tabular*}\par\vspace{\headtobullet}\prevdepth=0pt
+}
+
+\newcommand{\resumeProjectHeading}[2]{
+    \vspace{\projpre}\item
+    \begin{tabular*}{0.97\textwidth}{l@{\extracolsep{\fill}}r}
+      \small#1 & #2 \\
+    \end{tabular*}\par\vspace{\projadjust}\vspace{\headtobullet}\prevdepth=0pt
+}
+
+\newcommand{\resumeSubItem}[1]{\resumeItem{#1}}
+
+\renewcommand\labelitemii{$\vcenter{\hbox{\tiny$\bullet$}}$}
+
+\newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=0.15in, label={}, topsep=0pt, partopsep=0pt, itemsep=\entrygap, parsep=0pt]}
+\newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
+\newcommand{\resumeItemListStart}{\begin{itemize}[topsep=0pt, partopsep=0pt, itemsep=0pt, parsep=0pt]}
+\newcommand{\resumeItemListEnd}{\end{itemize}}
+
+%-------------------------------------------
+%%%%%%  RESUME STARTS HERE  %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 
 \begin{document}
 
+%----------HEADING----------
 \begin{center}
-{\LARGE\textbf{Jane Doe}}\\
-City, ST \textbar{} jane@example.com \textbar{}
-\href{https://linkedin.com/in/example}{linkedin.com/in/example} \textbar{}
-\href{https://github.com/example}{github.com/example}
+    \textbf{\Huge \scshape Jordan Lee} \\ \vspace{1pt}
+    \small 407-555-0142 $|$ \href{mailto:jordan.lee@example.com}{\underline{jordan.lee@example.com}} $|$
+    \href{https://linkedin.com/in/jordan-lee-example}{\underline{linkedin.com/in/jordan-lee-example}} $|$
+    \href{https://github.com/jordan-lee-example}{\underline{github.com/jordan-lee-example}}
 \end{center}
 
-\sect{Education}
-\entry{Example University, B.S. Computer Science}{Aug 2024 -- May 2028}
 
-\sect{Experience}
-\entry{Example Corp, Software Engineer Intern}{May 2026 -- Aug 2026}
-\begin{itemize}
-  \item Built a billing reconciliation service in Python and PostgreSQL that cut invoice mismatches by 40\%
-  \item Moved 12 nightly cron jobs onto a Redis queue, removing 5 hours a week of manual reruns
-  \item Added CI checks in GitHub Actions that blocked 30 failing deploys before production
-\iffalse % alternates
-  \item Designed REST APIs for the billing service used by 3 internal teams
-  \item Containerized the service with Docker and deployed it to AWS ECS
+%-----------EDUCATION-----------
+\section{Education}
+  \resumeSubHeadingListStart
+    \resumeSubheading
+      {University of Central Florida}{Orlando, FL}
+      {Bachelor of Science in Computer Science $|$ GPA: 3.8}{May 2028}
+  \resumeSubHeadingListEnd\vspace{\eduadjust}
+
+
+%-----------EXPERIENCE-----------
+\section{Experience}
+  \resumeSubHeadingListStart
+
+    \resumeSubheading
+      {Software Engineering Intern}{May 2026 -- Aug. 2026}
+      {Tidewater Freight}{Orlando, FL}
+      \resumeItemListStart
+        \resumeItem{Built a \textbf{Python} and \textbf{PostgreSQL} billing reconciliation service that matched every carrier invoice to its shipment and fuel records, cutting invoice mismatches by \textbf{40\%} across \textbf{3 regional hubs} and \textbf{18,000+ monthly invoices}.}
+        \resumeItem{Moved \textbf{12 nightly cron jobs} onto a \textbf{Redis} job queue with retries, removing \textbf{5 hours a week} of manual reruns.}
+        \resumeItem{Blocked \textbf{30 failing deploys} before production with \textbf{GitHub Actions} CI checks running tests on each pull request.}
+\iffalse % alternates: swap one in for a bullet above when a posting fits it better
+        \resumeItem{Designed \textbf{REST APIs} for the billing service used by \textbf{3 internal teams}, with OpenAPI docs and versioning.}
+        \resumeItem{Containerized the billing service with \textbf{Docker} and deployed it to \textbf{AWS ECS} behind an application load balancer.}
 \fi
-\end{itemize}
+      \resumeItemListEnd
 
-\sect{Projects}
-\entry{\href{https://github.com/example/trailmap}{Trailmap}}{TypeScript, React Native}
-\begin{itemize}
-  \item A hiking app that plans day routes from public trail data, used by 2,000 people in its first month
-  \item Built the route search with an A* search over a trail graph
-  \item Cached tiles on device so routes load offline in under 1 second
-\end{itemize}
+    \resumeSubheading
+      {Undergraduate Research Assistant}{Jan. 2026 -- Present}
+      {University of Central Florida}{Orlando, FL}
+      \resumeItemListStart
+        \resumeItem{Cut labeling time from \textbf{2 weeks to 3 days} for \textbf{20,000+ field images} with a \textbf{FastAPI} review tool that pre-sorts photos by model confidence, so the lab's annotators check the least certain photos first and skip the clear ones.}
+        \resumeItem{Trained a \textbf{PyTorch} image classifier that flags invasive plants in drone photos, raising accuracy from \textbf{71\% to 89\%}.}
+        \resumeItem{Sped up nightly model evaluation from \textbf{4 hours to 35 minutes} by batching inference on the lab's \textbf{NVIDIA} GPUs and caching image features between runs, so each model change gets scored before the next lab meeting.}
+\iffalse % alternates
+        \resumeItem{Wrote \textbf{Pandas} and \textbf{NumPy} scripts that clean and split survey data by site, so test photos never leak into training.}
+\fi
+      \resumeItemListEnd
 
-\sect{Skills}
-\textbf{Languages:} Python, TypeScript, JavaScript, SQL, Java\\
-\textbf{Frameworks:} React, React Native, Node.js, FastAPI\\
-\textbf{Cloud and tools:} AWS, Docker, GitHub Actions, Git, Linux
+    \resumeSubheading
+      {Web Developer}{Aug. 2025 -- Dec. 2025}
+      {UCF Student Government}{Orlando, FL}
+      \resumeItemListStart
+        \resumeItem{Rebuilt the club funding portal in \textbf{React} and \textbf{TypeScript}, serving \textbf{600+ clubs} and \textbf{1,900+} yearly requests.}
+        \resumeItem{Reduced page load time from \textbf{3.4s to 900ms} by moving reports to server-side pagination with cached \textbf{SQL} queries.}
+        \resumeItem{Raised on-time funding requests by \textbf{25\%} with automated deadline reminders sent from a scheduled \textbf{Node.js} worker that reads each club's open funding requests and emails the club treasurer three days before each funding cutoff.}
+      \resumeItemListEnd
 
+  \resumeSubHeadingListEnd
+
+
+%-----------PROJECTS-----------
+\section{Projects}
+    \resumeSubHeadingListStart
+        \resumeProjectHeading
+          {\projtitle{https://github.com/jordan-lee-example/floodwatch}{FloodWatch} $|$ \emph{Python, TypeScript, React, FastAPI, PostgreSQL, Mapbox}}{}
+          \resumeItemListStart
+            \resumeItem{Engineered a dashboard that ranks neighborhoods by flood risk, turning rain gauge and county drainage data into live street-level alerts, winning the \textbf{Best Civic Hack} of \textbf{180 projects} at Lakeside University's \textbf{LakeHacks}.}
+            \resumeItem{Refreshed risk scores every \textbf{5 minutes} for \textbf{40,000+ addresses} with a \textbf{FastAPI} scoring service on \textbf{PostgreSQL}.}
+            \resumeItem{Lowered map render time from \textbf{6s to 1.1s} by serving precomputed vector tiles to the \textbf{React} and Mapbox frontend.}
+          \resumeItemListEnd
+
+        \resumeProjectHeading
+          {\projtitle{https://github.com/jordan-lee-example/shuttle}{Shuttle} $|$ \emph{TypeScript, Next.js, Redis, Vercel, Playwright}}{}
+          \resumeItemListStart
+            \resumeItem{Launched a web app that shows live arrival times for campus shuttles, used by \textbf{1,200+ students} every week.}
+            \resumeItem{Kept arrival estimates within \textbf{1 minute} by polling the GPS feed every \textbf{15 seconds} and caching it at the edge, then streaming updates to every open browser page over server-sent events instead of reloading the whole route schedule.}
+            \resumeItem{Predicted arrivals from the route schedule when the GPS feed dropped, keeping it useful through \textbf{98\%} of outages.}
+          \resumeItemListEnd
+
+        \resumeProjectHeading
+          {\projtitle{https://github.com/jordan-lee-example/ledgerline}{Ledgerline} $|$ \emph{Go, SQLite, Docker, GitHub Actions}}{}
+          \resumeItemListStart
+            \resumeItem{Wrote a command-line tool that turns bank CSV exports into monthly budget reports, installed by \textbf{300+ users}.}
+            \resumeItem{Parsed statements from \textbf{9 bank formats} into one \textbf{SQLite} schema with a pluggable importer for each format.}
+            \resumeItem{Published signed binaries for \textbf{macOS}, \textbf{Linux} and \textbf{Windows} in \textbf{8 minutes} from one \textbf{GitHub Actions} pipeline.}
+          \resumeItemListEnd
+
+        \resumeProjectHeading
+          {\projtitle{https://github.com/jordan-lee-example/studybuddy}{StudyBuddy} $|$ \emph{Swift, SwiftUI, Firebase}}{}
+          \resumeItemListStart
+            \resumeItem{Built an iOS app that turns a course syllabus into a study calendar with reminders, used by \textbf{400+ students}.}
+            \resumeItem{Synced study plans across iPhone and iPad in under \textbf{2 seconds} with \textbf{Firebase} and offline-first local storage.}
+            \resumeItem{Pulled due dates from \textbf{PDF} syllabi with on-device text recognition, filling in \textbf{90\%} of calendars automatically.}
+          \resumeItemListEnd
+\iffalse % alternate project: swap it in for the least relevant project above
+        \resumeProjectHeading
+          {\projtitle{https://github.com/jordan-lee-example/quill}{Quill} $|$ \emph{Python, discord.py, PostgreSQL, Docker}}{}
+          \resumeItemListStart
+            \resumeItem{Built a Discord bot that runs office-hours queues for computer science courses, used by \textbf{900+ students}.}
+            \resumeItem{Cut average wait for help from \textbf{25 to 9 minutes} by matching students to the TA who knows their topic.}
+          \resumeItemListEnd
+\fi
+    \resumeSubHeadingListEnd
+
+
+%
+%-----------PROGRAMMING SKILLS-----------
+\section{Technical Skills}
+ \vspace{\skilltop}\begin{itemize}[leftmargin=0.15in, label={}, topsep=0pt, partopsep=0pt]
+    \small{\item{
+     \textbf{Languages}{: Python, TypeScript, JavaScript, Go, Java, C, SQL, Bash, HTML/CSS} \\
+     \textbf{Frameworks}{: React, Next.js, Node.js, Express, FastAPI, Flask, Tailwind, Jest, Playwright, pytest} \\
+     \textbf{Databases}{: PostgreSQL, MySQL, SQLite, Redis, MongoDB, Firebase} \\
+     \textbf{AI/ML}{: PyTorch, scikit-learn, Pandas, NumPy, OpenCV, Jupyter} \\
+     \textbf{Cloud}{: AWS, Docker, Linux, Git, CI/CD, Vercel, Nginx, Terraform, Grafana, Prometheus, GCP, Kafka, REST APIs}
+\iffalse % skills bank: rows and terms a tailored copy can swap in
+     \textbf{Concepts}{: distributed systems, data structures, algorithms, unit testing, code review}
+\fi
+    }}
+ \end{itemize}
+
+
+%-------------------------------------------
 \end{document}

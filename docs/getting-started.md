@@ -18,7 +18,7 @@ You need Chrome, Node.js and Python. The PDF tools are optional: without them th
 | Chrome 144+ | [google.com/chrome](https://www.google.com/chrome/) | `winget install Google.Chrome` | [google.com/chrome](https://www.google.com/chrome/) |
 | Node.js 20.19+ | `brew install node` | `winget install OpenJS.NodeJS.LTS` | Use [nvm](https://github.com/nvm-sh/nvm); distro packages are often too old |
 | Python 3.9+ | `brew install python` | `winget install Python.Python.3.12` | `sudo apt install python3` |
-| PDF tools (optional) | `brew install pandoc tectonic poppler` | `winget install JohnMacFarlane.Pandoc`, then [tectonic](https://tectonic-typesetting.github.io) and poppler | `sudo apt install pandoc poppler-utils`, then [tectonic](https://tectonic-typesetting.github.io) |
+| PDF tools (optional) | `brew install tectonic`, then `python3 -m pip install pymupdf` | [tectonic](https://tectonic-typesetting.github.io), then `py -3 -m pip install pymupdf` | [tectonic](https://tectonic-typesetting.github.io), then `python3 -m pip install pymupdf` |
 
 Check them:
 

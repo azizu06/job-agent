@@ -102,8 +102,8 @@ Progress file: `<workspace>/state/setup-progress.json`, like `{"done": ["chrome"
 7. **Master resume** (id `resume`).
    - Why: every application is a trimmed copy of one master file. I never invent facts, so the master must hold the full truth.
    - Ask what they have: (a) a PDF or Word file, (b) pasted LinkedIn profile text (About, Experience, Education, Skills, Projects), (c) a Markdown or LaTeX master, or (d) nothing.
-   - (a) and (b): read the file or text and convert it to the `assets/master-resume.md` layout (`##` sections, `###` entries, `- ` bullets). Show it and ask what is missing.
-   - (c): record the path.
+   - (a) and (b): read the file or text and convert it to the `assets/master-resume.md` layout (`##` sections; `### Title | Dates` then `Company | Location` for jobs; `### [Name](url) | Stack` for projects; `- ` bullets; `- Label: a, b` Skills rows). Both template files hold a placeholder persona (Jordan Lee); replace every line, never keep a placeholder fact. Show it and ask what is missing.
+   - (c): record the path. A LaTeX master in Jake's resume template converts to the default layout with `python3 ../tailor-resume/scripts/apply_uniform.py <file.tex>` (it keeps a `.bak-uniform` copy); offer it, do not run it without a yes.
    - (d) **No resume at all**, or thin input. This is common for students, so never stop here. Say: "No problem. I will build one with you from questions, about 10 minutes. I only write down what you tell me." Then ask one block at a time and fill `assets/master-resume.md`:
      1. Header: name, email, phone (optional), city, links (GitHub, portfolio, LinkedIn URL).
      2. Education: school, degree, major, expected graduation, GPA only if they want it, relevant courses.
@@ -112,7 +112,7 @@ Progress file: `<workspace>/state/setup-progress.json`, like `{"done": ["chrome"
      5. Clubs, volunteering, awards.
      6. Skills: only tools they have used, and where.
      Turn each answer into bullets in their words. Mark every bullet you wrote with a trailing `<!-- confirm -->`, then show the whole draft and ask them to confirm or fix each marked bullet. Remove the mark only when they confirm it. After each entry ask "any other way to say this?" and store answers as alternates in `<!-- alt -->` blocks. Never add a metric, tool, employer, date or title they did not state; if a section is empty, leave it out rather than fill it. `tailor-resume` refuses to use a bullet that still carries `<!-- confirm -->`.
-   - Save to `<workspace>/resumes/master.md`, set `master_resume` and `resume_format`. LaTeX users start from `assets/master-resume.tex`.
+   - Save to `<workspace>/resumes/master.md`, set `master_resume` and `resume_format`. LaTeX users start from `assets/master-resume.tex`. Both render in the same one-page layout (Markdown through `../tailor-resume/scripts/md_to_tex.py`). The bullets outside alternate blocks are the user's general resume: at most 3 per entry, filling one page. If `tectonic` and PyMuPDF are installed, build it and run `../tailor-resume/scripts/resume_gate.py` on it, so the general resume passes the same gate every tailored copy must pass.
 
 8. **Preferences** (id `preferences`). Follow `assets/preferences.example.yaml`:
    - target roles and title words to exclude; seniority, and the term for internships (for example Summer 2027)

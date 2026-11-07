@@ -139,7 +139,7 @@ class RigEndToEnd(unittest.TestCase):
         path = mock_ats.apply_path(acme)
         answers = {"first_name": "Test", "last_name": "Applicant", "email": "test@example.com", "phone": "5555550100",
                    "degree": "Bachelor of Science (BS)", "sponsorship": "No", "how_heard": "Company careers page",
-                   "why_us": "At Example Corp I built a billing reconciliation service in Python and PostgreSQL, and added GitHub Actions CI checks that blocked 30 failing deploys.", "consent": True,
+                   "why_us": "At Tidewater Freight I built a billing reconciliation service in Python and PostgreSQL, and added GitHub Actions CI checks that blocked 30 failing deploys.", "consent": True,
                    "_resume": resume_payload(resume)}
         status, out = b.post(path + "/submit", dict(answers, _trusted=[]))
         self.assertFalse(out["ok"])

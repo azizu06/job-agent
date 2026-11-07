@@ -56,12 +56,16 @@ Passwords, if you turn on credential mode, live only in your OS keychain. Nothin
 
 Keep one long master resume with everything you have done and several alternate bullets per entry. Each job gets a new copy built from it. The agent never adds a metric, tool or experience that is not in the master, and it lists the job's keywords you still lack so you decide.
 
-Start from [`skills/job-setup/assets/master-resume.md`](../skills/job-setup/assets/master-resume.md). A LaTeX version sits next to it. The checks are plain Python with no dependencies. From a clone of this repo:
+Start from [`skills/job-setup/assets/master-resume.tex`](../skills/job-setup/assets/master-resume.tex), the default one-page layout, or its Markdown twin [`master-resume.md`](../skills/job-setup/assets/master-resume.md), which renders in the same layout. Both hold a placeholder persona (Jordan Lee) to replace. Alternates sit in `\iffalse ... \fi` or `<!-- alt -->` blocks and never print. The content checks are plain Python; the PDF layout gate needs `tectonic` and PyMuPDF. From a clone of this repo:
 
 ```
-python3 skills/tailor-resume/scripts/keyword_coverage.py --jd jd.txt --resume tailored.md --before master.md
-python3 skills/tailor-resume/scripts/resume_check.py --master master.md --resume tailored.md
+python3 skills/tailor-resume/scripts/keyword_coverage.py --jd jd.txt --resume tailored.tex --before master.tex --min 95
+python3 skills/tailor-resume/scripts/resume_check.py --master master.tex --resume tailored.tex
+tectonic -X compile tailored.tex
+python3 skills/tailor-resume/scripts/resume_gate.py --pdf tailored.pdf --resume tailored.tex --master master.tex
 ```
+
+The gate prints `VERDICT: PASS` only when the content check and the layout check (one page filled to full height, bullets at most 2 lines with every line at least 95% full, no orphan lines, uniform spacing) are clean. It renders three PNGs to look at, and writes a receipt that `resume_gate.py --verify` checks before any upload.
 
 ## Browser
 

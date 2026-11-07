@@ -9,6 +9,12 @@ Examples:
   python3 keyword_coverage.py --jd jd.txt --resume tailored.md --before master.md
   python3 keyword_coverage.py --jd jd.txt --resume tailored.md --terms terms.txt --json
   python3 keyword_coverage.py --jd jd.txt --resume tailored.md --company "Acme"
+  python3 keyword_coverage.py --jd jd.txt --resume tailored.tex --before master.tex --exclude not-claimable.txt --min 95
+
+Alternates in the master (\\iffalse ... \\fi, <!-- alt --> ... <!-- /alt -->) never print,
+so they are dropped before scoring: --before master scores the master's printed page.
+--exclude takes terms the user cannot truthfully claim and culture or values words;
+they leave the denominator. Target: 95% of claimable terms, 100% when every one fits.
 
 Acronyms found only by their shape (for example IT, AI, S3) match case-sensitively,
 so the English word "it" never counts as the acronym "IT". URLs and email
@@ -148,8 +154,18 @@ class Term:
         return (self.name.lower(),) + tuple(v.lower() for v in self.variants)
 
 
+def strip_alternates(text: str) -> str:
+    """Drop master-only alternates: LaTeX \\iffalse ... \\fi blocks and Markdown <!-- alt --> blocks.
+
+    They never print, so they never count as coverage on the page.
+    """
+    text = re.sub(r"\\iffalse\b.*?\\fi\b", " ", text, flags=re.DOTALL)
+    return re.sub(r"<!--\s*alt\s*-->.*?<!--\s*/alt\s*-->", " ", text, flags=re.DOTALL | re.IGNORECASE)
+
+
 def strip_markup(text: str) -> str:
     """Strip LaTeX markup and collapse whitespace, keeping letter case."""
+    text = strip_alternates(text)
     text = re.sub(r"(?<!\\)%.*$", " ", text, flags=re.MULTILINE)
     text = re.sub(r"\\([%&#_$])", r"\1", text)
     text = re.sub(r"\\[a-zA-Z@]+\*?", " ", text)
@@ -284,6 +300,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--before", help="earlier resume (for example the master) for a before/after report")
     ap.add_argument("--terms", help="terms file that replaces automatic extraction")
     ap.add_argument("--also", help="terms file added on top of automatic extraction")
+    ap.add_argument("--exclude", help="terms file of words that do not count: tools the user never used, "
+                    "culture or values words. They leave the denominator; list them in the report")
     ap.add_argument("--company", help="employer name; drops extracted words that contain it")
     ap.add_argument("--min", type=float, help="exit 1 when coverage is below this percent")
     ap.add_argument("--json", action="store_true", help="print JSON instead of text")
@@ -294,6 +312,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.also:
         have = {t.name.lower() for t in terms}
         terms += [t for t in parse_terms_file(_read(args.also)) if t.name.lower() not in have]
+    if args.exclude:
+        drop = {t.name.lower() for t in parse_terms_file(_read(args.exclude))}
+        terms = [t for t in terms if t.name.lower() not in drop]
 
     resume_text = _read(args.resume)
     if args.before:

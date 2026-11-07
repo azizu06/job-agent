@@ -77,5 +77,39 @@ class ExamplePreferences(unittest.TestCase):
         self.assertRegex(text, r"\nschedule:\n  every_hours: 0 ")
 
 
+class ResumeGateBeforeUpload(unittest.TestCase):
+    def test_tailor_skill_runs_the_gate_and_visual_review(self):
+        text = (SKILLS / "tailor-resume" / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("resume_gate.py --pdf", text)
+        self.assertIn("Read all three PNGs yourself", text)
+        self.assertIn("Hard cap: 3 bullets per entry", text)
+        self.assertIn("<workspace>/reviews/<job_key>.md", text)
+        self.assertIn("<workspace>/interview-prep/<job_key>-defense.md", text)
+        self.assertIn("Never drop a missing term silently", text)
+
+    def test_every_uploader_verifies_the_gate(self):
+        for path in (SKILLS / "job-setup" / "assets" / "job-applier.md", SKILLS / "job-run" / "SKILL.md",
+                     SKILLS / "apply-fill" / "SKILL.md"):
+            text = path.read_text(encoding="utf-8")
+            self.assertIn("resume_gate.py --verify", text, path)
+            self.assertIn("Needs you: resume gate failed", text, path)
+
+
+class NoPersonalContent(unittest.TestCase):
+    """The template and checkers are generic: nothing from the author's own resume."""
+
+    WORDS = ("Versant", "Farsight", "PIP Scout", "FinBridge", "MIPS", "CDA 3103", "CrisisLens", "Backrooms",
+             "Hacklytics", "Knight Hacks", "Abduaziz", "Umarov", "azizu06", "Rehearse", "SnapList")
+
+    def test_tailoring_files_hold_no_personal_names(self):
+        files = list((SKILLS / "tailor-resume").rglob("*.py")) + [SKILLS / "tailor-resume" / "SKILL.md"]
+        files += list((SKILLS / "job-setup" / "assets").glob("master-resume.*"))
+        files += list((SKILLS.parent / "tests" / "fixtures" / "resume").glob("*"))
+        for f in files:
+            text = f.read_text(encoding="utf-8")
+            for w in self.WORDS:
+                self.assertNotIn(w, text, f"{w!r} in {f}")
+
+
 if __name__ == "__main__":
     unittest.main()

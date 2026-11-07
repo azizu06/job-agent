@@ -20,5 +20,16 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
+      - name: Resume gate tools (PyMuPDF, tectonic)
+        shell: bash
+        run: |
+          python -m pip install pymupdf
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            brew install tectonic
+          else
+            curl --proto '=https' --tlsv1.2 -fsSL https://drop-sh.fullyjustified.net | sh
+            sudo mv tectonic /usr/local/bin/
+          fi
+          tectonic --version
       - name: Unit tests and deterministic e2e rig tests
         run: python -m unittest discover -s tests -v
