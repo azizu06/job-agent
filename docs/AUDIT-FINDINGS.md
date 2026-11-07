@@ -27,6 +27,8 @@ Severity: **high** means a beginner hits it on a normal first run; **medium** me
 
 ## Findings
 
+Status after integration: fixed 2, 3, 4, 5, 6, 9, 10, 12 (12 by a `python_cmd` preference and a note at the top of each skill). Open: 1 (needs a real dry run), 7, 8, 11.
+
 ### 1. No measured token or cost numbers for real portals (medium)
 
 The only data point is the rig run (`p2run`): Claude Sonnet, 5 postings, 3 forms filled, about 10.8M cache-read input tokens, 0.5M cache-write, 28.5k output, $2.78 at list price. The README quotes it with a caveat. Real Workday and Greenhouse pages produce far larger snapshots.

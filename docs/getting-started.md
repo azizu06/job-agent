@@ -1,6 +1,6 @@
 # Getting started
 
-This page is for you if you have never set up a coding agent or a browser MCP. It covers what to install, what each one-time click is for, and what your first run looks like.
+This page is for you if you have never set up a coding agent or a browser MCP. The tested path is Claude Code on a Mac; the Windows and Linux columns are community-supported, and Windows is experimental. It covers what to install, what each one-time click is for, and what your first run looks like.
 
 - [1. Install the tools](#1-install-the-tools)
 - [2. Install a coding agent](#2-install-a-coding-agent)
@@ -33,10 +33,10 @@ Use Chrome itself, on the stable channel. Edge, Brave and Arc are built on Chrom
 
 ## 2. Install a coding agent
 
-job-agent is a set of instructions for a coding agent, so you need one. Any of these works:
+job-agent is a set of instructions for a coding agent, so you need one:
 
-- [Claude Code](https://claude.com/claude-code): the smoothest setup. The plugin wires up the browser for you and runs several applications at once.
-- Codex, Cursor or [another agent that reads skills](https://github.com/vercel-labs/skills).
+- [Claude Code](https://claude.com/claude-code): the supported and tested agent. The plugin wires up the browser for you and runs several applications at once.
+- Community-supported: Codex, Cursor or [another agent that reads skills](https://github.com/vercel-labs/skills). Not tested end to end yet.
 
 The agent's subscription or API usage is the real cost of job-agent. See the token question in the [README FAQ](../README.md#faq).
 

@@ -2,7 +2,7 @@
   "name": "job-agent",
   "displayName": "Job Agent",
   "version": "0.1.0",
-  "description": "Turns a coding agent into a job-application agent: find postings, tailor a resume from a master, fill applications in your own browser, and track the results.",
+  "description": "Apply while you sleep. Claude Code finds postings, tailors a one-page resume from your master, fills each application in your own Chrome, writes answers through a built-in humanizing layer and, if you want, in your own voice, and tracks the results. Stops at Submit by default.",
   "author": {
     "name": "Aziz Umarov",
     "url": "https://github.com/azizu06"
@@ -15,7 +15,8 @@
     "job-search",
     "resume",
     "applications",
-    "browser-automation"
+    "browser-automation",
+    "writing-voice"
   ],
   "mcpServers": {
     "job-agent-browser": {

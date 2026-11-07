@@ -136,7 +136,7 @@ Verification codes in credential mode:
 
 ## Auto-submit
 
-`auto_submit: false` is the default: the agent fills everything and stops at the final button. You read the form and click Submit.
+`auto_submit: false` is the default: the agent fills everything and stops at the final button. You review the form, then submit it, or turn on auto-submit once you trust the fills.
 
 Setting `auto_submit: true` lets it press the final button. Even then it never submits past a CAPTCHA, a sign-in wall, an unanswered required question, or a posting that bans AI tools. It respects a daily cap and a per-company cap, and logs a full read-back of every answer to your tracker before it clicks. `dry_run: true` fills and reads back without ever clicking.
 

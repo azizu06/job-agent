@@ -14,7 +14,7 @@ This file gives you your own browser connection (`job-agent-browser-own`), so yo
 
 1. If `browser.auto_allow` is true in `profile/preferences.yaml`, run `python3 <job-setup scripts>/auto_allow.py arm --label <job_key>` right before your first browser tool call. Otherwise the user clicks Allow in Chrome.
 2. Run the `tailor-resume` skill for this job. Write only inside your output folder.
-3. Run the `apply-fill` skill. Open your own tab with `new_page` and use only that page. If you hit a sign-in or account wall, use the `portal-auth` skill within the user's settings.
+3. Run the `apply-fill` skill. Every free-text answer goes through the `your-voice` skill before you type it. Open your own tab with `new_page` and use only that page. If you hit a sign-in or account wall, use the `portal-auth` skill within the user's settings.
 4. Return the apply-fill report plus the tailoring report. Never press the final Submit unless `auto_submit` is true and every guardrail passes.
 
 Install: copy this file to `~/.claude/agents/job-applier.md` (the job-setup skill does it). Claude Code ignores `mcpServers` in agents shipped inside plugins, so the copy in your user folder is what gives each applier its own connection. If your workspace is not `~/.job-agent`, set `--workspace=` to it. In dedicated-profile mode, replace `--autoConnect` with `--browser-url=http://127.0.0.1:9333`.

@@ -6,7 +6,7 @@ This repo turns you into a job-application agent. If a user gave you this repo's
 
 1. **Install the skills** for your agent:
    - Claude Code: `/plugin marketplace add azizu06/job-agent` then `/plugin install job-agent@job-agent`.
-   - Other agents: `npx skills add azizu06/job-agent`, or clone the repo and read `skills/*/SKILL.md` directly.
+   - Other agents (community-supported, not tested end to end): `npx skills add azizu06/job-agent`, or clone the repo and read `skills/*/SKILL.md` directly.
    - If installed with npx skills add, skills live in .agents/skills/, and add the browser MCP yourself: `npx -y chrome-devtools-mcp@1.10.1 --autoConnect` (Codex: `codex mcp add job-agent-browser -- npx -y chrome-devtools-mcp@1.10.1 --autoConnect`). Also pass `--no-usage-statistics --workspace=$HOME/.job-agent` so it sends no usage data and can upload resumes from the workspace.
 2. **Setup:** follow `skills/job-setup/SKILL.md`. It writes the user's profile into the workspace (`$JOB_AGENT_HOME`, default `~/.job-agent/`) and attaches to the user's own Chrome with chrome-devtools MCP `--autoConnect`.
 3. **Run:** follow `skills/job-run/SKILL.md`, which calls the other skills in order.
@@ -21,6 +21,7 @@ Before step 1, check the prerequisites yourself: `node --version` (20.19 or late
 | `skills/job-scan` | Read new postings from JobRight (or Indeed MCP) up to the saved checkpoint |
 | `skills/job-gate` | Filter by preferences, dedupe against the tracker, write the queue |
 | `skills/tailor-resume` | Build a truthful one-page copy from the master resume, with coverage before and after |
+| `skills/your-voice` | Every written answer: facts only, two drafts, built-in humanize pass, optional voice profile, self-audit, `writecheck.py` |
 | `skills/apply-fill` | Fill one application in its own tab and stop at Submit |
 | `skills/job-run` | Run the loop, one subagent per job, then re-verify and track |
 | `skills/tracker` | CSV, Notion or Sheets tracker plus Gmail receipts |

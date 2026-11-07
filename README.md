@@ -1,24 +1,40 @@
-<p align="center">
-  <img src="assets/banner.png" alt="job-agent: your coding agent finds jobs, tailors your resume and fills the application. You click Submit." width="100%">
-</p>
+<h1 align="center">
+  <img src="assets/icon.png" alt="" width="96" height="96" align="center">
+  job-agent
+</h1>
+
+<p align="center"><b>Apply while you sleep.</b></p>
+
+<p align="center">One line in your Mac's Terminal, with <a href="https://claude.com/claude-code">Claude Code</a> installed:</p>
+
+```bash
+claude plugin marketplace add azizu06/job-agent && claude plugin install job-agent@job-agent
+```
 
 <p align="center">
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-E8590C"></a>
   <a href="https://github.com/azizu06/job-agent/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/azizu06/job-agent/actions/workflows/ci.yml/badge.svg"></a>
-  <img alt="Platforms: macOS, Windows, Linux" src="https://img.shields.io/badge/platforms-macOS%20%7C%20Windows%20%7C%20Linux-0F1115">
-  <img alt="Works with Claude Code, Codex, Cursor" src="https://img.shields.io/badge/agents-Claude%20Code%20%7C%20Codex%20%7C%20Cursor-0F1115">
+  <img alt="Tested on macOS with Claude Code" src="https://img.shields.io/badge/tested-macOS%20%2B%20Claude%20Code-0F1115">
+  <img alt="Other agents: community-supported" src="https://img.shields.io/badge/other%20agents-community-6E7076">
 </p>
 
 <p align="center">
   <a href="#install">Install</a> ·
   <a href="#quickstart">Quickstart</a> ·
-  <a href="#what-runs-on-its-own">What you do once</a> ·
+  <a href="#answers-in-your-voice">Answers in your voice</a> ·
   <a href="#safety">Safety</a> ·
   <a href="#troubleshooting">Troubleshooting</a> ·
-  <a href="#faq">FAQ</a>
+  <a href="#faq">FAQ</a> ·
+  <a href="#coming-next">Coming next</a>
 </p>
 
-job-agent is a set of skills for your coding agent. It finds new postings, builds a one-page resume for each one from your master resume, and fills the application in your own Chrome. It never invents a fact, and by default it stops at the final Submit button so you can check the form and click it yourself.
+<p align="center">
+  <img src="assets/banner.png" alt="job-agent, apply while you sleep: Claude Code finds jobs, tailors your resume and fills every application in your own Chrome, then submits when you turn auto-submit on." width="100%">
+</p>
+
+job-agent is a Claude Code plugin. It finds new postings, builds a one-page resume for each one from your master resume, writes the written answers in your own voice, and fills the application in your own Chrome. It never invents a fact. It submits for you when you turn auto-submit on, within daily and per-company caps; until then it stops at the final button so you can review each form first.
+
+Claude Code on macOS is the fully tested path. The same skills also load in other agents and on other systems; that is [community-supported](#install), and Windows is experimental.
 
 <p align="center">
   <img src="assets/demo.gif" alt="The agent fills a test application on the localhost mock rig: it reads the feed, checks the posting, types each field, uploads the resume, picks dropdown answers, drafts the essay, ticks the consent box and stops at Submit." width="760">
@@ -36,7 +52,7 @@ flowchart LR
     C -- keep --> D[Tailor<br>resume per job]
     D --> E[Fill<br>one agent per job]
     E --> F{Auto-submit<br>on?}
-    F -- no --> G[Stops at Submit<br>you click it]
+    F -- no --> G[Stops at Submit<br>for review]
     F -- yes --> H[Submits within<br>your caps]
     E -. CAPTCHA or sign-in .-> P[Parked tab<br>you finish it]
     G --> T[(Tracker<br>CSV, Notion, Sheets)]
@@ -52,7 +68,8 @@ flowchart LR
 
 ## You need
 
-- [ ] A coding agent: [Claude Code](https://claude.com/claude-code), Codex, Cursor or [another agent that reads skills](https://github.com/vercel-labs/skills)
+- [ ] A Mac
+- [ ] [Claude Code](https://claude.com/claude-code)
 - [ ] Google Chrome 144 or later (stable). Not Edge, Brave or Arc
 - [ ] Node.js 20.19 or later
 - [ ] Python 3.9 or later
@@ -60,25 +77,46 @@ flowchart LR
 - [ ] A resume, any format. Setup turns it into a master resume
 - [ ] Optional: `pandoc`, `tectonic` and `poppler` to build the resume PDF
 
-New to some of these? [docs/getting-started.md](docs/getting-started.md) installs each one on macOS, Windows and Linux.
+New to some of these? [docs/getting-started.md](docs/getting-started.md) installs each one.
+
+Not on a Mac, or not using Claude Code? See the community-supported routes under [Install](#install).
 
 ## Install
 
-Pick one route.
+In your Mac's Terminal:
 
-| Route | Best for | Run this |
-| --- | --- | --- |
-| **Claude Code plugin** | Claude Code users. Sets up the browser for you | `/plugin marketplace add azizu06/job-agent`<br>`/plugin install job-agent@job-agent` |
-| **Skills CLI** | Codex, Cursor and other agents | `npx skills add azizu06/job-agent` |
-| **Paste the link** | Any agent. It installs and runs setup with you | `https://github.com/azizu06/job-agent set this up` |
+```bash
+claude plugin marketplace add azizu06/job-agent && claude plugin install job-agent@job-agent
+```
 
-The Skills CLI and paste routes also need the browser MCP added to your agent. Setup prints the exact line for your agent.
+Or inside a Claude Code session:
+
+```text
+/plugin marketplace add azizu06/job-agent
+/plugin install job-agent@job-agent
+/reload-plugins
+```
+
+This also gives Claude the browser connection it needs.
+
+<details>
+<summary><b>Other agents (community-supported)</b></summary>
+
+The skills follow the open Agent Skills format, so other agents can load them. These routes are not part of the tested launch path.
+
+| Route | Run this |
+| --- | --- |
+| Skills CLI (Codex, Cursor and others) | `npx skills add azizu06/job-agent` |
+| Paste the link to any agent | `https://github.com/azizu06/job-agent set this up` |
+
+Both also need the browser MCP added to your agent. Setup prints the exact line for your agent. Windows is experimental; Linux works for the main loop without the Mac-only helpers.
+</details>
 
 ## Quickstart
 
-1. **Install** with one of the routes above. In Claude Code, run `/reload-plugins` after.
+1. **Install** with one of the commands above. In a running session, run `/reload-plugins` after.
 2. **Turn on Chrome remote debugging.** Open `chrome://inspect/#remote-debugging` and switch it on. You do this once.
-3. **Run setup:** `/job-agent:setup`. About 10 questions and 10 minutes. It writes nothing until you say yes. In other agents, say "set up job-agent".
+3. **Run setup:** `/job-agent:setup`. About 10 questions and 10 minutes. It writes nothing until you say yes.
 4. **Try a dry run:** `/job-agent:run dry-run`. It scans, tailors and fills, and never presses Submit. When Chrome asks "Allow remote debugging?", click Allow.
 
 When the dry run looks right, use `/job-agent:run`. To repeat it every 4 hours, use `/loop 4h /job-agent:run`.
@@ -101,11 +139,22 @@ Add the Gmail MCP to any of them and the agent finds receipt emails, then moves 
 | --- | --- | --- |
 | Install the plugin or skills | Reads new postings in your JobRight feed | Clear parked tabs: CAPTCHAs, new sign-ins, codes |
 | Turn on Chrome remote debugging | Filters them by title, term, pay, location and age | Answer missing-keyword questions, once per term |
-| Mac only, for walk-away runs: grant Accessibility to the auto-allow helper | Builds a tailored resume for each job | Click Submit, unless you turned on auto-submit |
+| Mac only, for walk-away runs: grant Accessibility to the auto-allow helper | Builds a tailored resume for each job | Review filled forms, until you turn on auto-submit |
 | Create a free JobRight account and sort it by Most Recent | Fills each form in its own tab | Keep the computer on and awake during runs |
 | Give it your resume | Records every job in your tracker | |
 | Answer the setup wizard | Finds receipts and status emails | |
 | Sign in to optional connectors: Gmail, Notion, Sheets | Notifies you when a tab needs you | |
+
+## Answers in your voice
+
+Every written answer ("Why this company?", "Tell us about a project") goes through the `your-voice` skill before it is typed:
+
+1. **Facts only, two angles.** It drafts from your master resume, standing answers and the job description, nothing else. It writes two drafts from different angles and keeps the more specific one.
+2. **A built-in humanizing layer, always on.** It strips the common giveaways of AI writing (filler openers, "not just X but Y", stock words like "leverage", dashes) and applies plain craft moves: answer first, one idea, specific nouns, varied sentences.
+3. **Your voice, if you want it.** Setup asks: "Want answers to sound like you? Paste 2-5 things you've written, or add your own writing rules. Skip to use the humanizing layer only." From your samples it learns your sentence length, openers and the words you use and avoid.
+4. **Checks.** It audits itself (what still reads as AI, which fact you could not defend in an interview), then `writecheck.py` catches dashes, curly quotes, hidden Unicode characters and the form's length limit.
+
+When you edit an answer, it saves the change as a rule in your voice profile, so the next answer starts closer to how you write. Answers you approve are kept as examples, never copied word for word. Nothing is sent to a second model or a paraphrasing website. Your samples stay in `~/.job-agent/voice/` on your computer.
 
 ## Safety
 
@@ -161,7 +210,7 @@ Each job runs in its own agent session that reads page snapshots, tailors a resu
 <details>
 <summary><b>Does it work on Windows? Linux?</b></summary>
 
-Yes, the main loop works on macOS, Windows and Linux, and CI runs the tests on all three. Use `py -3` where the docs say `python3`. Two extras are macOS only: the auto-allow helper for walk-away runs and reading SMS codes. On Windows and Linux you click Chrome's Allow prompt yourself, or use the separate Chrome profile, which never asks.
+The launch is tested on macOS with Claude Code. The skills have Windows and Linux code paths, but Windows is experimental and Linux is community-supported; CI runs the tests on macOS and Ubuntu. On Windows, use `py -3` where the docs say `python3`. Two extras are macOS only: the auto-allow helper for walk-away runs and reading SMS codes. Elsewhere you click Chrome's Allow prompt yourself, or use the separate Chrome profile, which never asks. Full support is listed under [Coming next](#coming-next).
 </details>
 
 <details>
@@ -185,13 +234,19 @@ Setup can start one with you from the [master resume template](skills/job-setup/
 <details>
 <summary><b>Will it lie on my resume or answers?</b></summary>
 
-No. It only rewords and selects from your master resume and your standing answers. A checker fails any tailored resume that contains a number not found in the master. Written answers are drafted from the same sources, and any sentence it had to infer is listed for you to check. Set `written_answers: leave` to write them yourself.
+No. It only rewords and selects from your master resume and your standing answers. A checker fails any tailored resume that contains a number not found in the master. Written answers are drafted from the same sources by the `your-voice` skill, and any sentence it had to infer is listed for you to check. Set `written_answers: leave` to write them yourself.
+</details>
+
+<details>
+<summary><b>Will my answers sound like ChatGPT wrote them?</b></summary>
+
+That is what the `your-voice` skill is for. Each answer goes through a built-in humanizing layer that removes common AI giveaways, then, if you gave samples or rules, a rewrite in your voice, then a character and length check. It learns from every edit you make. It still only uses facts from your resume, so read each answer before you submit, and set `written_answers: leave` if you would rather write them yourself. See [Answers in your voice](#answers-in-your-voice).
 </details>
 
 <details>
 <summary><b>Does it submit on its own?</b></summary>
 
-Not unless you turn on `auto_submit`. By default it fills everything and stops at the final button, and the tracker row says `Ready`. You open the tab, read the form and click Submit.
+Not unless you turn on `auto_submit`. Auto-submit when you turn it on: it presses the final button itself, within your daily and per-company caps, and still stops at CAPTCHAs, sign-in walls and unanswered required questions. It is off by default, so a first run fills everything, stops at the final button for your review, and the tracker row says `Ready`.
 </details>
 
 <details>
@@ -227,8 +282,18 @@ Stop your agent at any time; filled tabs stay open. A submitted application cann
 <details>
 <summary><b>Which coding agents does it work with?</b></summary>
 
-Claude Code gets the smoothest setup, including parallel appliers. Codex, Cursor and any agent that reads skills or Markdown instructions work too, with one job at a time unless your agent can give each worker its own browser connection. Some agents refuse to type passwords or enter codes; those jobs park for you instead of failing.
+Claude Code is the supported, tested agent, including parallel appliers. Codex, Cursor and any agent that reads skills or Markdown instructions can load the skills too; that is community-supported, with one job at a time unless your agent can give each worker its own browser connection. Some agents refuse to type passwords or enter codes; those jobs park for you instead of failing.
 </details>
+
+## Coming next
+
+Wider support ships after launch, in this order of interest:
+
+- Codex and other agents, tested end to end
+- Windows
+- Linux
+
+Want one sooner? Open an issue and say which.
 
 More detail: [docs/how-it-works.md](docs/how-it-works.md). Development and the test rig: [tests/e2e/README.md](tests/e2e/README.md).
 

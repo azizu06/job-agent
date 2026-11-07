@@ -17,7 +17,7 @@ Say this, adjusted to the steps still open:
 
 > Setup takes about 10 minutes. We will: (1) connect me to your Chrome, (2) connect Gmail and pick a tracker, (3) link JobRight, (4) add your resume, (5) set your rules and teach me how you write, (6) run a practice application that stops before Submit.
 >
-> Have ready: Google Chrome 144 or later, Node.js installed, your resume (PDF, Word, or your LinkedIn profile text; no resume is fine too), 2 to 5 things you wrote yourself (essays, cover letters, long emails; optional), a Gmail account, and a free JobRight account (we make one if needed). Optional: a Notion or Google account for the tracker.
+> Have ready: Google Chrome 144 or later, Node.js installed, your resume (PDF, Word, or your LinkedIn profile text; no resume is fine too), optionally 2 to 5 things you wrote yourself (essays, cover letters, long emails), a Gmail account, and a free JobRight account (we make one if needed). Optional: a Notion or Google account for the tracker.
 
 Ask: "Ready?" Then go.
 
@@ -121,10 +121,7 @@ Progress file: `<workspace>/state/setup-progress.json`, like `{"done": ["chrome"
 
 9. **Standing answers** (id `answers`). Why: forms ask the same questions every time. Follow `assets/standing-answers.example.yaml`. EEO answers are optional; default each to "Decline to self-identify". Never guess; blank means the agent asks later.
 
-10. **Your writing voice** (id `voice`). Why: written answers ("why this company", "tell us about a project") should sound like you, not like a chatbot. Follow the "Setup" section of `../your-voice/SKILL.md`:
-    - Ask for 2 to 5 things they wrote themselves: past essays, cover letters, school applications, long messages or emails. Pasted text or file paths both work. Say: "Only things you wrote yourself, not text an AI helped with. I keep them on this computer in your workspace."
-    - Save each to `<workspace>/voice/samples/`, then write `<workspace>/voice/profile.md` from them and show it. Create `<workspace>/voice/approved/` (empty) and `<workspace>/voice/facts.md` (facts they want answers to use that are not in the resume; may stay empty).
-    - No samples: say "Fine, I will start from plain defaults and learn from your edits." Write the default profile from `../your-voice/assets/profile.example.md`.
+10. **Your writing voice** (id `voice`, optional). Why: written answers ("why this company", "tell us about a project") should not read like a chatbot. Every answer already goes through the built-in humanizing layer; this step adds the user's own voice on top. Follow the "Setup" section of `../your-voice/SKILL.md`, which asks: "Want answers to sound like you? Paste 2-5 things you've written, or add your own writing rules. Skip to use the humanizing layer only." Save to `<workspace>/voice/`.
 
 11. **Permissions** (id `permissions`). Ask each as yes/no, say its consequence in one line, show the safe default, write the answer to preferences.
     - **Sign in with Google, Microsoft or LinkedIn on job portals** (`portal_accounts.allow_sso`, default yes). Consequence: uses an account already signed in to your Chrome; only continues past basic profile and email consent screens.
@@ -142,7 +139,7 @@ Progress file: `<workspace>/state/setup-progress.json`, like `{"done": ["chrome"
     - Write both YAML files first and print a short summary (no secrets). Pick one real posting from the JobRight feed that matches the preferences. Run the job-run skill in dry-run mode on that one posting: tailor the resume, open the application, fill every field, stop at Submit without pressing it. Show the filled form and the tailored resume path. If something parks or fails, fix it or give the exact click needed.
 
 14. **Summary screen.** Print:
-    - A checklist of what is set up (Chrome, auto-allow on or off, Gmail, tracker type and location, JobRight feed URL, master resume path, voice profile (from N samples, or defaults), auto_submit, schedule, notifications), each ticked or "not set".
+    - A checklist of what is set up (Chrome, auto-allow on or off, Gmail, tracker type and location, JobRight feed URL, master resume path, voice (profile from N samples or rules, or humanizing layer only), auto_submit, schedule, notifications), each ticked or "not set".
     - How to start: `/job-agent:run dry-run` for another practice, `/job-agent:run` for a real run (other agents: "run the job-run skill").
     - If a schedule is enabled: "Say 'start the schedule' and I will run every <N> hours. Say 'stop the schedule' to end it." Do not start it without a yes.
     - "Run `/job-agent:setup` again any time; finished steps are skipped."
