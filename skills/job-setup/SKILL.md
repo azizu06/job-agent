@@ -85,7 +85,7 @@ Progress file: `<workspace>/state/setup-progress.json`, like `{"done": ["chrome"
 
 6. **JobRight feed** (id `jobright`). Capture the URL yourself; never ask the user to paste it.
    - Why: JobRight is the main source of new postings.
-   - With your browser MCP, open `https://jobright.ai/jobs/recommend` in a new tab with `new_page` (or reuse a JobRight tab the user has open, read-only). Take a snapshot.
+   - With your browser MCP, open `https://jobright.ai/jobs/recommend` in a new tab with `new_page`, keep its page id, and pass it on every call. Always open your own tab, even when the user already has JobRight open: never click, type or change the sort in a tab you did not open. Take a snapshot.
    - Signed in: job cards or a profile avatar show, and the URL stays under `/jobs`. Signed out: redirect to a landing or sign-in page, or "Sign in", "Log in", "Sign up" with no job cards.
    - If signed out, give these steps and wait until they say done:
      1. Go to https://jobright.ai and click Join Now. Make a free account (Sign in with Google works).
@@ -93,7 +93,7 @@ Progress file: `<workspace>/state/setup-progress.json`, like `{"done": ["chrome"
      3. Open **Jobs** in the menu.
      4. Sort the list by **Most Recent**.
      Labels may differ slightly; pick the closest one. Then snapshot again. Never create the account or type credentials for them.
-   - Once signed in, select Most Recent yourself if another sort shows, read the tab URL, save it as `sources.jobright.feed_url`, and confirm the snapshot lists job cards. Tell the user the URL.
+   - Once signed in, if another sort shows, ask: "JobRight sorts your feed by <current sort>. May I switch it to Most Recent? That changes the sort on your JobRight account." On yes, select Most Recent in your own tab. Read the tab URL, save it as `sources.jobright.feed_url`, and confirm the snapshot lists job cards. Tell the user the URL, then close your tab with `close_page`.
    - Dedicated-profile mode: do this in that profile's window.
 
 7. **Master resume** (id `resume`).
