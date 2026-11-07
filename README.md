@@ -68,6 +68,14 @@ When Chrome asks "Allow remote debugging?", click Allow. Read a few filled forms
 /loop 4h /job-agent:run
 ```
 
+### Run it while you're away
+
+Setup asks about each of these, and you can change any of them later by asking your agent.
+
+- **Auto-allow.** Chrome shows "Allow remote debugging?" every time an agent connects, and each job opens its own connection, so a run that fills three forms asks three times. The prompt is Chrome's own safety check and has no off switch. The optional auto-allow helper presses Allow for you, only in the 15 seconds before each of the agent's own connections, and macOS asks you once to give it Accessibility. Say yes in setup, or tell your agent "turn on auto-allow". If you would rather never see the prompt, use the [separate Chrome profile](docs/how-it-works.md#a-separate-profile-alternative), where you sign in to JobRight, Gmail and your portals once.
+- **Auto-submit.** Set `auto_submit: true` once you trust the fills, and the agent presses Submit itself within your caps.
+- **A schedule.** `/loop` repeats while the Claude Code session is open. A [local scheduled task](docs/how-it-works.md#scheduling) runs it with no session open. Keep the Mac plugged in and awake (`caffeinate -dimsu`).
+
 Each run ends with a summary: what it submitted or filled, written answers worth a second look, and parked tabs to clear in one sitting. Every application gets a row in your tracker: a local CSV by default, or [Notion or Google Sheets](docs/how-it-works.md#trackers). Add the Gmail connector and rows move to Assessment, Interview, Offer or Rejected as replies arrive.
 
 ## How it works
@@ -107,7 +115,7 @@ Your profile, resumes, tracker and logs stay in `~/.job-agent/` on your computer
 
 - Built for Claude Code on macOS. Your computer has to stay on, awake and signed in during runs, because the agent drives your local Chrome.
 - Needs Chrome itself on the stable channel. Edge, Brave and Arc do not have the setting it uses.
-- Chrome asks "Allow remote debugging?" for each new agent connection. An optional macOS helper clicks it for walk-away runs.
+- Chrome asks "Allow remote debugging?" for each new agent connection. The optional [auto-allow helper](#run-it-while-youre-away) clicks it for you on a Mac.
 - It never solves a CAPTCHA, never enters an SSN or payment details, never touches a tab it did not open, and never automates LinkedIn or other social sites.
 - Postings that ask applicants not to use AI tools are flagged and never auto-submitted. Set `genai_restriction: skip` to skip them.
 - Automating a website may break its terms, and you are responsible for how you use it. See the [safety rules](docs/how-it-works.md#safety-rules).

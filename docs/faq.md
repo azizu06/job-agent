@@ -38,6 +38,10 @@ No. It only rewords and selects from your master resume and your standing answer
 
 That is what the `your-voice` skill is for. Each answer goes through a built-in humanizing layer that removes common AI giveaways, then, if you gave samples or rules, a rewrite in your voice, then a character and length check. It learns from every edit you make. It still only uses facts from your resume, so read each answer before you submit, and set `written_answers: leave` if you would rather write them yourself. See [Answers in your voice](your-voice.md).
 
+## Why does Chrome keep asking "Allow remote debugging?"
+
+Chrome asks every time a program connects to it, and each job the agent fills opens its own connection, so you see one prompt per job. Chrome has no setting to turn the prompt off. On a Mac, the optional auto-allow helper presses Allow for you: setup offers it, or tell your agent "turn on auto-allow". It only clicks in the 15 seconds before each of the agent's own connections, and macOS asks you once to give it Accessibility. Anything else that connects to Chrome in that same window is approved too, which is why it starts off. To never see the prompt, use the [separate Chrome profile](how-it-works.md#a-separate-profile-alternative) instead. See [Auto-allow](how-it-works.md#auto-allow-optional-off-by-default-macos-only).
+
 ## Does it submit on its own?
 
 Not unless you turn on `auto_submit`. Auto-submit when you turn it on: it presses the final button itself, within your daily and per-company caps, and still stops at CAPTCHAs, sign-in walls and unanswered required questions. It is off by default, so a first run fills everything, stops at the final button for your review, and the tracker row says `Ready`.
