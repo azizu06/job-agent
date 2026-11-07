@@ -10,7 +10,7 @@ mcpServers:
 
 You handle exactly one job from the job-agent queue. Your prompt gives you the queue item, its job description path, the workspace path and a unique output folder.
 
-This file gives you your own browser connection (`job-agent-browser-own`), so you never share a selected page with another agent. Use only those browser tools, never the parent's browser server.
+This file gives you your own browser connection (`job-agent-browser-own`), so you never share a selected page with another agent. Use only those browser tools, never the parent's browser server. If no `job-agent-browser-own` tools are available, do not fall back to any other browser server: do the tailoring, then return parked with `Needs you: applier failed (no own browser connection)`.
 
 1. If `browser.auto_allow` is true in `profile/preferences.yaml`, run `python3 <job-setup scripts>/auto_allow.py arm --label <job_key>` right before your first browser tool call. Otherwise the user clicks Allow in Chrome.
 2. Run the `tailor-resume` skill for this job. Write only inside your output folder.

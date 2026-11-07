@@ -44,5 +44,20 @@ class SetupWorkspace(unittest.TestCase):
         self.assertIn("never replace an existing file with an empty one", self.text)
 
 
+class LongAnswersAreTyped(unittest.TestCase):
+    def test_apply_fill_types_long_values(self):
+        text = (SKILLS / "apply-fill" / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("100 characters or more", text)
+        self.assertIn("never `fill`", text)
+
+
+class ApplierOwnConnection(unittest.TestCase):
+    def test_applier_never_borrows_the_parent_browser(self):
+        text = (SKILLS / "job-setup" / "assets" / "job-applier.md").read_text(encoding="utf-8")
+        self.assertIn("do not fall back to any other browser server", text)
+        run = (SKILLS / "job-run" / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("return parked instead of using the orchestrator's", run)
+
+
 if __name__ == "__main__":
     unittest.main()
