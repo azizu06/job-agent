@@ -72,7 +72,7 @@ python3 skills/tailor-resume/scripts/resume_check.py --master master.md --resume
 
 Chrome asks every time a new debugging connection starts. Each applier opens its own connection so agents never get in each other's way, which means one prompt per applier. During a session Chrome shows a banner that it is being controlled by automated software.
 
-The Claude Code plugin sets up the MCP for you (chrome-devtools-mcp 1.10.1, the version this repo was tested with). For other agents, add:
+The Claude Code plugin sets up the MCP for you (chrome-devtools-mcp 1.10.1). For other agents, add:
 
 ```
 npx -y chrome-devtools-mcp@1.10.1 --autoConnect --no-usage-statistics --workspace=$HOME/.job-agent
@@ -97,7 +97,7 @@ For runs with nobody at the keyboard, [`auto_allow.py`](../skills/job-setup/scri
 - Turning it on installs a per-user LaunchAgent (`~/Library/LaunchAgents/io.github.azizu06.job-agent.auto-allow.plist`). Turning it off unloads and removes it.
 - Grant Accessibility to the Python binary the enable step prints: System Settings > Privacy & Security > Accessibility, press +, then Cmd-Shift-G to paste the path.
 - It finds Chrome's prompt by its English text, so Chrome must be in English.
-- Windows: not supported yet. Linux: not available. Click Allow yourself, or use a separate profile.
+- The helper is a macOS feature. On other systems, click Allow yourself or use a separate profile.
 
 To turn it on, ask your agent "turn on auto-allow". To turn it off, "turn off auto-allow".
 
@@ -167,6 +167,6 @@ python3 -m unittest discover -s tests
 claude plugin validate .
 ```
 
-The tests include an end-to-end rig: a mock job feed, Greenhouse-shaped and Workday-shaped forms, mocked Google sign-in, a CAPTCHA posting and a mock inbox, all on localhost. It also runs the full loop through a real agent with auto-submit on. See [`tests/e2e/README.md`](../tests/e2e/README.md).
+The suite includes end-to-end tests that run the full loop, from feed to tracker, against local Greenhouse and Workday forms, Google sign-in, a CAPTCHA page and an inbox. See [`tests/e2e/README.md`](../tests/e2e/README.md).
 
-The README banner and demo GIF are built from files in [`assets/src/`](../assets/src/): `banner.html` is rendered with headless Chrome at 1280x640, and the GIF frames are captured from the e2e rig by `demo-drive.mjs` and composed by `demo-compose.py`.
+The README banner and demo are built from files in [`assets/src/`](../assets/src/): `banner.html` is rendered with headless Chrome at 1280x640. The demo frames are captured by `demo-capture.py` while job-agent fills a live Greenhouse application in Chrome (it never presses Submit), and `demo-compose.py` adds the cursor, status pill and contact blur, then writes `demo.gif` and `demo.mp4`.

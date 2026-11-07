@@ -1,74 +1,259 @@
-"""Compose demo GIF frames: browser window + step caption, one accent colour."""
+"""Compose the README demo from frames captured by demo-capture.py.
+
+Adds an animated cursor with click ripples, a status pill, character-by-
+character typing reveals between captured frames, a blur over contact fields,
+and a closing card. Writes numbered PNG frames for ffmpeg.
+
+    python3 demo-compose.py <capture_dir> <out_frames_dir> [--fps 20] [--encode <assets_dir>]
+"""
 import json
+import math
 import sys
 from pathlib import Path
-from PIL import Image, ImageDraw, ImageFont
 
-FR = Path(sys.argv[1])
+import numpy as np
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
+
+CAP = Path(sys.argv[1])
 OUT = Path(sys.argv[2])
-INK, PAPER, ACCENT, LINE, MUTED = (15, 17, 21), (247, 245, 240), (232, 89, 12), (222, 218, 208), (110, 112, 118)
+FPS = int(sys.argv[sys.argv.index("--fps") + 1]) if "--fps" in sys.argv else 20
+OUT.mkdir(parents=True, exist_ok=True)
+for old in OUT.glob("*.png"):
+    old.unlink()
+
+INK, PAPER, ACCENT = (15, 17, 21), (247, 245, 240), (232, 89, 12)
 SF = "/System/Library/Fonts/SFNS.ttf"
-MONO = "/System/Library/Fonts/SFNSMono.ttf"
 
 
-def font(path, size, weight=None):
-    f = ImageFont.truetype(path, size)
-    if weight:
-        try:
-            f.set_variation_by_axes([100, min(max(size,17),96), 400, weight])
-        except Exception:
-            pass
+def font(size, weight):
+    f = ImageFont.truetype(SF, size)
+    try:
+        f.set_variation_by_axes([weight, min(max(size, 17), 96)])
+    except Exception:
+        pass
     return f
 
 
-f_cap = font(SF, 22, 600)
-f_step = font(SF, 15, 700)
-f_url = font(MONO, 13)
+F_PILL = font(14, 650)
+F_STEP = font(13, 500)
+F_END = font(30, 720)
+F_END2 = font(17, 500)
 
-frames = json.loads((FR / "frames.json").read_text())
-VW, VH = 820, 560
-M, TB, CB = 28, 40, 64
-CW, CH = VW + 2 * M, M + TB + VH + CB + 10
-STEPS = ["Scan", "Filter", "Fill", "Upload", "Dropdowns", "Essay", "Consent", "Stops"]
+meta = json.loads((CAP / "meta.json").read_text())
+COMPANY, ROLE = meta["company"], meta["role"]
+man = json.loads((CAP / "manifest.json").read_text())
 
-out, durs = [], []
-for fr in frames:
-    shot = Image.open(fr["file"]).convert("RGB").resize((VW, VH), Image.LANCZOS)
-    c = Image.new("RGB", (CW, CH), PAPER)
-    d = ImageDraw.Draw(c)
-    x0, y0 = M, M
-    # window shell
-    d.rounded_rectangle([x0 - 1, y0 - 1, x0 + VW + 1, y0 + TB + VH + 1], 12, fill=LINE)
-    d.rounded_rectangle([x0, y0, x0 + VW, y0 + TB + 12], 11, fill=(236, 233, 226))
-    d.rectangle([x0, y0 + TB, x0 + VW, y0 + TB + VH], fill="white")
-    for i, col in enumerate([(205, 200, 190)] * 3):
-        d.ellipse([x0 + 16 + i * 18, y0 + 15, x0 + 26 + i * 18, y0 + 25], fill=col)
-    d.rounded_rectangle([x0 + 90, y0 + 9, x0 + VW - 90, y0 + 31], 7, fill="white")
-    url = fr["url"].replace("http://", "")
-    d.text((x0 + 104, y0 + 13), url, font=f_url, fill=MUTED)
-    c.paste(shot, (x0, y0 + TB))
-    # caption
-    cap = fr["caption"]
-    head, _, rest = cap.partition(":")
-    cy = y0 + TB + VH + 20
-    if rest:
-        tag = head.strip().upper()
-        tw = d.textlength(tag, font=f_step)
-        d.rounded_rectangle([x0, cy, x0 + tw + 20, cy + 28], 6, fill=ACCENT)
-        d.text((x0 + 10, cy + 5), tag, font=f_step, fill="white")
-        r = rest.strip(); d.text((x0 + tw + 34, cy + 1), r[:1].upper() + r[1:], font=f_cap, fill=INK)
+
+def blur_masks(img, e):
+    rects = list(e.get("masks", []))
+    if e.get("loc_menu"):
+        rects.append(e["loc_menu"])
+    for r in rects:
+        x, y, w, h = [int(round(v)) for v in r]
+        x0, y0, x1, y1 = max(x, 0), max(y, 0), min(x + w, img.width), min(y + h, img.height)
+        if x1 <= x0 or y1 <= y0:
+            continue
+        region = img.crop((x0, y0, x1, y1)).filter(ImageFilter.GaussianBlur(9))
+        region = region.filter(ImageFilter.GaussianBlur(9))
+        img.paste(region, (x0, y0))
+    return img
+
+
+cache = {}
+
+
+def load(i):
+    if i not in cache:
+        e = man[i]
+        img = Image.open(e["img"]).convert("RGB")
+        cache[i] = blur_masks(img, e)
+    return cache[i]
+
+
+frames = []  # (base PIL image, cursor xy, ripple t or None, status, end card alpha)
+
+
+def emit(img, cur, status, ripple=None, end=0.0):
+    frames.append((img, cur, ripple, status, end))
+
+
+def center(r, left=False):
+    x, y, w, h = r
+    return (x + min(60, w * 0.3), y + h * 0.6) if left else (x + w / 2, y + h / 2)
+
+
+def ease(t):
+    return t * t * (3 - 2 * t)
+
+
+def reveal(a, b, steps):
+    """Yield images that reveal the pixels that differ from a to b in reading order."""
+    A = np.asarray(a, dtype=np.int16)
+    B = np.asarray(b, dtype=np.int16)
+    diff = np.abs(A - B).max(axis=2) > 24
+    ys, xs = np.nonzero(diff)
+    if len(ys) == 0 or len(ys) > 400_000:
+        yield b
+        return
+    band = (ys - ys.min()) // 20
+    order = np.lexsort((xs, band))
+    key = np.empty(len(ys), dtype=np.int64)
+    key[order] = np.arange(len(ys))
+    for k in range(1, steps + 1):
+        lim = len(ys) * k / steps
+        sel = key < lim
+        out = A.copy()
+        out[ys[sel], xs[sel]] = B[ys[sel], xs[sel]]
+        yield Image.fromarray(out.astype(np.uint8))
+
+
+FAST = ("Education", "Eligibility", "Final questions", "Links")
+speed = [1.0]
+
+
+def secs(s):
+    return max(1, int(round(s * speed[0] * FPS)))
+
+
+cur = (480.0, 700.0)
+prev_img = None
+prev_i = None
+for i, e in enumerate(man):
+    img = load(i)
+    k, status = e["kind"], e["status"]
+    tgt = e.get("t")
+    speed[0] = 0.6 if status in FAST else 1.0
+    if k == "hold":
+        for _ in range(secs(0.8)):
+            emit(img, cur, status)
+    elif k == "read":
+        for _ in range(secs(0.9)):
+            emit(img, cur, status)
+    elif k == "scroll":
+        n = secs(0.24)
+        delta = int(round(e["sy"] - man[prev_i]["sy"]))
+        H = img.height
+        for s in range(n):
+            t = ease((s + 1) / n)
+            if 0 < delta < H:
+                sh = int(round(delta * t))
+                fr = Image.new("RGB", img.size)
+                fr.paste(prev_img.crop((0, sh, img.width, H)), (0, 0))
+                fr.paste(img.crop((0, H - delta, img.width, H - delta + sh)), (0, H - sh))
+            elif delta >= H:
+                sh = int(round(H * t))
+                fr = Image.new("RGB", img.size)
+                fr.paste(prev_img.crop((0, sh, img.width, H)), (0, 0))
+                fr.paste(img.crop((0, 0, img.width, sh)), (0, H - sh))
+            else:
+                fr = Image.blend(prev_img, img, t)
+            emit(fr, (cur[0], cur[1]), status)
+    elif k in ("move", "menu", "final"):
+        dest = center(tgt, left=(k == "move" and tgt[2] > 300))
+        n = secs(0.26 if k != "menu" else 0.2)
+        start = cur
+        for s in range(n):
+            t = ease((s + 1) / n)
+            p = (start[0] + (dest[0] - start[0]) * t, start[1] + (dest[1] - start[1]) * t - math.sin(t * math.pi) * 18)
+            emit(img, p, status)
+        cur = dest
+        if k == "final":
+            speed[0] = 1.0
+            for _ in range(secs(0.6)):
+                emit(img, cur, "Ready to submit")
+            n = secs(0.3)
+            for s in range(n):
+                emit(img, cur, "Ready to submit", end=(s + 1) / n)
+            for _ in range(secs(1.9)):
+                emit(img, cur, "Ready to submit", end=1.0)
+        else:
+            nr = secs(0.14)
+            for s in range(nr):
+                emit(img, cur, status, ripple=(s + 1) / (nr + 1))
+    elif k == "type":
+        base = prev_img
+        last = man[i - 1].get("typed", 0) if man[i - 1]["kind"] == "type" else 0
+        chars = max(1, e.get("typed", last + 4) - last)
+        steps = max(1, min(4, chars // 4))
+        if "Writing" in status:
+            steps = 3
+        for im in reveal(base, img, steps):
+            emit(im, cur, status)
+    elif k in ("picked",):
+        for _ in range(secs(0.14)):
+            emit(img, cur, status)
     else:
-        d.rounded_rectangle([x0, cy, x0 + 14, cy + 28], 4, fill=ACCENT)
-        d.text((x0 + 26, cy + 1), cap, font=f_cap, fill=INK)
-    out.append(c)
-    durs.append(int(fr["hold"]) * 260)
+        emit(img, cur, status)
+    prev_img, prev_i = img, i
 
-# palette shared across frames for stable colours
-pal_src = Image.new("RGB", (CW, CH * 3))
-for i, k in enumerate([0, len(out) // 2, len(out) - 1]):
-    pal_src.paste(out[k], (0, CH * i))
-pal = pal_src.quantize(colors=128, method=Image.MEDIANCUT)
-q = [im.quantize(palette=pal, dither=Image.NONE) for im in out]
-q[0].save(OUT, save_all=True, append_images=q[1:], duration=durs, loop=0, optimize=True, disposal=1)
-print(OUT, OUT.stat().st_size // 1024, "KB", len(q), "frames", sum(durs) / 1000, "s")
-out[-1].save(OUT.with_name("demo-last.png"))
+
+# ---------- overlay drawing ----------
+def cursor_layer(draw, p):
+    x, y = p
+    pts = [(0, 0), (0, 22), (5.5, 17), (9.5, 26), (13, 24.5), (9, 16), (16, 16)]
+    poly = [(x + a, y + b) for a, b in pts]
+    draw.polygon([(px + 1.5, py + 2) for px, py in poly], fill=(0, 0, 0, 60))
+    draw.polygon(poly, fill=(15, 17, 21, 255), outline=(255, 255, 255, 255), width=2)
+
+
+def pill(draw, status):
+    title = f"job-agent · filling {COMPANY} · {ROLE}"
+    tw = draw.textlength(title, font=F_PILL)
+    sw = draw.textlength(status, font=F_STEP)
+    w = int(max(tw, sw + 22) + 44)
+    x1 = 944
+    x0 = x1 - w
+    y0, y1 = 16, 70
+    draw.rounded_rectangle((x0 + 2, y0 + 3, x1 + 2, y1 + 3), 14, fill=(0, 0, 0, 40))
+    draw.rounded_rectangle((x0, y0, x1, y1), 14, fill=INK + (245,))
+    draw.ellipse((x0 + 16, y0 + 15, x0 + 26, y0 + 25), fill=ACCENT + (255,))
+    draw.text((x0 + 34, y0 + 11), title, font=F_PILL, fill=(255, 255, 255, 255))
+    draw.text((x0 + 34, y0 + 32), status, font=F_STEP, fill=(214, 210, 200, 255))
+
+
+def end_card(draw, a):
+    if a <= 0:
+        return
+    W, H = 960, 800
+    w, h = 580, 116
+    x0, y0 = (W - w) // 2, 250
+    al = int(250 * a)
+    draw.rounded_rectangle((x0 + 3, y0 + 5, x0 + w + 3, y0 + h + 5), 18, fill=(0, 0, 0, int(50 * a)))
+    draw.rounded_rectangle((x0, y0, x0 + w, y0 + h), 18, fill=PAPER + (al,), outline=INK + (al,), width=2)
+    draw.rectangle((x0 + 28, y0 + 28, x0 + 34, y0 + h - 28), fill=ACCENT + (al,))
+    draw.text((x0 + 52, y0 + 24), "Stopped at Submit.", font=F_END, fill=INK + (al,))
+    draw.text((x0 + 52, y0 + 68), "You're in control. Auto-submit is off by default.", font=F_END2, fill=(70, 72, 78, al))
+
+
+for n, (img, p, rip, status, end) in enumerate(frames):
+    canvas = img.convert("RGBA")
+    ov = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
+    d = ImageDraw.Draw(ov)
+    if rip is not None:
+        r = 6 + 22 * rip
+        a = int(200 * (1 - rip))
+        d.ellipse((p[0] - r, p[1] - r, p[0] + r, p[1] + r), outline=ACCENT + (a,), width=3)
+        d.ellipse((p[0] - 7, p[1] - 7, p[0] + 7, p[1] + 7), fill=ACCENT + (int(110 * (1 - rip)),))
+    pill(d, status)
+    end_card(d, end)
+    cursor_layer(d, p)
+    Image.alpha_composite(canvas, ov).convert("RGB").save(OUT / f"{n:05d}.png")
+
+print(f"{len(frames)} frames, {len(frames) / FPS:.1f}s at {FPS} fps")
+
+
+# ---------- encode ----------
+if "--encode" in sys.argv:
+    import subprocess
+
+    dest = Path(sys.argv[sys.argv.index("--encode") + 1])
+    gif_w = int(sys.argv[sys.argv.index("--gif-width") + 1]) if "--gif-width" in sys.argv else 880
+    gif_fps = int(sys.argv[sys.argv.index("--gif-fps") + 1]) if "--gif-fps" in sys.argv else 15
+    src = ["-framerate", str(FPS), "-i", str(OUT / "%05d.png")]
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", *src, "-c:v", "libx264", "-pix_fmt", "yuv420p",
+                    "-crf", "18", "-preset", "slow", "-movflags", "+faststart", str(dest / "demo.mp4")], check=True)
+    vf = (f"fps={gif_fps},scale={gif_w}:-1:flags=lanczos,split[a][b];"
+          "[a]palettegen=max_colors=96:stats_mode=diff[p];[b][p]paletteuse=dither=none:diff_mode=rectangle")
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", *src, "-vf", vf, "-loop", "0", str(dest / "demo.gif")], check=True)
+    for f in ("demo.mp4", "demo.gif"):
+        print(f, f"{(dest / f).stat().st_size / 1e6:.2f} MB")

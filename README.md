@@ -14,8 +14,7 @@ claude plugin marketplace add azizu06/job-agent && claude plugin install job-age
 <p align="center">
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-E8590C"></a>
   <a href="https://github.com/azizu06/job-agent/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/azizu06/job-agent/actions/workflows/ci.yml/badge.svg"></a>
-  <img alt="Tested on macOS with Claude Code" src="https://img.shields.io/badge/tested-macOS%20%2B%20Claude%20Code-0F1115">
-  <img alt="Other agents: community-supported" src="https://img.shields.io/badge/other%20agents-community-6E7076">
+  <img alt="Built for Claude Code on macOS" src="https://img.shields.io/badge/built%20for-Claude%20Code%20on%20macOS-0F1115">
 </p>
 
 <p align="center">
@@ -34,12 +33,12 @@ claude plugin marketplace add azizu06/job-agent && claude plugin install job-age
 
 job-agent is a Claude Code plugin. It finds new postings, builds a one-page resume for each one from your master resume, writes the written answers in your own voice, and fills the application in your own Chrome. It never invents a fact. It submits for you when you turn auto-submit on, within daily and per-company caps; until then it stops at the final button so you can review each form first.
 
-Claude Code on macOS is the fully tested path. The same skills also load in other agents and on other systems; that is [community-supported](#install), and Windows is experimental.
+Built for Claude Code on macOS.
 
 <p align="center">
-  <img src="assets/demo.gif" alt="The agent fills a test application on the localhost mock rig: it reads the feed, checks the posting, types each field, uploads the resume, picks dropdown answers, drafts the essay, ticks the consent box and stops at Submit." width="760">
+  <img src="assets/demo.gif" alt="job-agent fills a Vercel Software Engineering Intern application on Greenhouse in Chrome: it reads the form, types each field, uploads the resume, answers every dropdown, writes the why-Vercel answer and stops at Submit." width="760">
   <br>
-  <sub>A real run on the built-in test rig. Every page is on localhost and every value is fake.</sub>
+  <sub>job-agent filling a Vercel internship application in Chrome, then stopping at Submit. Contact details are blurred.</sub>
 </p>
 
 ## How it works
@@ -79,8 +78,6 @@ flowchart LR
 
 New to some of these? [docs/getting-started.md](docs/getting-started.md) installs each one.
 
-Not on a Mac, or not using Claude Code? See the community-supported routes under [Install](#install).
-
 ## Install
 
 In your Mac's Terminal:
@@ -99,18 +96,7 @@ Or inside a Claude Code session:
 
 This also gives Claude the browser connection it needs.
 
-<details>
-<summary><b>Other agents (community-supported)</b></summary>
-
-The skills follow the open Agent Skills format, so other agents can load them. These routes are not part of the tested launch path.
-
-| Route | Run this |
-| --- | --- |
-| Skills CLI (Codex, Cursor and others) | `npx skills add azizu06/job-agent` |
-| Paste the link to any agent | `https://github.com/azizu06/job-agent set this up` |
-
-Both also need the browser MCP added to your agent. Setup prints the exact line for your agent. Windows is experimental; Linux works for the main loop without the Mac-only helpers.
-</details>
+Using another agent? The skills follow the open Agent Skills format, so `npx skills add azizu06/job-agent` loads them in Codex, Cursor and others, one job at a time; full support for them is on the [roadmap](#coming-next).
 
 ## Quickstart
 
@@ -180,7 +166,6 @@ Full rules: [docs/how-it-works.md](docs/how-it-works.md#safety-rules).
 | Jobs run one at a time | The `job-applier` subagent is missing. Run setup again; it copies the file to `~/.claude/agents/` |
 | A scheduled run stops at the first prompt | Headless runs need tools pre-approved. Copy the allow-list from [skills/job-run/SKILL.md](skills/job-run/SKILL.md) |
 | Auto-allow clicks nothing | Grant Accessibility to the Python path that `enable` printed, and set Chrome's language to English |
-| `python3` is not found on Windows | Use `py -3` wherever the docs say `python3` |
 | No resume PDF, only a `.md` or `.tex` file | Install `pandoc`, `tectonic` and `poppler`. Without them the agent hands you the source file |
 | A form shows "needs corrections" after filling | The portal ignored a field. The agent re-reads every field before it calls a form ready; if it flags one, fix it by hand |
 | Most jobs park as `Needs you: sign-in` | Sign in to Google in that Chrome, and keep Sign in with Google allowed in setup. Workday needs one account per company |
@@ -204,13 +189,13 @@ job-agent is free and MIT licensed. JobRight's free account works. The cost is y
 <details>
 <summary><b>What does it cost in tokens?</b></summary>
 
-Each job runs in its own agent session that reads page snapshots, tailors a resume and fills the form, so cost grows with the number of jobs and the length of each form. One measured run on the test rig with Claude Sonnet: 5 postings, 3 forms filled, about 11 million mostly cached input tokens and 29,000 output tokens, about $2.80 at API list prices. Real portals have longer pages, so expect more per job. On a Claude Pro or Max plan this counts toward your usage limit instead of a bill. Start with a dry run on a few jobs and check your usage before you schedule it.
+Each job runs in its own agent session that reads the page, tailors a resume and fills the form, so cost scales with how many jobs you run and how long each form is. On a Claude Pro or Max plan it counts toward your plan's usage limit, not a separate bill. To see your real number, do a dry run on a few jobs and check your usage before you schedule it.
 </details>
 
 <details>
 <summary><b>Does it work on Windows? Linux?</b></summary>
 
-The launch is tested on macOS with Claude Code. The skills have Windows and Linux code paths, but Windows is experimental and Linux is community-supported; CI runs the tests on macOS and Ubuntu. On Windows, use `py -3` where the docs say `python3`. Two extras are macOS only: the auto-allow helper for walk-away runs and reading SMS codes. Elsewhere you click Chrome's Allow prompt yourself, or use the separate Chrome profile, which never asks. Full support is listed under [Coming next](#coming-next).
+job-agent is built for Claude Code on macOS, and CI runs the test suite on macOS and Ubuntu. Windows and Linux are next on the [roadmap](#coming-next). The auto-allow helper for walk-away runs and reading SMS codes use macOS features.
 </details>
 
 <details>
@@ -282,20 +267,18 @@ Stop your agent at any time; filled tabs stay open. A submitted application cann
 <details>
 <summary><b>Which coding agents does it work with?</b></summary>
 
-Claude Code is the supported, tested agent, including parallel appliers. Codex, Cursor and any agent that reads skills or Markdown instructions can load the skills too; that is community-supported, with one job at a time unless your agent can give each worker its own browser connection. Some agents refuse to type passwords or enter codes; those jobs park for you instead of failing.
+Claude Code, including parallel appliers, one per job. Codex, Cursor and other agents that read skills can load them too and run one job at a time; first-class support for them is on the [roadmap](#coming-next).
 </details>
 
 ## Coming next
 
-Wider support ships after launch, in this order of interest:
-
-- Codex and other agents, tested end to end
+- Codex and other agents, with parallel appliers
 - Windows
 - Linux
 
 Want one sooner? Open an issue and say which.
 
-More detail: [docs/how-it-works.md](docs/how-it-works.md). Development and the test rig: [tests/e2e/README.md](tests/e2e/README.md).
+More detail: [docs/how-it-works.md](docs/how-it-works.md). Development: [tests/e2e/README.md](tests/e2e/README.md).
 
 ---
 
