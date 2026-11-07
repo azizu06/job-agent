@@ -158,5 +158,32 @@ class RecordSubmitTests(unittest.TestCase):
         self.assertTrue(any("absolute" in p for p in probs))
 
 
+class LoopAdditions(unittest.TestCase):
+    def test_new_statuses_and_columns(self):
+        rows = []
+        tc.add(rows, {"company": "Acme", "req_id": "R1", "status": "Discovered", "pay": "$45/hr", "location": "New York, NY"})
+        tc.update(rows, "Acme", "R1", "", {"status": "Ghosted"})
+        self.assertEqual(rows[0]["status"], "Ghosted")
+        self.assertEqual(rows[0]["pay"], "$45/hr")
+        self.assertIn("applied_at", tc.COLUMNS)
+
+    def test_receipt_for_a_role_the_loop_did_not_fill(self):
+        rows = []
+        row = tc.record_submit(rows, {"company": "Acme", "req_id": "R7", "role": "SWE Intern"}, "", "",
+                               receipt_id="msg-7", not_filled=True)
+        self.assertEqual(row["status"], "Submitted")
+        self.assertIn(tc.NOT_FILLED, row["notes"])
+        self.assertEqual(tc.audit(rows), [])
+        with self.assertRaises(ValueError):
+            tc.record_submit(rows, {"company": "Acme", "req_id": "R8"}, "", "", receipt_id="msg-8")
+
+    def test_reconcile_finds_receipts_without_rows(self):
+        rows = [{"company": "Acme", "req_id": "R1", "role": "x", "status": "Submitted", "receipt_id": ""}]
+        res = tc.reconcile(rows, [{"company": "Acme", "req_id": "R1", "id": "m1"},
+                                  {"company": "Acme", "req_id": "R2", "id": "m2"}])
+        self.assertEqual([r["id"] for r in res["receipts_without_row"]], ["m2"])
+        self.assertEqual(res["rows_missing_receipt"][0]["receipt"], "m1")
+
+
 if __name__ == "__main__":
     unittest.main()

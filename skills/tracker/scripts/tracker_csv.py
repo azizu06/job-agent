@@ -33,10 +33,15 @@ import re
 import sys
 from pathlib import Path
 
-COLUMNS = ["company", "role", "req_id", "link", "date", "resume_used", "status", "receipt_id", "notes"]
+COLUMNS = ["company", "role", "req_id", "link", "date", "resume_used", "status", "receipt_id", "notes",
+           "applied_at", "pay", "location"]
 # Ready means filled and waiting for the human to press Submit.
 # "Needs you: <reason>" means the applier parked the tab for the human.
-STATUSES = ["Ready", "Submitted", "Assessment", "Interview", "Offer", "Rejected", "Withdrawn"]
+# Discovered is an optional row for a posting you want tracked before it is filled.
+# Ghosted is a sent application with no reply after a long wait (the user sets it).
+# With tracker.rows_for_unsubmitted: false, only sent applications get rows;
+# Ready and parked jobs live in the apply queue instead.
+STATUSES = ["Discovered", "Ready", "Submitted", "Assessment", "Interview", "Offer", "Rejected", "Ghosted", "Withdrawn"]
 
 _SUFFIXES = re.compile(r"\b(inc|llc|ltd|corp|corporation|co|company|plc|gmbh)\b\.?", re.IGNORECASE)
 
@@ -149,13 +154,25 @@ def check_resume(path: str) -> str:
 
 READ_BACK = "read-back: "
 # Statuses that mean the application was sent; such rows need proof.
-SENT = {"Submitted", "Assessment", "Interview", "Offer", "Rejected"}
+SENT = {"Submitted", "Assessment", "Interview", "Offer", "Rejected", "Ghosted"}
+NOT_FILLED = "receipt for a role the loop did not fill"
 
 
 def record_submit(rows: list[dict], ident: dict, resume_used: str, read_back: str, link: str = "",
-                  date: str = "", receipt_id: str = "", inbox: str = "", since: str | None = None) -> dict:
-    """Write or update the row for a pressed final control, with receipt and resume proof."""
-    check_resume(resume_used)
+                  date: str = "", receipt_id: str = "", inbox: str = "", since: str | None = None,
+                  applied_at: str = "", pay: str = "", location: str = "", not_filled: bool = False) -> dict:
+    """Write or update the row for a pressed final control, with receipt and resume proof.
+
+    not_filled: a receipt arrived for a role the loop did not fill (the user
+    applied on their own). It is still logged, flagged in notes, and the
+    resume and read-back proofs are not required.
+    """
+    if not_filled:
+        if resume_used:
+            check_resume(resume_used)
+        read_back = read_back or "none (not filled by the loop)"
+    else:
+        check_resume(resume_used)
     if not read_back:
         raise ValueError("read_back is required: the state/submissions/<job_key>.json path")
     if not receipt_id and inbox:
@@ -164,10 +181,15 @@ def record_submit(rows: list[dict], ident: dict, resume_used: str, read_back: st
                                       ident.get("req_id", ""), ident.get("role", ""), since)
         receipt_id = msg["id"] if msg else ""
     row, _ = add(rows, dict(ident, link=link, date=date, status="Submitted"))
-    old_notes = [n for n in row.get("notes", "").split(" | ") if n and not n.startswith(READ_BACK) and n != "no receipt yet"]
-    notes = [READ_BACK + read_back] + old_notes + ([] if receipt_id else ["no receipt yet"])
-    row.update({"status": "Submitted", "resume_used": resume_used, "receipt_id": receipt_id or row.get("receipt_id", ""),
-                "notes": " | ".join(notes)})
+    old_notes = [n for n in row.get("notes", "").split(" | ")
+                 if n and not n.startswith(READ_BACK) and n not in ("no receipt yet", NOT_FILLED)]
+    notes = [READ_BACK + read_back] + old_notes + ([] if receipt_id else ["no receipt yet"]) + ([NOT_FILLED] if not_filled else [])
+    row.update({"status": "Submitted", "resume_used": resume_used or row.get("resume_used", ""),
+                "receipt_id": receipt_id or row.get("receipt_id", ""), "notes": " | ".join(notes),
+                "applied_at": applied_at or row.get("applied_at", "") or dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat()})
+    for col, value in (("pay", pay), ("location", location)):
+        if value:
+            row[col] = value
     if link:
         row["link"] = link
     return row
@@ -182,16 +204,38 @@ def audit(rows: list[dict]) -> list[str]:
         name = f"{row['company']} {row.get('req_id') or row.get('role')}".strip()
         if not row.get("receipt_id") and "no receipt yet" not in row.get("notes", ""):
             problems.append(f"{name}: receipt_id is empty and notes do not say 'no receipt yet'")
-        try:
-            check_resume(row.get("resume_used", ""))
-        except ValueError as exc:
-            problems.append(f"{name}: {exc}")
+        if NOT_FILLED in row.get("notes", "") and not row.get("resume_used"):
+            pass  # the user applied by hand; there is no uploaded file of ours to prove
+        else:
+            try:
+                check_resume(row.get("resume_used", ""))
+            except ValueError as exc:
+                problems.append(f"{name}: {exc}")
         if not row.get("notes", "").startswith(READ_BACK):
             problems.append(f"{name}: notes do not start with the read-back path")
     return problems
 
 
 NEEDS_YOU = "Needs you: "  # parked for the human, for example "Needs you: captcha"
+
+
+def reconcile(rows: list[dict], receipts: list[dict]) -> dict:
+    """Compare receipts found in email with tracker rows.
+
+    receipts: [{"company", "req_id", "role", "id", "date"}]. Returns receipts
+    with no row (log them, flagged if the loop did not fill them), rows whose
+    receipt_id is empty although a receipt exists, and the matches.
+    """
+    missing, unreceipted, matched = [], [], []
+    for rc in receipts:
+        row = find(rows, rc.get("company", ""), rc.get("req_id", ""), "" if rc.get("req_id") else rc.get("role", ""))
+        if row is None:
+            missing.append(rc)
+        elif not row.get("receipt_id"):
+            unreceipted.append({"row": f"{row['company']} {row.get('req_id') or row.get('role')}", "receipt": rc.get("id")})
+        else:
+            matched.append(rc.get("id"))
+    return {"receipts_without_row": missing, "rows_missing_receipt": unreceipted, "matched": matched}
 
 
 def _check_status(status: str) -> None:
@@ -214,7 +258,7 @@ def main(argv: list[str] | None = None) -> int:
 
     p_add = sub.add_parser("add")
     ident(p_add)
-    for col in ("link", "date", "resume-used", "status", "receipt-id", "notes"):
+    for col in ("link", "date", "resume-used", "status", "receipt-id", "notes", "pay", "location"):
         p_add.add_argument("--" + col, default="")
 
     p_find = sub.add_parser("find")
@@ -222,7 +266,7 @@ def main(argv: list[str] | None = None) -> int:
 
     p_up = sub.add_parser("update")
     ident(p_up)
-    for col in ("link", "date", "resume-used", "status", "receipt-id", "notes"):
+    for col in ("link", "date", "resume-used", "status", "receipt-id", "notes", "pay", "location"):
         p_up.add_argument("--" + col, default=None)
 
     p_count = sub.add_parser("count")
@@ -233,13 +277,21 @@ def main(argv: list[str] | None = None) -> int:
 
     p_rec = sub.add_parser("record-submit", help="write the row for a pressed final control")
     ident(p_rec)
-    p_rec.add_argument("--resume-used", required=True, help="absolute path of the uploaded PDF")
-    p_rec.add_argument("--read-back", required=True, help="state/submissions/<job_key>.json path")
+    p_rec.add_argument("--resume-used", default="", help="absolute path of the uploaded PDF (required unless --not-filled)")
+    p_rec.add_argument("--read-back", default="", help="state/submissions/<job_key>.json path (required unless --not-filled)")
     p_rec.add_argument("--link", default="")
     p_rec.add_argument("--date", default="")
     p_rec.add_argument("--receipt-id", default="", help="Gmail message ID or portal confirmation number")
     p_rec.add_argument("--inbox", default="", help="mock inbox folder (email.receipts: mock)")
     p_rec.add_argument("--since", help="submit time, ISO")
+    p_rec.add_argument("--applied-at", default="", help="ISO time the application was sent (default now)")
+    p_rec.add_argument("--pay", default="")
+    p_rec.add_argument("--location", default="")
+    p_rec.add_argument("--not-filled", action="store_true",
+                       help="a receipt for a role the loop did not fill: log it and flag it")
+
+    p_rec2 = sub.add_parser("reconcile", help="receipts from email vs tracker rows")
+    p_rec2.add_argument("--receipts", required=True, help="JSON list of {company, req_id, role, id, date}")
 
     sub.add_parser("audit")
     sub.add_parser("list")
@@ -254,10 +306,15 @@ def main(argv: list[str] | None = None) -> int:
         if args.cmd == "record-submit":
             row = record_submit(rows, {"company": args.company, "req_id": args.req_id, "role": args.role},
                                 args.resume_used, args.read_back, args.link, args.date, args.receipt_id,
-                                args.inbox, args.since)
+                                args.inbox, args.since, args.applied_at, args.pay, args.location, args.not_filled)
             save(path, rows)
             print(json.dumps({"recorded": True, "receipt_found": bool(row["receipt_id"]), "row": row}))
             return 0
+        if args.cmd == "reconcile":
+            receipts = json.loads(Path(args.receipts).expanduser().read_text(encoding="utf-8"))
+            res = reconcile(rows, receipts)
+            print(json.dumps(res, indent=1))
+            return 1 if res["receipts_without_row"] or res["rows_missing_receipt"] else 0
         if args.cmd == "audit":
             problems = audit(rows)
             print(json.dumps({"ok": not problems, "problems": problems}, indent=1))
@@ -267,6 +324,7 @@ def main(argv: list[str] | None = None) -> int:
                 "company": args.company, "role": args.role, "req_id": args.req_id,
                 "link": args.link, "date": args.date, "resume_used": args.resume_used,
                 "status": args.status, "receipt_id": args.receipt_id, "notes": args.notes,
+                "pay": args.pay, "location": args.location,
             }
             row, created = add(rows, new)
             if created:
@@ -280,6 +338,7 @@ def main(argv: list[str] | None = None) -> int:
             changes = {
                 "link": args.link, "date": args.date, "resume_used": args.resume_used,
                 "status": args.status, "receipt_id": args.receipt_id, "notes": args.notes,
+                "pay": args.pay, "location": args.location,
             }
             row = update(rows, args.company, args.req_id, args.role, changes)
             if row is None:
