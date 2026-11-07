@@ -11,17 +11,41 @@ exclude_title_words:     # a title containing any of these is cut
   - Manager
 seniority: internship    # internship | new-grad | junior | mid | senior
 term: Summer 2027        # internships: stated term must match; blank for full-time
+term_missing: near_miss  # near_miss | pass. What to do when a posting states no term at all
+
+role_fit:                # the title decides role type, before anything else is read
+  title_overrides:       # a title with any of these stays in, even on a team listed under cut_title_words
+    - Software Engineer
+    - Software Developer
+  tailored_title_words:  # roles you fit with a tailored copy only
+    - Platform
+    - Infrastructure
+  cut_title_words:       # role types you never apply to, whatever the pay
+    - Data Analyst
+    - Security
+    - Android
 
 pay_floor:
   amount: 30             # compared with the midpoint of the posted range
   unit: hour             # hour | year
   missing_pay: check_live  # check_live | allow | cut. Aggregators often drop pay; check the real posting first
+  lookup: none           # none | levels_fyi. With no posted pay, look the company's intern pay up on levels.fyi and cite year and count
+  step_up_route: false   # true: under the floor or no pay data passes only when the company is a clear step up (see prestige); the reason is written on the queue entry
 
 locations:
   - New York, NY
   - Remote (US)
 remote_ok: true
 relocate_ok: true
+work_mode:
+  remote_requires_prestige: false   # true: remote passes only at a company in your prestige tiers
+
+prestige:                # optional. Tiers rank the queue; require makes them a gate
+  require: false
+  step_up_tiers: []      # tier names that count as a step up from where you are now; empty means any tier
+  tiers:
+    # A: [Example Big Tech, Example AI Lab]
+    # B: [Example Unicorn]
 
 sectors_and_interests:   # used to rank, not to cut
   - developer tools
@@ -30,9 +54,14 @@ companies_to_skip:
   - Example Corp
 
 max_posting_age_days: 3  # measured from the date the agent first saw the posting
+freshness:               # two checks; failing either cuts the posting as REPOST
+  # first_seen_hours: 24 # overrides max_posting_age_days. JobRight ids carry their first-seen time
+  employer_max_days: 2   # the employer's own publish date (Ashby publishedAt, Greenhouse first_published, Workday postedOn)
+  exempt_sources: []     # extra sources whose drops are days old by design, for example a newsletter
 caps:
   daily_submit_cap: 10   # applies only when auto_submit is true
   per_company_default: 3
+  best_per_company: 2    # several open roles at one company: queue only the best N by fit, then pay; the rest are dropped
   per_company:           # optional overrides; window_days makes it a rolling window
     # Example Corp: { max: 2, window_days: 180 }
 
@@ -40,20 +69,33 @@ python_cmd: python3     # set by setup: python3 on macOS and Linux, py -3 on Win
 master_resume: ~/.job-agent/resumes/master.md   # set by setup
 resume_format: markdown  # markdown | latex
 
+prior_check:             # before a posting passes: has the user applied to this req already?
+  fail_closed: true      # a check that cannot run means not a pass this run
+  sources: [gmail, tracker]   # add simplify if you use the Simplify extension (it often sends no email)
+
 sources:
   jobright:
     enabled: true
     feed_url: ""         # paste the URL of your JobRight recommendations page sorted by Most Recent
+    use_open_tab: false  # true: scan in a JobRight feed tab you keep open, instead of opening one. Never a second feed tab
   indeed:
     enabled: true        # fallback, used when the Indeed MCP connector is available
     queries:
       - software engineer intern
+  extra:                 # optional, pluggable. Each is read after JobRight and gated the same way
+    # - name: newsletter
+    #   kind: gmail       # gmail: issues from a sender, newer than the last_read line in state/sources.json
+    #   from: newsletter@example.com
+    # - name: careers-page
+    #   kind: page        # page: a public page read in your browser, no login
+    #   url: https://example.com/careers
 
 browser:
   mode: main             # main: your own signed-in Chrome (--autoConnect) | dedicated: separate job-agent profile
   port: 9333             # dedicated mode only; not 9222, which your main Chrome may use
   auto_allow: false      # opt-in helper that presses Chrome's Allow prompt for the agent's own connects. Read the README first
   max_parallel_tabs: 3
+  max_forms_per_run: 10  # the rest stay queued for the next run
 
 portal_accounts:
   allow_sso: true        # Sign in with Google, then Microsoft, then LinkedIn, with an account already signed in to Chrome
@@ -70,12 +112,15 @@ portal_accounts:
 
 notify:
   method: none           # none | macos | ntfy | slack. Setup writes the details to state/notify.json
+  parked: each           # each: one notification per parked job | summary: one at the end of the run | none: list them in the run report only
+  # Also sent: a form is ready (auto_submit false), a new assessment, interview or offer, and two blocked runs in a row
 
 tracker:
   backend: csv           # csv | notion | sheets
   csv_path: ~/.job-agent/tracker.csv
   notion_database_url: ""
   sheets_url: ""
+  rows_for_unsubmitted: true  # false: only sent applications get rows; Ready and parked jobs live in state/queue.json
 
 email:
   receipts: gmail        # gmail | none | mock. gmail uses the Gmail MCP (the real default); mock is for the test rig only
@@ -84,8 +129,11 @@ email:
 # Submitting. Read the README section "Auto-submit" before changing this.
 auto_submit: false       # false: the agent stops at the final Submit and you click it
 dry_run: false           # true: fill and read back, never press Submit even when auto_submit is true
-skip_if_genai_banned: true  # skip postings that ask applicants not to use AI tools
-written_answers: draft   # draft: write essay and free-text answers from your resume and standing answers | leave: leave them empty for you
+genai_restriction: flag  # flag: fill as usual and flag it so you decide before submitting (never auto-submitted) | skip: cut it
+                         # older profiles: skip_if_genai_banned: true means skip
+written_answers: draft   # draft: write essay and free-text answers from your resume and standing answers | writer: appliers leave them empty and a separate writer drafts them | leave: leave them empty for you
 
 schedule:
   every_hours: 0         # 0: no schedule. Setup sets 3 (or your choice) when you turn it on; job-run prints the /loop, scheduled-task and cron lines from it
+  jitter_minutes: 15     # start each scheduled run up to this many minutes late, so runs do not land on the hour
+  lock_stale_hours: 3    # a run lock older than this is from a hung run and is replaced

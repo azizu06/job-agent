@@ -8,12 +8,15 @@ contact:
   email: jane@example.com
   phone: ""             # digits as you want them typed
   location: City, ST, Country
+  address: ""           # only for forms that require a street address; never printed in reports
+  phone_type: Mobile
 
 links:
   linkedin: https://www.linkedin.com/in/example
   github: https://github.com/example
   website: https://example.com
   other_links_policy: only the links above   # what goes in generic "Websites" boxes
+  showcase_links: {}    # only for questions that ask for something you built, e.g. { project-name: https://... }
 
 work_authorization:
   authorized_to_work: "Yes"
@@ -21,6 +24,8 @@ work_authorization:
   willing_to_relocate: "Yes"
   onsite_ok: "Yes"
   available_from: 2027-05-15
+  us_citizen: ""        # only if forms ask; blank means ask
+  government_conflict_noncompete: "No"   # government employment, conflicts of interest, non-competes
 
 education:
   - school: Example University
@@ -29,11 +34,29 @@ education:
     start: 2024-08
     end: 2028-05
     gpa: ""              # optional; blank means leave GPA fields empty unless required
+    currently_enrolled: "Yes"
+
+work_history:            # newest first; descriptions are that entry's bullets from the PDF you upload, verbatim
+  - employer: Example Co
+    title: Software Engineering Intern
+    location: City, ST
+    start: 2026-06       # full-date fields use day 01 of the month (2026-06-01)
+    end: 2026-08         # blank for a current role
+date_fields_day: "01"    # forms that want a full date get day 01 of the stated month
+
+languages:
+  - English, fluent
 
 how_heard_default: Company careers page
-referral: none
+referral: none           # the gate overrides this per job: a referral link, or Employee Referral with the referrer's name and email
 previously_employed_here: "No"
 pay_expectation: posted_midpoint   # posted_midpoint | a number with units
+pay_expectation_fallback: levels_fyi   # no pay posted: levels_fyi (cite it) | ask
+recruiting_timeline: from_email   # "other processes or deadlines" questions: the true latest stage or earliest deadline from email and the tracker
+
+screeners:               # yes/no and multiple-choice questions you want answered the same way each time
+  # - question: "How many years of professional experience do you have?"
+  #   answer: "0-1"
 
 # Optional. Leave blank or "Decline to self-identify" to use the decline option.
 eeo:
@@ -42,5 +65,12 @@ eeo:
   hispanic_or_latino: Decline to self-identify
   veteran_status: Decline to self-identify
   disability_status: Decline to self-identify
+  sexual_orientation: Decline to self-identify
+  transgender: Decline to self-identify
+  pronouns: ""           # blank leaves the field empty unless required
 
 consent_boxes: tick_required_only   # tick_required_only | ask
+optional_sections: fill   # fill: optional websites, skills, languages and text boxes get real answers | skip
+
+# Quiz and screener picks are recorded in each form's read-back with the full
+# question text, the option text picked (never an option number) and why.
