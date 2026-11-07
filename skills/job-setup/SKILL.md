@@ -44,9 +44,11 @@ All user data lives in the workspace: `$JOB_AGENT_HOME` if set, else `~/.job-age
   chrome-profile/                # only in dedicated browser mode
 ```
 
+Use the workspace as given. If `JOB_AGENT_HOME` is set, never offer to switch to another folder and never write to `~/.job-agent/` instead; other skills read `JOB_AGENT_HOME`, so a moved workspace is lost to them. If it sits under `/tmp`, say once that the folder may be cleared on restart, and keep it.
+
 Never write user data into the plugin or skill folder. If `JOB_AGENT_HOME` points at a clone of this repo, its `.gitignore` already excludes these paths.
 
-Progress file: `<workspace>/state/setup-progress.json`, like `{"done": ["chrome", "connectors"]}`. After each step passes its check, add its id. On a re-run, read it, print a checklist with done steps ticked, say "Skipping what is already done", and resume at the first open step. If the user asks to redo a step, remove its id. Step ids: `chrome`, `autoallow`, `connectors`, `tracker`, `jobright`, `resume`, `preferences`, `answers`, `voice`, `permissions`, `notify`, `dryrun`.
+Progress file: `<workspace>/state/setup-progress.json`, like `{"done": ["chrome", "connectors"]}`. Read it before you write it, and only add or remove ids; never replace an existing file with an empty one. After each step passes its check, add its id. On a re-run, read it, print a checklist with done steps ticked, say "Skipping what is already done", and resume at the first open step. If the user asks to redo a step, remove its id. Step ids: `chrome`, `autoallow`, `connectors`, `tracker`, `jobright`, `resume`, `preferences`, `answers`, `voice`, `permissions`, `notify`, `dryrun`.
 
 ## Steps
 

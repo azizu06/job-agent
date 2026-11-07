@@ -33,5 +33,16 @@ class SetupAutoAllowStep(unittest.TestCase):
         self.assertIn("If no: record `browser.auto_allow: false`", step)
 
 
+class SetupWorkspace(unittest.TestCase):
+    def setUp(self):
+        self.text = (SKILLS / "job-setup" / "SKILL.md").read_text(encoding="utf-8")
+
+    def test_keeps_job_agent_home(self):
+        self.assertIn("never offer to switch to another folder", self.text)
+
+    def test_never_clobbers_progress(self):
+        self.assertIn("never replace an existing file with an empty one", self.text)
+
+
 if __name__ == "__main__":
     unittest.main()
