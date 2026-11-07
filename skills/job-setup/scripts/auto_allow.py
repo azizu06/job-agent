@@ -311,7 +311,11 @@ def install_launch_agent(base: Path, plist_path: Path | None = None, launchctl=_
     base.mkdir(parents=True, exist_ok=True)
     domain = f"gui/{os.getuid()}"
     launchctl("bootout", f"{domain}/{LAUNCH_LABEL}")  # reload cleanly if already there
-    plist_path.write_bytes(launch_agent_plist(base, python_binary(), Path(__file__).resolve()))
+    # Run a copy kept in the workspace: plugin updates replace the versioned
+    # plugin folder, which would leave the LaunchAgent pointing at a deleted file.
+    script = base / "auto_allow.py"
+    script.write_bytes(Path(__file__).resolve().read_bytes())
+    plist_path.write_bytes(launch_agent_plist(base, python_binary(), script))
     out = launchctl("bootstrap", domain, str(plist_path))
     if out.returncode != 0:
         raise RuntimeError(f"launchctl bootstrap failed: {(out.stderr or out.stdout).strip()}")
@@ -440,6 +444,14 @@ def main(argv: list[str] | None = None) -> int:
     if args.cmd == "status":
         live = open_arms(base)
         print(f"enabled: {is_enabled(base)}; open windows: {len(live)}; log: {p['log']}")
+        if sys.platform == "darwin":
+            agent = launch_agent_path()
+            if agent.exists():
+                script = Path(plistlib.loads(agent.read_bytes())["ProgramArguments"][1])
+                ok = "" if script.exists() else " (its script is missing: run enable again)"
+                print(f"LaunchAgent: {agent}{ok}")
+            else:
+                print("LaunchAgent: not installed")
         return 0
     if args.cmd == "arm":
         if platform_backend() is None:

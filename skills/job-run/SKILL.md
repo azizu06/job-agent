@@ -10,7 +10,7 @@ Python: commands below say `python3`. Use `python_cmd` from `profile/preferences
 ## Preconditions
 
 - Workspace (`$JOB_AGENT_HOME` or `~/.job-agent/`) has `profile/preferences.yaml` and `profile/standing-answers.yaml`. If not, run `job-setup`.
-- Browser reachable. `main` mode: Chrome is open with remote debugging enabled, and your browser MCP uses `--autoConnect`. If `browser.auto_allow` is true, run `python3 ../job-setup/scripts/auto_allow.py arm --label orchestrator` right before your first browser call. `dedicated` mode: start it with `python3 ../job-setup/scripts/launch_chrome.py`.
+- Browser reachable. `main` mode: Chrome is open with remote debugging enabled, and your browser MCP uses `--autoConnect`. If `browser.auto_allow` is true, run `python3 ../job-setup/scripts/auto_allow.py arm --label orchestrator` right before your first browser call. `dedicated` mode: start it with `python3 ../job-setup/scripts/launch_chrome.py`, and drive it with the `job-agent-dedicated` MCP server setup added (`--browser-url`), not the plugin's `--autoConnect` server.
 - Write a run log to `state/runs/<run-id>.md` as you go.
 
 ## Loop
@@ -59,6 +59,7 @@ A headless run cannot answer permission prompts. Pre-approve what the run uses, 
     "allow": [
       "mcp__plugin_job-agent_job-agent-browser",
       "mcp__job-agent-browser-own",
+      "mcp__job-agent-dedicated",
       "mcp__gmail",
       "Bash(python3 *keyword_coverage.py*)",
       "Bash(python3 *resume_check.py*)",

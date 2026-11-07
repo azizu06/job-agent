@@ -104,14 +104,24 @@ class RigEndToEnd(unittest.TestCase):
         self.assertIn("auto_submit: true", prefs)
         self.assertIn("test@example.com", self.paths["answers"].read_text())
 
-        # Scan: five cards, newest first, sorted by Most Recent.
+        # Scan: eight cards, newest first, sorted by Most Recent.
         _, feed = b.get("/feed")
         self.assertIn("Most Recent", feed)
         ids = [j["id"] for j in mock_ats.JOBS]
-        self.assertEqual(sum(f"/jobs/info/{i}" in feed for i in ids), 5)
+        self.assertEqual(sum(f"/jobs/info/{i}" in feed for i in ids), 8)
         for job in mock_ats.JOBS:
             _, info = b.get(f"/jobs/info/{job['id']}")
             self.assertIn(mock_ats.apply_path(job), info)
+
+        # Gate inputs: the LinkedIn-only post links off localhost, and the tracker
+        # already holds the Wayne req (dedupe) and a Stark submit (cap of 1).
+        _, vandelay = b.get("/jobs/info/b8f0c0de0008")
+        self.assertIn("https://www.linkedin.com/jobs/view/", vandelay)
+        seeded = tracker_csv.load(self.paths["tracker"])
+        self.assertIsNotNone(tracker_csv.find(seeded, "Wayne Enterprises", "GH-6006"))
+        self.assertEqual(tracker_csv.count(seeded, company="Stark Industries"), 1)
+        self.assertIn("Stark Industries: { max: 1, window_days: 30 }", prefs)
+        self.tracker("audit")
 
         # Tailor: the real coverage and resume checks run on the rig master.
         jd = self.ws / "state" / "jd" / "acme.txt"

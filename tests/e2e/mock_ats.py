@@ -69,7 +69,28 @@ JOBS = [
         "req_id": "GH-5005", "ats": "gh", "board": "hooli", "posted_minutes": 70,
         "skills": "Go, gRPC and Kubernetes",
     },
+    # Gate cases that need the tracker or the link, not the card: a req already
+    # in the tracker (dedupe), a company at its cap, and a LinkedIn-only post.
+    {
+        "id": "f6f0c0de0006", "company": "Wayne Enterprises", "title": "Software Engineer Intern",
+        "location": "New York, NY", "work_model": "Hybrid", "pay": "$42/hr", "term": "Summer 2027",
+        "req_id": "GH-6006", "ats": "gh", "board": "wayne", "posted_minutes": 80,
+        "skills": "Python, Flask and PostgreSQL",
+    },
+    {
+        "id": "a7f0c0de0007", "company": "Stark Industries", "title": "Backend Engineer Intern",
+        "location": "Remote (US)", "work_model": "Remote", "pay": "$44/hr", "term": "Summer 2027",
+        "req_id": "GH-7007", "ats": "gh", "board": "stark", "posted_minutes": 90,
+        "skills": "Python, Docker and AWS",
+    },
+    {
+        "id": "b8f0c0de0008", "company": "Vandelay Industries", "title": "Software Engineer Intern",
+        "location": "New York, NY", "work_model": "Onsite", "pay": "$41/hr", "term": "Summer 2027",
+        "req_id": "LI-8008", "ats": "linkedin", "board": "vandelay", "posted_minutes": 100,
+        "skills": "Python and SQL",
+    },
 ]
+LINKEDIN_JOB_URL = "https://www.linkedin.com/jobs/view/4000000008/"
 BY_ID = {j["id"]: j for j in JOBS}
 
 DEGREES = ["Associate's Degree", "Bachelor of Arts (BA)", "Bachelor of Science (BS)", "Master of Science (MS)", "Doctor of Philosophy (PhD)"]
@@ -78,6 +99,8 @@ HEARD = ["Company careers page", "Job board", "Referral", "University career fai
 
 
 def apply_path(job: dict) -> str:
+    if job["ats"] == "linkedin":
+        return LINKEDIN_JOB_URL
     if job["ats"] == "gh":
         return f"/gh/{job['board']}/jobs/{job['id']}"
     return f"/wd/{job['board']}/job/{job['id']}"

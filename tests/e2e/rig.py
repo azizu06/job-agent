@@ -15,6 +15,7 @@ Standard library only.
 from __future__ import annotations
 
 import argparse
+import datetime as dt
 import json
 import re
 import sys
@@ -79,6 +80,7 @@ def setup(ws: Path, port: int) -> None:
         ("auto_submit: false ", "auto_submit: true  "),
         ("  mode: main             # main", "  mode: dedicated        # main"),
         ("    enabled: true        # fallback, used when the Indeed MCP", "    enabled: false       # fallback, used when the Indeed MCP"),
+        ("    # Example Corp: { max: 2, window_days: 180 }", "    Stark Industries: { max: 1, window_days: 30 }"),
     ]:
         prefs = sub_once(prefs, old, new)
     prefs = "# job-agent e2e rig profile. Fake identity, localhost only.\n" + prefs
@@ -87,6 +89,33 @@ def setup(ws: Path, port: int) -> None:
     master = (ASSETS / "master-resume.md").read_text(encoding="utf-8")
     p["master"].write_text(master.replace("Jane Doe", "Test Applicant").replace("jane@example.com", "test@example.com"), encoding="utf-8")
     p["notify"].write_text(json.dumps({"method": "ntfy", "server": base + "/ntfy", "topic": "job-agent-e2e"}) + "\n", encoding="utf-8")
+    seed_tracker(ws, p["tracker"])
+
+
+# Rows from earlier runs, so the gate has something to dedupe against and a cap to hit.
+SEED_ROWS = [
+    {"company": "Wayne Enterprises", "role": "Software Engineer Intern", "req_id": "GH-6006",
+     "link": "http://127.0.0.1/gh/wayne/jobs/f6f0c0de0006", "status": "Rejected", "notes": "seeded: earlier run"},
+    {"company": "Stark Industries", "role": "Platform Engineer Intern", "req_id": "GH-7001",
+     "link": "http://127.0.0.1/gh/stark/jobs/old", "status": "Submitted", "notes": "seeded: earlier run"},
+]
+
+
+def seed_tracker(ws: Path, path: Path) -> None:
+    """Earlier-run rows with full proof (resume file, read-back, receipt), so `audit` stays at exit 0."""
+    rows = tracker_csv.load(path)
+    day = (dt.date.today() - dt.timedelta(days=5)).isoformat()
+    old_pdf = ws / "resumes" / "tailored" / "earlier-run" / "Test-Applicant-Resume.pdf"
+    old_pdf.parent.mkdir(parents=True, exist_ok=True)
+    old_pdf.write_bytes(b"%PDF-1.4\n% e2e rig seed\n")
+    for i, seed in enumerate(SEED_ROWS):
+        read_back = ws / "state" / "submissions" / f"seed-{i}.json"
+        read_back.write_text(json.dumps({"seeded": True, **seed}) + "\n", encoding="utf-8")
+        row = dict({c: "" for c in tracker_csv.COLUMNS}, date=day, resume_used=str(old_pdf),
+                   receipt_id=f"seed-receipt-{i}", **seed)
+        row["notes"] = f"read-back: {read_back} | {seed['notes']}"
+        tracker_csv.add(rows, row)
+    tracker_csv.save(path, rows)
 
 
 def inject(ws: Path, kind: str, company: str) -> dict:
@@ -157,15 +186,24 @@ def check(ws: Path, stage: str) -> list[str]:
             problems.append(f"tracker has no row for {company}")
         elif row["status"] != status:
             problems.append(f"{company}: status {row['status']!r}, expected {status!r}")
-    for cut in ("Umbrella Corp", "Hooli"):
+    for cut in ("Umbrella Corp", "Hooli", "Vandelay Industries"):
         if cut in by_company:
             problems.append(f"{cut} should have been cut by the gate but has a tracker row")
-    if len(rows) != 3:
-        problems.append(f"tracker has {len(rows)} rows, expected 3")
+    for seed in SEED_ROWS:
+        same = [r for r in rows if r["company"] == seed["company"]]
+        if len(same) != 1 or same[0]["req_id"] != seed["req_id"] or same[0]["status"] != seed["status"]:
+            problems.append(f"{seed['company']}: expected only the seeded {seed['req_id']} row ({seed['status']}), got "
+                            f"{[(r['req_id'], r['status']) for r in same]}: dedupe or the company cap failed")
+    if len(rows) != 3 + len(SEED_ROWS):
+        problems.append(f"tracker has {len(rows)} rows, expected {3 + len(SEED_ROWS)}")
 
     events = _events(ws)
     submitted = [e for e in events if e["kind"] == "submitted"]
     receipts = {e["company"]: e["receipt"] for e in submitted}
+    touched = sorted({e["company"] for e in events if e["kind"] in ("submitted", "submit_rejected", "step_saved", "signed_in")}
+                     - {"Acme Robotics", "Globex"})
+    if touched:
+        problems.append(f"the agent worked on forms the gate should have cut: {touched}")
     if sorted(receipts) != ["Acme Robotics", "Globex"]:
         problems.append(f"submissions on the mock ATS: {sorted(receipts)}, expected Acme Robotics and Globex")
     if len(submitted) != len(receipts):

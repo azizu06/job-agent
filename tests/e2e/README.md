@@ -4,7 +4,7 @@ A small fake job world on `127.0.0.1`, so the whole job-agent loop can run with 
 
 | Piece | Where | What it does |
 | --- | --- | --- |
-| Mock feed | `/feed`, `/jobs/info/<id>` | Five JobRight-like cards sorted "Most Recent", each with an "Original Job Post" link |
+| Mock feed | `/feed`, `/jobs/info/<id>` | Eight JobRight-like cards sorted "Most Recent", each with an "Original Job Post" link |
 | Greenhouse-shaped form | `/gh/<board>/jobs/<id>` | react-select-style dropdowns, resume file input, required consent box, required essay (1000 characters max), "Submit application" leading to a thank-you URL |
 | Workday-shaped flow | `/wd/<tenant>/job/<id>` | Apply, a sign-in wall with "Sign in with Google" (mocked) and email/password, then three steps with Next and a final Submit |
 | Mock Google sign-in | `/mock-google/...` | Account chooser for `test@example.com` and a consent screen asking only for name and email |
@@ -15,7 +15,7 @@ A small fake job world on `127.0.0.1`, so the whole job-agent loop can run with 
 
 The forms refuse answers that were not typed or clicked (they track `isTrusted` input events), like Lever and Ashby do.
 
-The five jobs: Acme Robotics (Greenhouse-shaped, should be submitted), Globex (Workday-shaped with Google sign-in, should be submitted), Initech (CAPTCHA, should be parked), Umbrella Corp (Senior title, should be cut), Hooli (San Francisco, should be cut).
+The eight jobs: Acme Robotics (Greenhouse-shaped, should be submitted), Globex (Workday-shaped with Google sign-in, should be submitted), Initech (CAPTCHA, should be parked), Umbrella Corp (Senior title, should be cut), Hooli (San Francisco, should be cut), Wayne Enterprises (its req is already in the seeded tracker, should be cut as a duplicate), Stark Industries (the seeded tracker already holds one Stark submit and the rig profile caps Stark at 1 per 30 days, should be cut), Vandelay Industries (its only apply link is on linkedin.com, should be cut as `linkedin_only` without opening it). `rig.py setup` seeds the two earlier-run rows with full proof, so `audit` passes on a fresh workspace.
 
 ## Automated part
 
@@ -55,6 +55,6 @@ python3 tests/e2e/rig.py inject --workspace $W --kind rejection --company "Acme 
 python3 tests/e2e/rig.py check  --workspace $W --stage final
 ```
 
-A pass means: Acme Robotics and Globex were submitted once each with the fake identity and have receipt IDs from the mock inbox; Globex was entered through Sign in with Google; Initech is `Needs you: captcha` with a notification; Umbrella and Hooli have no rows; each row's `resume_used` is the absolute path of the uploaded PDF and exists; the required essay was drafted within its limit and names no number, employer or tool absent from the master resume; no Enter, Escape or CAPTCHA click happened; after the syncs the rows read Assessment then Rejected (Acme) and Interview (Globex), with the read-back path still in `notes`.
+A pass means: Acme Robotics and Globex were submitted once each with the fake identity and have receipt IDs from the mock inbox; Globex was entered through Sign in with Google; Initech is `Needs you: captcha` with a notification; Umbrella, Hooli and Vandelay have no rows, the seeded Wayne and Stark rows are unchanged, and no cut job's form was touched; each row's `resume_used` is the absolute path of the uploaded PDF and exists; the required essay was drafted within its limit and names no number, employer or tool absent from the master resume; no Enter, Escape or CAPTCHA click happened; after the syncs the rows read Assessment then Rejected (Acme) and Interview (Globex), with the read-back path still in `notes`.
 
 Stop the headless Chrome when you are done (`pkill -f "user-data-dir=$W/chrome-profile"`) and the server (`kill %1`).

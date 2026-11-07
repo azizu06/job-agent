@@ -98,6 +98,22 @@ def port_alive(port: int) -> bool:
         return False
 
 
+def chrome_args(chrome: str, port: int, profile: Path, headless: bool) -> list[str]:
+    """The Chrome command line. Headless runs (the test rig, CI) also skip the
+    OS keychain, so they never raise a "Chrome Safe Storage" keychain prompt;
+    the visible profile keeps the keychain so its saved logins stay encrypted."""
+    cmd = [
+        chrome,
+        f"--remote-debugging-port={port}",
+        f"--user-data-dir={profile}",
+        "--no-first-run",
+        "--no-default-browser-check",
+    ]
+    if headless:
+        cmd += ["--headless=new", "--use-mock-keychain", "--password-store=basic"]
+    return cmd
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--port", type=int, default=int(os.environ.get("JOB_AGENT_CHROME_PORT", 9333)))
@@ -124,15 +140,7 @@ def main(argv: list[str] | None = None) -> int:
 
     home.mkdir(parents=True, exist_ok=True)
     profile.mkdir(parents=True, exist_ok=True)
-    cmd = [
-        chrome,
-        f"--remote-debugging-port={args.port}",
-        f"--user-data-dir={profile}",
-        "--no-first-run",
-        "--no-default-browser-check",
-    ]
-    if args.headless:
-        cmd.append("--headless=new")
+    cmd = chrome_args(chrome, args.port, profile, args.headless)
 
     log = open(home / "chrome.log", "ab")
     kwargs: dict = {"stdout": log, "stderr": log, "stdin": subprocess.DEVNULL}

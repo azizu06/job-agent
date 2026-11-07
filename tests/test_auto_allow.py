@@ -127,6 +127,11 @@ class LaunchAgentTests(unittest.TestCase):
             aa.install_launch_agent(base, plist, launchctl=fake)
             self.assertTrue(plist.exists())
             self.assertEqual(calls[-1][0], "bootstrap")
+            # The LaunchAgent runs a copy in the workspace, so a plugin update
+            # (which replaces the versioned plugin folder) cannot break it.
+            script = Path(plistlib.loads(plist.read_bytes())["ProgramArguments"][1])
+            self.assertEqual(script, base / "auto_allow.py")
+            self.assertEqual(script.read_bytes(), Path(aa.__file__).read_bytes())
             aa.remove_launch_agent(plist, launchctl=fake)
             self.assertFalse(plist.exists())
             self.assertEqual(calls[-1][0], "bootout")
