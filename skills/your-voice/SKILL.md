@@ -27,7 +27,9 @@ All in the workspace (`$JOB_AGENT_HOME` or `~/.job-agent/`):
 | `voice/facts.md` | Extra facts the user gave for answers that are not in the resume (why a field interests them, a club, a class). Optional |
 | `voice/approved/` | Answers the user approved or submitted, one file each, with the question at the top |
 
-From this skill: `references/humanize.md` (craft moves and the AI-tell catalog), `scripts/writecheck.py` (character, length and pattern check, stdlib only), `assets/profile.example.md`.
+From this skill: `references/written-answer-standard.md` (what a strong answer says: a decision with its mechanism, research tied to the user's own work, length ranges, a cut list, the cross-form rules and the reviewer's test), `references/humanize.md` (craft moves and the AI-tell catalog), `scripts/writecheck.py` (character, length, pattern and cross-form check, stdlib only), `assets/profile.example.md`.
+
+`voice/approved/` is the exemplar slot: answers the user reviewed and approved, or submitted. A fresh writer writes far better with a few of them in hand, so keep it filled (see Corrections loop). It holds only the user's own answers, never examples copied from anywhere else.
 
 ## Setup (called by job-setup, step `voice`)
 
@@ -42,9 +44,11 @@ From this skill: `references/humanize.md` (craft moves and the AI-tell catalog),
 
 Inputs: the question text, its limit (`maxlength`, "N characters", "N words", or none), the company, the job description at `jd_path`, the tailored resume, the master resume, `profile/standing-answers.yaml`, and the files above.
 
+Read `references/written-answer-standard.md` first, every time. When you draft for a whole form (the `writer` mode in `apply-fill`, where appliers leave essays empty and report each question's exact text, limit and required flag), take all of its questions together, plan which story carries which answer so none repeats, then draft each one with the steps below.
+
 1. **Facts only.** List the facts you may use, each with its source: master resume, tailored resume, standing answers, `voice/facts.md`, and the job description (for what the company and role are). Nothing else. Never invent an employer, project, skill, tool, date, number, title, award or motive. If the question needs a fact you do not have (for example "why do you want to live in Austin"), do not make one up: draft from what you have and list the gap, or park as `Needs you: written answer` when no honest answer is possible.
 2. **Depth from approved answers.** Read up to 3 files in `voice/approved/` closest to this question to see what the user chose to say and how much detail they like. Never copy a sentence from them verbatim, and never reuse an answer written for another company.
-3. **Two drafts, two angles.** Draft A from the user's side: lead with the one experience that best matches the posting, then tie it to the role. Draft B from the posting's side: lead with what the role needs, then show one real thing the user did that fits. Both first person, plain, under the limit, using the craft moves in Part 1 of `references/humanize.md`.
+3. **Two drafts, two angles.** Each draft carries at least one decision with its mechanism (standard, point 1). Draft A from the user's side: lead with the one experience that best matches the posting, then tie it to the role. Draft B from the posting's side: lead with what the role needs, then show one real thing the user did that fits. Both first person, plain, under the limit, using the craft moves in Part 1 of `references/humanize.md`.
 4. **Keep the more specific one.** Count the concrete, checkable facts per sentence (named project, tool, number, result) and the tells from Part 2. Keep the draft with more facts and fewer tells. You may move one better sentence over from the other draft.
 5. **Humanize pass (always).** Apply `references/humanize.md` in full: strip every tell in Part 2, check the craft moves in Part 1, and respect "Do not over-correct". Keep every fact; this pass changes how it reads, never what it says.
 6. **Voice layer (if `voice/profile.md` exists).** Rewrite to match it: sentence length, openers, connectives, contractions, words they use and avoid, their rules. Corrections and their rules win over everything else, including `humanize.md`.
@@ -52,7 +56,9 @@ Inputs: the question text, its limit (`maxlength`, "N characters", "N words", or
    - What still reads as AI? Fix each line you name.
    - Which fact could the user not defend in an interview, or which sentence goes beyond a source? Cut it, or keep it modest and list it word for word under "inferred sentences".
 8. **writecheck.** Save the answer to `<your output folder>/answers/<slug>.txt` and run `python3 scripts/writecheck.py check <file> --max-chars <limit>` (or `--max-words`). With no stated limit use `--max-words 150`. Add `--allow-dashes` and `--allow WORD` only when `voice/profile.md` says so. Fix every problem and run it again until it prints `CLEAN`. Use `--fix <out>` only for quotes, invisible characters and odd spaces.
-9. **Return** the final answer, its character and word count, the source of each fact, the inferred sentences, the self-audit, and the last writecheck output. apply-fill types the answer only after this.
+9. **Across the form.** With two or more answers for one form, run `python3 scripts/writecheck.py crossform <answer files> --allow "<company>"` and fix every shared story until it prints `CLEAN`.
+10. **Reviewer's test.** Read each answer as a skeptical hiring engineer (the test at the end of the standard). Rewrite any answer that fails it, then run steps 8 and 9 again.
+11. **Return** the final answer, its character and word count, the source of each fact, the inferred sentences, the self-audit, and the last writecheck output (and the crossform output for a whole form). apply-fill types the answer only after this.
 
 Never send a draft to a second model, a paraphrasing service or an "AI humanizer" website to reword it. The rewrite happens here, under the facts-only rule, so nothing new gets added and the user's text stays with them.
 
