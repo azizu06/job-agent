@@ -30,7 +30,7 @@ Python: commands below say `python3`. Use `python_cmd` from `profile/preferences
 
 ## Running every N hours
 
-The interval is `schedule.every_hours` in preferences (default 3 when the schedule is enabled). Read it and use it as `N` below; the examples show N=3.
+The interval is `schedule.every_hours` in preferences (default 3 when the schedule is enabled; 0 or missing means no schedule, so say so and offer to set one). Read it and use it as `N` below; the examples show N=3.
 
 Claude Code:
 - In a session: `/loop <N>h /job-agent:run` (for example `/loop 3h /job-agent:run`) repeats while the session is open.

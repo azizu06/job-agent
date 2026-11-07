@@ -86,3 +86,6 @@ auto_submit: false       # false: the agent stops at the final Submit and you cl
 dry_run: false           # true: fill and read back, never press Submit even when auto_submit is true
 skip_if_genai_banned: true  # skip postings that ask applicants not to use AI tools
 written_answers: draft   # draft: write essay and free-text answers from your resume and standing answers | leave: leave them empty for you
+
+schedule:
+  every_hours: 0         # 0: no schedule. Setup sets 3 (or your choice) when you turn it on; job-run prints the /loop, scheduled-task and cron lines from it

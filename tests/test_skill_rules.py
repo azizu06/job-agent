@@ -71,5 +71,11 @@ class PageIdsAreChecked(unittest.TestCase):
         self.assertIn("find it by its URL with `list_pages`", text)
 
 
+class ExamplePreferences(unittest.TestCase):
+    def test_has_schedule_interval(self):
+        text = (SKILLS / "job-setup" / "assets" / "preferences.example.yaml").read_text(encoding="utf-8")
+        self.assertRegex(text, r"\nschedule:\n  every_hours: 0 ")
+
+
 if __name__ == "__main__":
     unittest.main()
