@@ -16,7 +16,7 @@
 <p align="center">
   <a href="assets/demo.mp4"><img src="assets/demo.gif" alt="job-agent fills a job application in Chrome: it reads the form, types each field, uploads the tailored resume, answers the dropdowns and written questions, and stops at Submit." width="760"></a>
   <br>
-  <sub>A live run on a real posting, stopped at Submit. The applicant, Jordan Lee, is fictional. <a href="assets/demo.mp4">Watch the full video</a>.</sub>
+  <sub>A live run on a real posting, stopped at Submit. <a href="assets/demo.mp4">Watch the full video</a>.</sub>
 </p>
 
 <p align="center">

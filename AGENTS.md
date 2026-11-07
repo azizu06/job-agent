@@ -49,4 +49,4 @@ On Windows, use `py -3` wherever these docs say `python3`.
 - Plugin check: `claude plugin validate .`
 - Keep prose plain: no em dashes, no hype words.
 - Docs: `README.md` is the product page, `docs/how-it-works.md` holds the detail, `docs/getting-started.md` is for first-time users, and `docs/faq.md`, `docs/troubleshooting.md` and `docs/your-voice.md` hold the FAQ, fixes and answer-writing detail. Keep facts in sync across them when a skill changes.
-- README images: `assets/banner.png` and `assets/demo.gif`, built from `assets/src/`. The demo fills a live posting as the fictional applicant in `assets/src/demo-persona.json` and never submits; no real person's data may appear in any frame.
+- README images: `assets/demo.gif` and `assets/demo.mp4`, a screen recording of a real run that stops at Submit. No real person's data may appear in any frame.

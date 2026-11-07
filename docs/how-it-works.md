@@ -57,7 +57,7 @@ Passwords, if you turn on credential mode, live only in your OS keychain. Nothin
 
 Keep one long master resume with everything you have done and several alternate bullets per entry. Each job gets a new copy built from it. The agent never adds a metric, tool or experience that is not in the master, and it lists the job's keywords you still lack so you decide.
 
-Start from [`skills/job-setup/assets/master-resume.tex`](../skills/job-setup/assets/master-resume.tex), the default one-page layout, or its Markdown twin [`master-resume.md`](../skills/job-setup/assets/master-resume.md), which renders in the same layout. Both hold a placeholder persona (Jordan Lee) to replace. Alternates sit in `\iffalse ... \fi` or `<!-- alt -->` blocks and never print. The content checks are plain Python; the PDF layout gate needs `tectonic` and PyMuPDF. From a clone of this repo:
+Start from [`skills/job-setup/assets/master-resume.tex`](../skills/job-setup/assets/master-resume.tex), the default one-page layout, or its Markdown twin [`master-resume.md`](../skills/job-setup/assets/master-resume.md), which renders in the same layout. Both hold a sample resume for you to replace. Alternates sit in `\iffalse ... \fi` or `<!-- alt -->` blocks and never print. The content checks are plain Python; the PDF layout gate needs `tectonic` and PyMuPDF. From a clone of this repo:
 
 ```
 python3 skills/tailor-resume/scripts/keyword_coverage.py --jd jd.txt --resume tailored.tex --before master.tex --min 95
@@ -192,4 +192,4 @@ claude plugin validate .
 
 The suite includes end-to-end tests that run the full loop, from feed to tracker, against local Greenhouse and Workday forms, Google sign-in, a CAPTCHA page and an inbox. See [`tests/e2e/README.md`](../tests/e2e/README.md).
 
-The README banner and demo are built from files in [`assets/src/`](../assets/src/): `banner.html` is rendered with headless Chrome at 1280x640. The demo frames are captured by `demo-capture.py` while job-agent fills a live Greenhouse application in Chrome as Jordan Lee, a fictional applicant (`demo-persona.json`, resume from `demo-resume.tex`), and it never presses Submit. `demo-compose.py` adds the cursor and status pill, then writes `demo.gif` and `demo.mp4`.
+The README demo is a screen recording of a real run: Claude Code in the terminal beside Chrome, from the JobRight feed to a filled application, stopped at Submit.
