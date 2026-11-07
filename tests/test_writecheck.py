@@ -104,5 +104,20 @@ class CliTests(unittest.TestCase):
             self.assertEqual(json.loads(buf.getvalue())["sentences"], 2)
 
 
+class CrossFormTests(unittest.TestCase):
+    def test_repeated_story_is_flagged(self):
+        a = "At Example Corp I moved the nightly import to a queue, so one bad file stopped failing the whole batch."
+        b = "I care about reliability. At Example Corp I moved the nightly import to a queue, and it held up."
+        r = wc.crossform({"why.txt": a, "project.txt": b})
+        self.assertFalse(r["clean"])
+        self.assertTrue(any("share the words" in p for p in r["problems"]))
+
+    def test_distinct_answers_are_clean_and_company_can_be_allowed(self):
+        a = "The posting at Acme asks for queue work. I moved a nightly import to a queue at my last job."
+        b = "I saw that Acme also lists on-call. I wrote the runbook for our school club's event check-in app."
+        self.assertFalse(wc.crossform({"a": a, "b": b})["clean"])
+        self.assertTrue(wc.crossform({"a": a, "b": b}, allow=["Acme"])["clean"])
+
+
 if __name__ == "__main__":
     unittest.main()

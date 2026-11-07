@@ -17,6 +17,11 @@ Commands:
       --json           print the result as JSON
   stats FILE...  measure writing samples for voice/profile.md: sentence length,
                  contractions, dashes, common openers and connectives.
+  crossform FILE FILE...  every written answer on ONE form. Flags a story told
+                 twice: a run of 6 or more words shared by two answers, or the
+                 same named project, employer or number carrying two answers.
+                 Exit 0 when CLEAN. Each answer must stand alone with its own
+                 evidence.
 
 Examples:
   python3 writecheck.py check answer.txt --max-chars 1000
@@ -149,6 +154,45 @@ def stats(texts: list[str]) -> dict:
     }
 
 
+_COMMON_CAPS = {"I", "I'm", "I've", "I'd", "My", "The", "A", "An", "And", "But", "So", "At", "In", "On", "As", "It",
+                "This", "That", "When", "What", "We", "Our", "You", "Your", "For", "With", "Then", "After", "Before"}
+
+
+def _ngrams(text: str, n: int) -> set[tuple[str, ...]]:
+    words = re.findall(r"[a-z0-9']+", text.lower())
+    return {tuple(words[i:i + n]) for i in range(len(words) - n + 1)}
+
+
+def _evidence(text: str) -> set[str]:
+    """Named things and numbers an answer leans on: projects, employers, metrics."""
+    out = set()
+    for sent in re.split(r"(?<=[.!?])\s+", text.strip()):
+        toks = re.findall(r"[A-Za-z0-9][A-Za-z0-9'+#%.]*", sent)
+        for i, tok in enumerate(toks):
+            tok = tok.rstrip(".")
+            if any(c.isdigit() for c in tok) and len(tok) > 1:
+                out.add(tok)
+            elif i > 0 and tok[:1].isupper() and tok not in _COMMON_CAPS:
+                out.add(tok)
+    return out
+
+
+def crossform(texts: dict[str, str], n: int = 6, allow: list[str] | None = None) -> dict:
+    """Problems across the answers on one form: shared word runs and shared evidence."""
+    allow_l = {a.lower() for a in allow or []}
+    names = list(texts)
+    problems = []
+    for i, a in enumerate(names):
+        for b in names[i + 1:]:
+            shared = _ngrams(texts[a], n) & _ngrams(texts[b], n)
+            if shared:
+                problems.append(f"{a} and {b} share the words: \"{' '.join(sorted(shared)[0])}\"")
+            ev = {e for e in _evidence(texts[a]) & _evidence(texts[b]) if e.lower() not in allow_l}
+            if ev:
+                problems.append(f"{a} and {b} both lean on: {', '.join(sorted(ev))} (tell a different story, or --allow it)")
+    return {"answers": len(names), "problems": problems, "clean": not problems}
+
+
 def _read(path: str) -> str:
     if path == "-":
         return sys.stdin.read()
@@ -168,7 +212,21 @@ def main(argv: list[str] | None = None) -> int:
     c.add_argument("--json", action="store_true")
     s = sub.add_parser("stats")
     s.add_argument("files", nargs="+")
+    x = sub.add_parser("crossform")
+    x.add_argument("files", nargs="+")
+    x.add_argument("--allow", action="append", default=[], help="a name every answer may use (the company); repeatable")
+    x.add_argument("--json", action="store_true")
     args = ap.parse_args(argv)
+
+    if args.cmd == "crossform":
+        result = crossform({Path(f).name: _read(f) for f in args.files}, allow=args.allow)
+        if args.json:
+            print(json.dumps(result, indent=2))
+        else:
+            for p in result["problems"]:
+                print(p)
+            print("CLEAN" if result["clean"] else "NOT CLEAN")
+        return 0 if result["clean"] else 1
 
     if args.cmd == "stats":
         print(json.dumps(stats([_read(f) for f in args.files]), indent=2))
