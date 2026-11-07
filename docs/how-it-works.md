@@ -19,7 +19,7 @@ The README is the short version. This page has the detail: each skill, the brows
 | --- | --- | --- |
 | Setup | `job-setup` | Writes your preferences and standing answers, records your master resume, attaches to Chrome, captures your JobRight feed |
 | Scan | `job-scan` | Reads your JobRight "Most Recent" feed down to the last card it saw. Falls back to the Indeed MCP connector |
-| Gate | `job-gate` | Filters by title, term, pay floor, location and posting age. Skips jobs already in your tracker |
+| Gate | `job-gate` | Filters by title and role fit, term, pay floor, location, freshness (it cuts reposts by first-seen and the employer's own posting date) and caps. Checks that you have not applied to that req already and stops the job if that check cannot run. Keeps the best one or two roles per company and holds jobs waiting on a referral |
 | Tailor | `tailor-resume` | Copies your master, picks the best entries and bullets, reports keyword coverage before and after, asks you about missing terms |
 | Fill | `apply-fill` | Fills the form in its own tab with real clicks and typing, uploads the resume, checks every field |
 | Sign in | `portal-auth` | Tries Sign in with Google, then Microsoft, then LinkedIn, then a login Chrome already saved. Otherwise it parks the job for you |
@@ -120,7 +120,7 @@ The agent will never:
 - enter an SSN or payment details, or approve an authenticator or push 2FA request.
 - use Sign in with Google, Microsoft or LinkedIn unless you allowed it in setup. It picks only your own matching account and continues only past consent screens that ask for basic profile and email.
 - press Enter or Escape inside a form, or reload a filled tab. It answers fields with real clicks and typing.
-- invent facts in written answers. It drafts essay and free-text answers only from your resume, standing answers and the job description, lists any inferred sentence for you to check, and skips postings that ban AI-written answers. Set `written_answers: leave` to have it leave them empty instead.
+- invent facts in written answers. It drafts essay and free-text answers only from your resume, standing answers and the job description, lists any inferred sentence for you to check, and flags postings with a rule about AI-written answers so you decide (`genai_restriction: skip` skips them). Set `written_answers: writer` to have a separate writer draft every answer on a form together, or `leave` to leave them empty for you.
 - touch a browser tab it did not open.
 - automate LinkedIn or any social media site.
 
@@ -142,7 +142,7 @@ Verification codes in credential mode:
 
 `auto_submit: false` is the default: the agent fills everything and stops at the final button. You review the form, then submit it, or turn on auto-submit once you trust the fills.
 
-Setting `auto_submit: true` lets it press the final button. Even then it never submits past a CAPTCHA, a sign-in wall, an unanswered required question, or a posting that bans AI tools. It respects a daily cap and a per-company cap, and logs a full read-back of every answer to your tracker before it clicks. `dry_run: true` fills and reads back without ever clicking.
+Setting `auto_submit: true` lets it press the final button. Even then it never submits past a CAPTCHA, a sign-in wall, an unanswered required question, a posting with a rule about AI tools, or an event RSVP. It respects a daily cap and a per-company cap, and logs a full read-back of every answer to your tracker before it clicks. `dry_run: true` fills and reads back without ever clicking.
 
 The trade-off: auto-submit saves you the review step, but a wrong answer, a bad upload or a misread dropdown goes to the employer with your name on it, and you cannot take it back. Many companies also limit how many roles you can apply to. Start with `dry_run`, then `auto_submit: false`, and turn on auto-submit only after you trust the fills on the portals you use.
 
@@ -150,6 +150,8 @@ The trade-off: auto-submit saves you the review step, but a wrong answer, a bad 
 
 - Claude Code, in a session: `/loop 4h /job-agent:run` repeats while the session is open.
 - A local scheduled task, or cron with a headless CLI such as `claude -p` or `codex exec`. A cloud routine cannot reach your Chrome.
+
+Each run takes a lock, so two runs never overlap; a lock older than 3 hours is from a hung run and is replaced. A run fills at most `browser.max_forms_per_run` forms (default 10) and leaves the rest queued. A locked screen or a browser that does not attach logs `BLOCKED` and stops; two blocked runs in a row send you a notification. Each run ends with `READY: <forms>`, `ALERT: <assessment, interview or offer>` or `NOTHING READY`, and a notification goes out only for the first two.
 
 Walk-away runs on your main Chrome need auto-allow; the separate profile needs nothing. Headless runs need their tools pre-approved; the example allow-list is in [`skills/job-run/SKILL.md`](../skills/job-run/SKILL.md). Keep the computer on and awake while runs are due.
 

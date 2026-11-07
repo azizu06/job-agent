@@ -96,6 +96,7 @@ Progress file: `<workspace>/state/setup-progress.json`, like `{"done": ["chrome"
      3. Open **Jobs** in the menu.
      4. Sort the list by **Most Recent**.
      Labels may differ slightly; pick the closest one. Then snapshot again. Never create the account or type credentials for them.
+   - Filters: suggest loose ones (job type, experience level, broad job functions, all work modes, a recent-posts window) and let the gate do the strict work. Location gotcha: "Anywhere in the US" means remote only; for the whole country pick the country United States with no city chips. If the picker forces a city, tell the user what it does and let them choose; do not change it for them.
    - Once signed in, if another sort shows, ask: "JobRight sorts your feed by <current sort>. May I switch it to Most Recent? That changes the sort on your JobRight account." On yes, select Most Recent in your own tab. Read the tab URL, save it as `sources.jobright.feed_url`, and confirm the snapshot lists job cards. Tell the user the URL, then close your tab with `close_page`.
    - Dedicated-profile mode: do this in that profile's window.
 
@@ -115,14 +116,15 @@ Progress file: `<workspace>/state/setup-progress.json`, like `{"done": ["chrome"
    - Save to `<workspace>/resumes/master.md`, set `master_resume` and `resume_format`. LaTeX users start from `assets/master-resume.tex`. Both render in the same one-page layout (Markdown through `../tailor-resume/scripts/md_to_tex.py`). The bullets outside alternate blocks are the user's general resume: at most 3 per entry, filling one page. If `tectonic` and PyMuPDF are installed, build it and run `../tailor-resume/scripts/resume_gate.py` on it, so the general resume passes the same gate every tailored copy must pass.
 
 8. **Preferences** (id `preferences`). Follow `assets/preferences.example.yaml`:
-   - target roles and title words to exclude; seniority, and the term for internships (for example Summer 2027)
-   - pay floor with units, and what to do when pay is missing (default: check the live posting)
-   - locations, remote, relocation; sectors and interests (ranking only)
-   - companies to skip, per-company caps; max posting age in days
-   - `skip_if_genai_banned` (default true)
+   - target roles and title words to exclude; role fit (`role_fit`: title words that always stay in, roles that need a tailored copy, role types never applied to); seniority, and the term for internships (for example Summer 2027) and what to do when a posting states none (`term_missing`)
+   - pay floor with units, and what to do when pay is missing (default: check the live posting); optionally a levels.fyi lookup and a step-up route for pay under the floor (`pay_floor.lookup`, `pay_floor.step_up_route`)
+   - locations, remote, relocation, and whether remote passes only at well-known companies (`work_mode`); sectors and interests (ranking only); optional prestige tiers (`prestige`)
+   - companies to skip, per-company caps with rolling windows, and how many roles per company at most (`caps.best_per_company`, default 2); max posting age in days and the employer-date check (`freshness`)
+   - GenAI rules in postings (`genai_restriction`, default `flag`: fill and flag so they decide; `skip` cuts them)
+   - forms per run (`browser.max_forms_per_run`, default 10), and extra job sources they read (`sources.extra`, optional)
    - `python_cmd: python3` (write it yourself; Windows: `py -3`)
 
-9. **Standing answers** (id `answers`). Why: forms ask the same questions every time. Follow `assets/standing-answers.example.yaml`. EEO answers are optional; default each to "Decline to self-identify". Never guess; blank means the agent asks later.
+9. **Standing answers** (id `answers`). Why: forms ask the same questions every time. Follow `assets/standing-answers.example.yaml`: contact and links, work authorization, education, work history with dates (full-date fields use day 01), languages, how they heard, referral, pay expectation and its fallback, screener answers they want reused, consent boxes, optional sections. EEO answers are optional; default each to "Decline to self-identify". Never guess; blank means the agent asks later. Also create an empty `profile/corrections.md`: rules the user teaches a run go there, and every run reads it.
 
 10. **Your writing voice** (id `voice`, optional). Why: written answers ("why this company", "tell us about a project") should not read like a chatbot. Every answer already goes through the built-in humanizing layer; this step adds the user's own voice on top. Follow the "Setup" section of `../your-voice/SKILL.md`, which asks: "Want answers to sound like you? Paste 2-5 things you've written, or add your own writing rules. Skip to use the humanizing layer only." Save to `<workspace>/voice/`.
 

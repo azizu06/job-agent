@@ -146,11 +146,11 @@ When you edit an answer, it saves the change as a rule in your voice profile, so
 
 The agent never solves a CAPTCHA, never enters an SSN or payment details, and never touches a tab it did not open. It does not automate LinkedIn or any social site. When it hits a step only you can do, it parks the job: the tab stays open and filled, the tracker row says `Needs you: <reason>`, you get a notification, and the run moves on.
 
-**Auto-submit is off by default.** Turn it on only after you trust the fills on your portals. Even then it stops at CAPTCHAs, sign-in walls, unanswered required questions and postings that ban AI tools, and it keeps to a daily cap and a per-company cap. A wrong answer sent with your name on it cannot be taken back.
+**Auto-submit is off by default.** Turn it on only after you trust the fills on your portals. Even then it stops at CAPTCHAs, sign-in walls, unanswered required questions and postings with a rule about AI tools, and it keeps to a daily cap and a per-company cap. A wrong answer sent with your name on it cannot be taken back.
 
 **Terms of service.** Automating a website may break its terms, and a site may limit or close your account. The agent reads slowly in your own browser and uses no private APIs, which lowers the load but does not make automation allowed. You are responsible for how you use it.
 
-**Employer AI policies.** Some employers ask applicants not to use AI tools. The agent looks for that language, skips those postings by default and tells you. Read each posting before you submit.
+**Employer AI policies.** Some employers ask applicants not to use AI tools. The agent reads each full posting for that language, fills those forms as usual, flags them in its report and its ready notification, and never auto-submits them, so you decide. Set `genai_restriction: skip` to skip them instead. Read each posting before you submit.
 
 Full rules: [docs/how-it-works.md](docs/how-it-works.md#safety-rules).
 
