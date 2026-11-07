@@ -1,5 +1,6 @@
 """Guard rules in the skill text that end-to-end QA found broken."""
 
+import sys
 import unittest
 from pathlib import Path
 
@@ -196,3 +197,35 @@ class OwnTabMarker(unittest.TestCase):
         self.assertIn("drop your `#job-agent-...` fragment", step)
         for skill in ("job-scan", "apply-fill"):
             self.assertIn("#job-agent-<short random id>", (SKILLS / skill / "SKILL.md").read_text(encoding="utf-8"))
+
+
+class SetupGatesGeneralResume(unittest.TestCase):
+    def setUp(self):
+        self.text = (SKILLS / "job-setup" / "SKILL.md").read_text(encoding="utf-8")
+
+    def test_practice_run_gates_the_general_resume_first(self):
+        step = section(self.text, "**Practice run**", "**Summary screen.**")
+        gate = "python3 ../tailor-resume/scripts/resume_gate.py --pdf <general>.pdf --resume <general>.tex --master <master>"
+        self.assertIn(gate, step)
+        self.assertLess(step.index("resume_gate.py"), step.index("Run the job-run skill"))
+
+    def test_gate_command_form_matches_tailor_resume(self):
+        tailor = (SKILLS / "tailor-resume" / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("resume_gate.py --pdf <copy>.pdf --resume <copy>.tex --master <master>", tailor)
+
+
+class TrackerColumnsMatchScript(unittest.TestCase):
+    def test_setup_lists_every_script_column(self):
+        sys.path.insert(0, str(SKILLS / "tracker" / "scripts"))
+        import tracker_csv
+        step = section((SKILLS / "job-setup" / "SKILL.md").read_text(encoding="utf-8"), "**Tracker**", "**JobRight feed**")
+        self.assertIn("`" + ", ".join(tracker_csv.COLUMNS) + "`", step)
+        self.assertEqual(len(tracker_csv.COLUMNS), 12)
+
+
+class RigUsesMainBrowserMode(unittest.TestCase):
+    def test_rig_profile_keeps_main_mode(self):
+        rig = (Path(__file__).resolve().parent / "e2e" / "rig.py").read_text(encoding="utf-8")
+        self.assertNotIn("mode: dedicated", rig)
+        example = (SKILLS / "job-setup" / "assets" / "preferences.example.yaml").read_text(encoding="utf-8")
+        self.assertIn("  mode: main ", example)
