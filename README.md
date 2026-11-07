@@ -1,150 +1,244 @@
-# job-agent
+<p align="center">
+  <img src="assets/banner.png" alt="job-agent: your coding agent finds jobs, tailors your resume and fills the application. You click Submit." width="100%">
+</p>
 
-Skills that turn your coding agent (Claude Code, Codex, Cursor and others) into a job-application agent.
+<p align="center">
+  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-E8590C"></a>
+  <a href="https://github.com/azizu06/job-agent/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/azizu06/job-agent/actions/workflows/ci.yml/badge.svg"></a>
+  <img alt="Platforms: macOS, Windows, Linux" src="https://img.shields.io/badge/platforms-macOS%20%7C%20Windows%20%7C%20Linux-0F1115">
+  <img alt="Works with Claude Code, Codex, Cursor" src="https://img.shields.io/badge/agents-Claude%20Code%20%7C%20Codex%20%7C%20Cursor-0F1115">
+</p>
 
-1. **Find** new postings in your job feed.
-2. **Tailor** a one-page resume for each one from your master resume, without inventing anything.
-3. **Fill** the application in your own Chrome, then **track** it and its email replies.
+<p align="center">
+  <a href="#install">Install</a> ·
+  <a href="#quickstart">Quickstart</a> ·
+  <a href="#what-runs-on-its-own">What you do once</a> ·
+  <a href="#safety">Safety</a> ·
+  <a href="#troubleshooting">Troubleshooting</a> ·
+  <a href="#faq">FAQ</a>
+</p>
 
-By default it stops at the final Submit button. You review and click it.
+job-agent is a set of skills for your coding agent. It finds new postings, builds a one-page resume for each one from your master resume, and fills the application in your own Chrome. It never invents a fact, and by default it stops at the final Submit button so you can check the form and click it yourself.
 
-## You need
-
-> - **Google Chrome 144 or later, stable channel.** Not Edge, Brave or Arc.
-> - **Node.js 20.19 or later** (for `npx chrome-devtools-mcp`).
-> - **Python 3.9 or later.** On Windows, use `py -3` wherever these docs say `python3`.
-> - **A free JobRight account** (setup walks you through it), or the Indeed MCP connector as the job source.
-> - **A resume.** Setup turns it into a master resume.
-> - **For the resume PDF:** `pandoc` or `tectonic`, and `pdftoppm` from poppler. On macOS: `brew install pandoc tectonic poppler`.
-
-## Quickstart (Claude Code)
-
-1. Install the plugin:
-
-   ```
-   /plugin marketplace add azizu06/job-agent
-   /plugin install job-agent@job-agent
-   /reload-plugins
-   ```
-
-2. Run setup: `/job-agent:setup`. It asks about 10 questions and takes about 10 minutes. It writes nothing until you say yes.
-3. In Chrome, open `chrome://inspect/#remote-debugging` and turn remote debugging on. When Chrome asks "Allow remote debugging?", click Allow.
-4. Try it: `/job-agent:run dry-run`. It scans, tailors and fills forms, and never presses Submit, even if you turn on auto-submit later. With the default settings a plain `/job-agent:run` also stops at Submit; the two differ only once `auto_submit` is on.
-
-### Other agents
-
-- **Paste the link.** Send your agent `https://github.com/azizu06/job-agent  set this up`. It reads [`AGENTS.md`](AGENTS.md), installs the skills, and runs setup with you.
-- **Skills CLI** (Codex, Cursor and [many other agents](https://github.com/vercel-labs/skills)): `npx skills add azizu06/job-agent`, then add the browser MCP yourself (see [Browser](#browser)) and ask your agent to set up job-agent. The CLI writes `skills-lock.json` into your project; add it to `.gitignore` unless you want to commit it.
-
-## What setup does
-
-- asks what jobs you want and your standard application answers, and records your master resume
-- attaches to the Chrome you already use, so it starts with the logins you already have
-- checks which MCPs you have (Gmail, Notion, Sheets, Indeed) and what each adds
-- offers the optional auto-allow helper for walk-away runs
-- asks whether the agent may use Sign in with Google, Microsoft or LinkedIn on job portals (setup asks, default yes) and click Sign In on logins Chrome already saved, and offers the optional credential mode (off by default)
-- sets up a notification (macOS, ntfy.sh or Slack) for jobs that need you
+<p align="center">
+  <img src="assets/demo.gif" alt="The agent fills a test application on the localhost mock rig: it reads the feed, checks the posting, types each field, uploads the resume, picks dropdown answers, drafts the essay, ticks the consent box and stops at Submit." width="760">
+  <br>
+  <sub>A real run on the built-in test rig. Every page is on localhost and every value is fake.</sub>
+</p>
 
 ## How it works
 
-| Step | Skill | What it does |
+```mermaid
+flowchart LR
+    A([Setup wizard<br>once]) --> B[Scan<br>JobRight feed]
+    B --> C{Filter<br>your rules}
+    C -- cut --> X[Cut report]
+    C -- keep --> D[Tailor<br>resume per job]
+    D --> E[Fill<br>one agent per job]
+    E --> F{Auto-submit<br>on?}
+    F -- no --> G[Stops at Submit<br>you click it]
+    F -- yes --> H[Submits within<br>your caps]
+    E -. CAPTCHA or sign-in .-> P[Parked tab<br>you finish it]
+    G --> T[(Tracker<br>CSV, Notion, Sheets)]
+    H --> T
+    T --> S[Email sync<br>receipts and replies]
+    S -. every few hours .-> B
+
+    classDef accent fill:#E8590C,stroke:#E8590C,color:#fff
+    classDef ink fill:#0F1115,stroke:#0F1115,color:#fff
+    class E,D accent
+    class G,P ink
+```
+
+## You need
+
+- [ ] A coding agent: [Claude Code](https://claude.com/claude-code), Codex, Cursor or [another agent that reads skills](https://github.com/vercel-labs/skills)
+- [ ] Google Chrome 144 or later (stable). Not Edge, Brave or Arc
+- [ ] Node.js 20.19 or later
+- [ ] Python 3.9 or later
+- [ ] A free [JobRight](https://jobright.ai) account. Setup walks you through it
+- [ ] A resume, any format. Setup turns it into a master resume
+- [ ] Optional: `pandoc`, `tectonic` and `poppler` to build the resume PDF
+
+New to some of these? [docs/getting-started.md](docs/getting-started.md) installs each one on macOS, Windows and Linux.
+
+## Install
+
+Pick one route.
+
+| Route | Best for | Run this |
 | --- | --- | --- |
-| Setup | `job-setup` | Writes your preferences and standing answers, attaches to Chrome |
-| Scan | `job-scan` | Reads your JobRight "Most Recent" feed down to the last card it saw. Falls back to the Indeed MCP connector |
-| Gate | `job-gate` | Filters by title, term, pay floor, location and posting age. Skips jobs already in your tracker |
-| Tailor | `tailor-resume` | Copies your master, picks the best entries and bullets, reports keyword coverage before and after, asks you about missing terms |
-| Fill | `apply-fill` | Fills the form in its own tab with real clicks and typing, uploads the resume, checks every field |
-| Sign in | `portal-auth` | Tries Sign in with Google, then Microsoft, then LinkedIn, then a login Chrome already saved. Otherwise it parks the job for you. Typed passwords, new accounts, resets and codes need the optional credential mode |
-| Run | `job-run` | Runs the loop, one applier per job, each with its own browser connection, then re-checks every form |
-| Track | `tracker` | Local CSV by default, or Notion or Google Sheets. Finds the receipt email after a submit |
-| Sync | `status-sync` | Reads new email for assessments, interviews, offers and rejections and updates each row |
+| **Claude Code plugin** | Claude Code users. Sets up the browser for you | `/plugin marketplace add azizu06/job-agent`<br>`/plugin install job-agent@job-agent` |
+| **Skills CLI** | Codex, Cursor and other agents | `npx skills add azizu06/job-agent` |
+| **Paste the link** | Any agent. It installs and runs setup with you | `https://github.com/azizu06/job-agent set this up` |
 
-Your data stays in `~/.job-agent/` (or `$JOB_AGENT_HOME`): profile, resumes, tracker and state. Passwords live only in your OS keychain. Nothing personal goes in this repo.
+The Skills CLI and paste routes also need the browser MCP added to your agent. Setup prints the exact line for your agent.
 
-### The master resume
+## Quickstart
 
-Keep one long master resume with everything you have done and several alternate bullets per entry. Each job gets a new copy built from it. The agent never adds a metric, tool or experience that is not in the master, and it lists the job's keywords you still lack so you decide. Start from [`skills/job-setup/assets/master-resume.md`](skills/job-setup/assets/master-resume.md) (a LaTeX version sits next to it). The checks are plain Python with no dependencies. From a clone of this repo:
+1. **Install** with one of the routes above. In Claude Code, run `/reload-plugins` after.
+2. **Turn on Chrome remote debugging.** Open `chrome://inspect/#remote-debugging` and switch it on. You do this once.
+3. **Run setup:** `/job-agent:setup`. About 10 questions and 10 minutes. It writes nothing until you say yes. In other agents, say "set up job-agent".
+4. **Try a dry run:** `/job-agent:run dry-run`. It scans, tailors and fills, and never presses Submit. When Chrome asks "Allow remote debugging?", click Allow.
 
-```
-python3 skills/tailor-resume/scripts/keyword_coverage.py --jd jd.txt --resume tailored.md --before master.md
-python3 skills/tailor-resume/scripts/resume_check.py --master master.md --resume tailored.md
-```
+When the dry run looks right, use `/job-agent:run`. To repeat it every 4 hours, use `/loop 4h /job-agent:run`.
 
-## Browser
+## Pick a tracker
 
-**Default: your own Chrome.** The agent works in the Chrome you already use, with your existing logins, through [chrome-devtools MCP](https://github.com/ChromeDevTools/chrome-devtools-mcp) and its `--autoConnect` option.
+Every application gets a row: company, role, requisition ID, link, date, resume used, status and receipt.
 
-1. Use Chrome 144 or later. Open `chrome://inspect/#remote-debugging` once and turn remote debugging on.
-2. When the agent connects, Chrome asks "Allow remote debugging?". Click Allow.
+| Tracker | You need | Pick it if |
+| --- | --- | --- |
+| **CSV** (default) | Nothing | You want it to work now. Opens in Excel, Numbers or Google Sheets |
+| **Notion** | The Notion MCP connector | You already plan in Notion. Setup can create the database |
+| **Google Sheets** | A Google Sheets MCP connector | You want a live sheet you can share or open on your phone |
 
-Chrome asks every time a new debugging connection starts. Each applier opens its own connection so agents never get in each other's way, which means one prompt per applier. During a session Chrome shows a banner that it is being controlled by automated software. The Claude Code plugin sets up the MCP for you (chrome-devtools-mcp 1.10.1, the version this repo was tested with); for other agents, add `npx -y chrome-devtools-mcp@1.10.1 --autoConnect --no-usage-statistics --workspace=$HOME/.job-agent` (Codex: `codex mcp add job-agent-browser -- npx -y chrome-devtools-mcp@1.10.1 --autoConnect --no-usage-statistics --workspace=$HOME/.job-agent`). `--no-usage-statistics` turns off the MCP's usage reporting to Google. The `--workspace` folder is where the browser server may read files, so it can upload your tailored resumes; use your `JOB_AGENT_HOME` if you set one. For parallel appliers in Claude Code, setup copies [`skills/job-setup/assets/job-applier.md`](skills/job-setup/assets/job-applier.md) to `~/.claude/agents/` (plugins cannot give a subagent its own MCP connection). Without it, jobs run one at a time.
+Add the Gmail MCP to any of them and the agent finds receipt emails, then moves rows to Assessment, Interview, Offer or Rejected as replies arrive.
 
-**Optional, off by default: auto-allow.** For runs with nobody at the keyboard, [`auto_allow.py`](skills/job-setup/scripts/auto_allow.py) presses Allow for the agent.
+## What runs on its own
 
-- It only acts while armed. Each agent arms a 15 second window right before its own connect. While any window is open, the helper clicks each Chrome prompt that appears, logs the click to `~/.job-agent/auto-allow.log`, and closes one window per click. When no window is open it clicks nothing.
-- What it does: it approves the agent's own connections.
-- What turning it on means: Chrome's prompt does not say who is asking, so any other program on your computer that connects to Chrome while a window is open is approved too.
-- macOS only. Turning it on installs a per-user LaunchAgent (`~/Library/LaunchAgents/io.github.azizu06.job-agent.auto-allow.plist`) that does the clicking; agents only arm it through files in `~/.job-agent/auto-allow/`. Turning it off unloads and removes the LaunchAgent. Grant Accessibility to the Python binary the enable step prints, since the LaunchAgent runs it (System Settings > Privacy & Security > Accessibility, press +, Cmd-Shift-G to paste the path). It finds Chrome's prompt by its English text, so it works only when Chrome's language is English. Windows: not supported yet. Linux: not available; click Allow yourself or use a separate profile.
-- To turn it on, ask your agent: "turn on auto-allow". To turn it off: "turn off auto-allow". (From a clone: `python3 skills/job-setup/scripts/auto_allow.py enable` or `disable`.)
-
-**Alternative: a separate profile.** If you want the agent isolated from your main browser, ask your agent to "start the job-agent Chrome profile" (from a clone: `python3 skills/job-setup/scripts/launch_chrome.py`). It starts Chrome with its own profile (`--remote-debugging-port=9333 --user-data-dir=~/.job-agent/chrome-profile`) on macOS, Linux or Windows. On Linux with a snap or flatpak Chrome, set `CHROME_BIN` to the Chrome command first. Point the MCP at it with `--browser-url=http://127.0.0.1:9333` and set `browser.mode: dedicated`. There are no prompts, but you sign in to your job sites once in that window. While it runs, any program on your computer can control that profile through the port.
+| You do once | It does every run | You still do sometimes |
+| --- | --- | --- |
+| Install the plugin or skills | Reads new postings in your JobRight feed | Clear parked tabs: CAPTCHAs, new sign-ins, codes |
+| Turn on Chrome remote debugging | Filters them by title, term, pay, location and age | Answer missing-keyword questions, once per term |
+| Mac only, for walk-away runs: grant Accessibility to the auto-allow helper | Builds a tailored resume for each job | Click Submit, unless you turned on auto-submit |
+| Create a free JobRight account and sort it by Most Recent | Fills each form in its own tab | Keep the computer on and awake during runs |
+| Give it your resume | Records every job in your tracker | |
+| Answer the setup wizard | Finds receipts and status emails | |
+| Sign in to optional connectors: Gmail, Notion, Sheets | Notifies you when a tab needs you | |
 
 ## Safety
 
-The agent will never:
+The agent never solves a CAPTCHA, never enters an SSN or payment details, and never touches a tab it did not open. It does not automate LinkedIn or any social site. When it hits a step only you can do, it parks the job: the tab stays open and filled, the tracker row says `Needs you: <reason>`, you get a notification, and the run moves on.
 
-- solve or get around a CAPTCHA or bot check. It parks that job instead: the tab stays open and filled, the tracker row says `Needs you: captcha`, you get a notification, and the run moves on. The run ends with a list of parked tabs so you clear them in one sitting.
-- stall or crash on a step it will not or cannot do. Some agents refuse to type passwords, create accounts or enter codes under their own policies. The agent parks that job the same way (`Needs you: sign-in`, `Needs you: create account` and so on), does not retry it, and moves on.
-- enter an SSN or payment details, or approve an authenticator or push 2FA request.
-- use Sign in with Google, Microsoft or LinkedIn unless you allowed it in setup. It picks only your own matching account and continues only past consent screens that ask for basic profile and email.
-- press Enter or Escape inside a form, or reload a filled tab. It answers fields with real clicks and typing.
-- invent facts in written answers. It drafts essay and free-text answers only from your resume, standing answers and the job description, lists any inferred sentence for you to check, and skips postings that ban AI-written answers. Set `written_answers: leave` to have it leave them empty instead.
-- touch a browser tab it did not open.
-- automate LinkedIn or any social media site.
+**Auto-submit is off by default.** Turn it on only after you trust the fills on your portals. Even then it stops at CAPTCHAs, sign-in walls, unanswered required questions and postings that ban AI tools, and it keeps to a daily cap and a per-company cap. A wrong answer sent with your name on it cannot be taken back.
 
-### Portal sign-in
+**Terms of service.** Automating a website may break its terms, and a site may limit or close your account. The agent reads slowly in your own browser and uses no private APIs, which lowers the load but does not make automation allowed. You are responsible for how you use it.
 
-By default the agent signs in to job portals only with an account already signed in to your Chrome (Google, then Microsoft, then LinkedIn) or a login Chrome already saved. If neither works, it parks the job: the tab stays open and you finish the sign-in.
+**Employer AI policies.** Some employers ask applicants not to use AI tools. The agent looks for that language, skips those postings by default and tells you. Read each posting before you submit.
 
-**Optional credential mode, off by default.** It lets the agent type passwords from your OS keychain, create portal accounts, reset passwords and enter verification codes. Many agents (including Claude) will refuse these steps under their own safety rules; when they do, the job parks for you. Generated passwords go to your OS keychain and never appear in chat or logs.
+Full rules: [docs/how-it-works.md](docs/how-it-works.md#safety-rules).
 
-Verification codes (credential mode): emailed codes are read through the Gmail MCP (newest message from that sender, within a few minutes). On macOS, if you opt in, SMS codes are read from the Messages database (`~/Library/Messages/chat.db`, read-only, last 5 minutes), which needs Full Disk Access for the app running your agent (System Settings > Privacy & Security > Full Disk Access) and Text Message Forwarding from your iPhone. On Windows, SMS codes come to you, because Phone Link has no stable API.
+## Troubleshooting
 
-Before it calls a form ready, it re-reads the live form for errors. Some portals record your application before the last step; on unfamiliar multi-step forms it stops after step 1 and checks your email after each step.
+| Problem | Fix |
+| --- | --- |
+| Chrome never shows "Allow remote debugging?" | Check Chrome is 144 or later and open. Turn the switch on at `chrome://inspect/#remote-debugging`, then restart Chrome |
+| The agent opened a new, empty Chrome | The browser MCP is missing `--autoConnect`. Run setup again, or copy the line from [docs/how-it-works.md](docs/how-it-works.md#browser) |
+| "Allow" pops up for every job | Expected. Each job opens its own connection. Click Allow, or turn on auto-allow on a Mac |
+| Resume upload fails with "not within any of the configured workspace roots" | You set a custom `JOB_AGENT_HOME`. The agent copies the PDF to a temp folder and retries. If it still fails, set `--workspace=` to your folder |
+| Scan says "checkpoint not found" or reads old jobs | Your JobRight feed is not sorted by Most Recent. Sort it, then ask your agent to "recapture my JobRight feed" |
+| Jobs run one at a time | The `job-applier` subagent is missing. Run setup again; it copies the file to `~/.claude/agents/` |
+| A scheduled run stops at the first prompt | Headless runs need tools pre-approved. Copy the allow-list from [skills/job-run/SKILL.md](skills/job-run/SKILL.md) |
+| Auto-allow clicks nothing | Grant Accessibility to the Python path that `enable` printed, and set Chrome's language to English |
+| `python3` is not found on Windows | Use `py -3` wherever the docs say `python3` |
+| No resume PDF, only a `.md` or `.tex` file | Install `pandoc`, `tectonic` and `poppler`. Without them the agent hands you the source file |
+| A form shows "needs corrections" after filling | The portal ignored a field. The agent re-reads every field before it calls a form ready; if it flags one, fix it by hand |
+| Most jobs park as `Needs you: sign-in` | Sign in to Google in that Chrome, and keep Sign in with Google allowed in setup. Workday needs one account per company |
 
-### Auto-submit
+More in [docs/getting-started.md](docs/getting-started.md#if-something-goes-wrong).
 
-`auto_submit: false` is the default: the agent fills everything and stops at the final button. You read the form and click Submit.
+## FAQ
 
-Setting `auto_submit: true` lets it press the final button. Even then it never submits past a CAPTCHA, a sign-in wall, an unanswered required question, or a posting that bans AI tools. It respects a daily cap and a per-company cap, and logs a full read-back of every answer to your tracker before it clicks. `dry_run: true` fills and reads back without ever clicking.
+<details>
+<summary><b>What is JobRight?</b></summary>
 
-The trade-off: auto-submit saves you the review step, but a wrong answer, a bad upload or a misread dropdown goes to the employer with your name on it, and you cannot take it back. Many companies also limit how many roles you can apply to. Start with `dry_run`, then `auto_submit: false`, and turn on auto-submit only after you trust the fills on the portals you use.
+[JobRight](https://jobright.ai) is a job board that builds a feed of postings matched to your profile. job-agent reads that feed in your own signed-in Chrome, newest first, and stops at the last job it saw. A free account is enough. If you do not want JobRight, the agent can use the Indeed MCP connector instead.
+</details>
 
-## Your responsibility
+<details>
+<summary><b>Is it free?</b></summary>
 
-- **Job site terms.** Automating a website may break its terms of service, and a site may limit or close your account. You are responsible for how you use this tool on JobRight, Indeed, employer portals and any other site. The agent reads slowly in your own signed-in browser and uses no private APIs, which lowers the load on a site but does not make automation allowed.
-- **Employer AI policies.** Some employers ask applicants not to use AI tools when applying. The agent looks for that language, skips those postings by default and tells you. Read each posting yourself before you submit.
-- **What you submit.** You are responsible for everything sent in your name. Check each application.
+job-agent is free and MIT licensed. JobRight's free account works. The cost is your coding agent: a Claude, ChatGPT or Cursor subscription, or API usage. See the next question.
+</details>
 
-## Requirements
+<details>
+<summary><b>What does it cost in tokens?</b></summary>
 
-- A coding agent that supports skills or can read Markdown instructions, plus everything in [You need](#you-need).
-- Optional: `pip install keyring` (credential mode passwords). On Linux, the clipboard helpers need `wl-copy` (Wayland) or `xclip`.
-- Optional MCPs: Gmail (receipts, account verification, status sync), Notion or Google Sheets (tracker), Indeed (fallback job source).
+Each job runs in its own agent session that reads page snapshots, tailors a resume and fills the form, so cost grows with the number of jobs and the length of each form. One measured run on the test rig with Claude Sonnet: 5 postings, 3 forms filled, about 11 million mostly cached input tokens and 29,000 output tokens, about $2.80 at API list prices. Real portals have longer pages, so expect more per job. On a Claude Pro or Max plan this counts toward your usage limit instead of a bill. Start with a dry run on a few jobs and check your usage before you schedule it.
+</details>
 
-## Scheduling
+<details>
+<summary><b>Does it work on Windows? Linux?</b></summary>
 
-Run it every few hours with `/loop 4h /job-agent:run` in Claude Code, a local scheduled task, or cron with a headless CLI such as `claude -p` or `codex exec`. Walk-away runs on your main Chrome need auto-allow; the separate profile needs nothing. Headless runs need their tools pre-approved; the example allow-list is in [`skills/job-run/SKILL.md`](skills/job-run/SKILL.md).
+Yes, the main loop works on macOS, Windows and Linux, and CI runs the tests on all three. Use `py -3` where the docs say `python3`. Two extras are macOS only: the auto-allow helper for walk-away runs and reading SMS codes. On Windows and Linux you click Chrome's Allow prompt yourself, or use the separate Chrome profile, which never asks.
+</details>
 
-## Development
+<details>
+<summary><b>Will I get banned?</b></summary>
 
-```
-python3 -m unittest discover -s tests
-claude plugin validate .
-```
+It can happen. Automation may break a site's terms, and a site may limit or close your account. The agent lowers the risk: it works in your normal Chrome, reads slowly, uses no private APIs, never touches LinkedIn, never solves CAPTCHAs, and caps how many roles it applies to per company. Many companies also limit how many roles you can apply to, so the caps protect your candidacy too.
+</details>
 
-The tests include an end-to-end rig: a mock job feed, Greenhouse-shaped and Workday-shaped forms, mocked Google sign-in, a CAPTCHA posting and a mock inbox, all on localhost. It also runs the full loop through a real agent with auto-submit on. See [`tests/e2e/README.md`](tests/e2e/README.md).
+<details>
+<summary><b>Can it apply through LinkedIn Easy Apply?</b></summary>
 
-## License
+No. It does not automate LinkedIn or any social site. It applies on the employer's own portal (Greenhouse, Workday, Lever, Ashby and others). It can use the "Sign in with LinkedIn" button on a portal, if you allow it, but it never browses linkedin.com.
+</details>
 
-MIT. By Aziz Umarov ([@azizu06](https://github.com/azizu06)).
+<details>
+<summary><b>What if I have no resume?</b></summary>
+
+Setup can start one with you from the [master resume template](skills/job-setup/assets/master-resume.md). You list your school, jobs, projects and skills, and the agent shapes them into entries. Every number and tool must be something you really did; the agent never adds facts of its own.
+</details>
+
+<details>
+<summary><b>Will it lie on my resume or answers?</b></summary>
+
+No. It only rewords and selects from your master resume and your standing answers. A checker fails any tailored resume that contains a number not found in the master. Written answers are drafted from the same sources, and any sentence it had to infer is listed for you to check. Set `written_answers: leave` to write them yourself.
+</details>
+
+<details>
+<summary><b>Does it submit on its own?</b></summary>
+
+Not unless you turn on `auto_submit`. By default it fills everything and stops at the final button, and the tracker row says `Ready`. You open the tab, read the form and click Submit.
+</details>
+
+<details>
+<summary><b>What happens at a CAPTCHA or a sign-in page?</b></summary>
+
+It tries Sign in with Google, Microsoft or LinkedIn with an account already in your Chrome, then a login Chrome already saved. If none works, or it sees a CAPTCHA, it parks the job: the tab stays open and filled, and you get a notification. At the end of the run you get one list of parked tabs to clear in one sitting.
+</details>
+
+<details>
+<summary><b>Where does my data go?</b></summary>
+
+Your profile, resumes, tracker and run logs live in `~/.job-agent/` on your computer. Passwords, if you turn on the optional credential mode, live only in your OS keychain. Nothing personal goes into this repo. Your agent's model provider sees what the agent reads, as with any agent task.
+</details>
+
+<details>
+<summary><b>Does my computer have to stay on?</b></summary>
+
+Yes. The agent drives the Chrome on your computer, so runs need it on, awake and signed in. A cloud agent cannot reach your Chrome. On a Mac, walk-away runs also need the auto-allow helper.
+</details>
+
+<details>
+<summary><b>Does it only do internships?</b></summary>
+
+No. Set `seniority` to internship, new-grad, junior, mid or senior, set your pay floor per hour or per year, and list the titles you want. The examples use internships because the author is a student.
+</details>
+
+<details>
+<summary><b>Can I stop or undo it?</b></summary>
+
+Stop your agent at any time; filled tabs stay open. A submitted application cannot be pulled back by the agent, which is why auto-submit is off by default. To turn helpers off, ask your agent "turn off auto-allow".
+</details>
+
+<details>
+<summary><b>Which coding agents does it work with?</b></summary>
+
+Claude Code gets the smoothest setup, including parallel appliers. Codex, Cursor and any agent that reads skills or Markdown instructions work too, with one job at a time unless your agent can give each worker its own browser connection. Some agents refuse to type passwords or enter codes; those jobs park for you instead of failing.
+</details>
+
+More detail: [docs/how-it-works.md](docs/how-it-works.md). Development and the test rig: [tests/e2e/README.md](tests/e2e/README.md).
+
+---
+
+<p align="center">
+  <b>If job-agent saves you an evening of copy-pasting, star the repo.</b><br>
+  It helps other students find it. Issues and pull requests are welcome.
+  <br><br>
+  <a href="https://github.com/azizu06/job-agent"><img alt="Star on GitHub" src="https://img.shields.io/github/stars/azizu06/job-agent?style=social"></a>
+  <br><br>
+  <sub>MIT. By Aziz Umarov (<a href="https://github.com/azizu06">@azizu06</a>).</sub>
+</p>
