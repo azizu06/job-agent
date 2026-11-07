@@ -111,6 +111,29 @@ def _has_word(text: str, word: str) -> bool:
     return re.search(r"(?<![A-Za-z0-9])" + re.escape(word.lower()) + r"(?![A-Za-z0-9])", text.lower()) is not None
 
 
+def _has_role(title: str, role: str) -> bool:
+    """Like _has_word, but a role's last word may carry -ing or -s: "Software Engineering Intern" is a Software Engineer role."""
+    pat = r"(?<![A-Za-z0-9])" + re.escape(role.lower()) + r"(?:ing|s)?(?![A-Za-z0-9])"
+    return re.search(pat, title.lower()) is not None
+
+
+_SEASON = r"(?:spring|summer|fall|autumn|winter)"
+_TERM_IN_TITLE = re.compile(_SEASON + r"(?:\s*/\s*" + _SEASON + r")*\s*(?:'|\u2019)?\s*(?:20)?\d{2}\b", re.I)
+
+
+def norm_term(text: str) -> str:
+    """Lowercase, and write a two-digit year in full: "Summer '27" and "Summer 27" read as "summer 2027"."""
+    t = re.sub(r"\s+", " ", (text or "").lower().replace("\u2019", "'"))
+    t = re.sub(r"(" + _SEASON + r")\s*'?\s*(\d{2})\b(?!\d)", r"\1 20\2", t)
+    return t
+
+
+def term_from_title(title: str) -> str:
+    """A term the title states, like "[Summer 2027]", "Summer '27" or "(Winter/Spring 2027)"; empty when there is none."""
+    m = _TERM_IN_TITLE.search(title or "")
+    return m.group(0) if m else ""
+
+
 def _time(value) -> dt.datetime | None:
     return jobright_meta.parse_time(str(value)) if value else None
 
@@ -165,7 +188,7 @@ def gate_one(job: dict, prefs: dict, now: dt.datetime) -> dict:
     # 1. title
     fit = prefs.get("role_fit") or {}
     overrides = _words(fit.get("title_overrides"))
-    overridden = any(_has_word(title, w) for w in overrides)
+    overridden = any(_has_role(title, w) for w in overrides)
     for w in _words(prefs.get("exclude_title_words")):
         if _has_word(title, w):
             return out("role_cut", "title", f"title has excluded word {w!r}")
@@ -175,10 +198,10 @@ def gate_one(job: dict, prefs: dict, now: dt.datetime) -> dict:
                 return out("role_cut", "role_fit", f"title has role-fit cut word {w!r}")
     targets = _words(prefs.get("target_roles")) + _words(fit.get("tailored_title_words")) + overrides
     is_event = (job.get("kind") or "job") == "event"
-    if targets and not is_event and not any(_has_word(title, w) for w in targets):
+    if targets and not is_event and not any(_has_role(title, w) for w in targets):
         return out("role_cut", "title", "title matches no target role")
-    if any(_has_word(title, w) for w in _words(fit.get("tailored_title_words"))) and not any(
-            _has_word(title, w) for w in _words(prefs.get("target_roles"))):
+    if any(_has_role(title, w) for w in _words(fit.get("tailored_title_words"))) and not any(
+            _has_role(title, w) for w in _words(prefs.get("target_roles"))):
         entry["fit_tier"] = "tailored"
 
     # 2. linkedin-only
@@ -195,10 +218,10 @@ def gate_one(job: dict, prefs: dict, now: dt.datetime) -> dict:
 
     # 3. term
     term = str(prefs.get("term") or "").strip()
-    term_text = job.get("term_text") or ""
+    term_text = job.get("term_text") or term_from_title(title)
     if term:
         if term_text:
-            if term.lower() not in term_text.lower():
+            if norm_term(term) not in norm_term(term_text):
                 return out("near", "term", f"stated term {term_text!r} is not {term!r}")
         elif (prefs.get("term_missing") or "near_miss") != "pass":
             return out("near", "term", "no term stated")

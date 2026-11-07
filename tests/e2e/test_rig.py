@@ -265,6 +265,13 @@ class RigEndToEnd(unittest.TestCase):
         self.assertIn("facts absent from the master resume: ['50', 'Google', 'Kubernetes']", problems)
 
 
+class EssayCheck(unittest.TestCase):
+    def test_pronoun_contractions_are_not_new_names(self):
+        master = "Built a billing service in Python."
+        self.assertEqual(rig.essay_unsupported("I build services. Later I'd like to ship more, and I'll test them.", master), [])
+        self.assertEqual(rig.essay_unsupported("Then I'd join Google.", master), ["Google"])
+
+
 class SyncRules(unittest.TestCase):
     def setUp(self):
         sys.path.insert(0, str(SYNC.parent))

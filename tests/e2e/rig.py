@@ -163,7 +163,7 @@ def essay_unsupported(essay: str, master: str, allowed: str = "") -> list[str]:
     for sentence in re.split(r"(?<=[.!?])\s+", essay.strip()):
         toks = re.findall(r"[A-Za-z0-9][A-Za-z0-9'+#]*", sentence)
         for i, tok in enumerate(toks):
-            if tok in ESSAY_STOP:
+            if tok in ESSAY_STOP or re.fullmatch(r"I'[a-z]+", tok):  # I'd, I'll, I'm: the pronoun, not a name
                 continue
             is_num = any(c.isdigit() for c in tok)
             is_name = tok[0].isupper() and i > 0

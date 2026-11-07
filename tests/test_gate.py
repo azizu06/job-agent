@@ -106,6 +106,30 @@ class RoleFit(unittest.TestCase):
         self.assertEqual(gate.gate_one(job(company="Bigco", work_mode="remote", location="Remote (US)"), p, NOW)["decision"], "pass")
 
 
+class TitleShapes(unittest.TestCase):
+    """Title shapes seen on the live JobRight feed (QA pass 3)."""
+
+    def test_engineering_intern_is_a_software_engineer_role(self):
+        p = prefs()
+        r = gate.gate_one(job(title="Software Engineering Intern"), p, NOW)
+        self.assertEqual(r["decision"], "pass")
+        r = gate.gate_one(job(title="Software Engineering Intern", location="San Francisco, CA"), p, NOW)
+        self.assertEqual((r["decision"], r["gate"]), ("near", "location"))
+        self.assertEqual(gate.gate_one(job(title="Software Engineerx Intern"), p, NOW)["decision"], "role_cut")
+
+    def test_term_stated_in_the_title(self):
+        p = prefs()
+        r = gate.gate_one(job(title="Software Engineer Intern, Autonomy [Summer 2027]", term_text=""), p, NOW)
+        self.assertEqual(r["decision"], "pass")
+        r = gate.gate_one(job(title="Software Engineering Intern - Summer '27", term_text=""), p, NOW)
+        self.assertEqual(r["decision"], "pass")
+        r = gate.gate_one(job(title="Internship, Software Engineer (Winter/Spring 2027)", term_text=""), p, NOW)
+        self.assertEqual((r["decision"], r["gate"]), ("near", "term"))
+        self.assertIn("Winter/Spring 2027", r["why"])
+        r = gate.gate_one(job(title="Software Engineer Intern", term_text=""), p, NOW)
+        self.assertEqual((r["gate"], r["why"]), ("term", "no term stated"))
+
+
 class PriorCheckFailsClosed(unittest.TestCase):
     def test_missing_or_errored_check_is_not_a_pass(self):
         p = prefs()

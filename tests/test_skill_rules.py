@@ -169,3 +169,30 @@ class LoopParityRules(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class BrowserConnectRetry(unittest.TestCase):
+    """QA pass 3: one of four parallel autoConnect attaches failed once with DevToolsActivePort; the applier parked at once."""
+
+    def test_applier_retries_before_parking(self):
+        text = (SKILLS / "job-setup" / "assets" / "job-applier.md").read_text(encoding="utf-8")
+        self.assertIn("Could not find DevToolsActivePort", text)
+        self.assertIn("up to 3 tries in all", text)
+        self.assertIn("Park only after the third failed try", text)
+
+    def test_job_run_passes_the_retry_to_appliers(self):
+        text = (SKILLS / "job-run" / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("retry a failed connect", text)
+        self.assertIn("up to 3 tries in all", section(text, "## Preconditions", "## Guard"))
+
+
+class OwnTabMarker(unittest.TestCase):
+    """QA pass 3: setup opened a second JobRight tab, the connection dropped, and it could no longer tell its tab from the user's."""
+
+    def test_feed_tabs_get_a_unique_fragment(self):
+        setup = (SKILLS / "job-setup" / "SKILL.md").read_text(encoding="utf-8")
+        step = section(setup, "**JobRight feed**", "**Master resume**")
+        self.assertIn("#job-agent-<short random id>", step)
+        self.assertIn("drop your `#job-agent-...` fragment", step)
+        for skill in ("job-scan", "apply-fill"):
+            self.assertIn("#job-agent-<short random id>", (SKILLS / skill / "SKILL.md").read_text(encoding="utf-8"))
