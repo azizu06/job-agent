@@ -21,11 +21,15 @@ Say this, adjusted to the steps still open:
 
 Ask: "Ready?" Then go.
 
-## Assumed setup: Claude Code on a Mac
+## Detect the runtime and operating system
 
-These steps are written for **Claude Code on macOS**, the fully tested path. Check once at the start (`uname -s` prints `Darwin` on a Mac). On a Mac with Claude Code, follow the steps as written and never read out the steps for other systems.
+Use the current host's tool and session information to identify Codex, Claude Code or another agent. Do not identify the active runtime merely because a CLI happens to be installed. Check the operating system once (`uname -s` on macOS or Linux; the host's platform information on Windows).
 
-Not on a Mac, or not Claude Code? Say once: "You are not on Claude Code on a Mac, so a few steps work differently. Support for your setup is community-tested." Then use the section **Not on Mac or not using Claude Code?** at the end of this file wherever a step marks `(other setups: see end)`.
+- **Codex:** read `../../docs/codex.md` relative to this skill's directory when available in a clone. If installed separately without the repository docs, use the Codex instructions in this file and the Other setups section below. Repository skills are already exposed through `.agents/skills/`. Skip every Claude-specific install, agent-copy and connector click path. This milestone covers discovery and setup; full browser-run validation is still pending. Keep scheduling disabled and do not promise parallel fills.
+- **Claude Code on macOS:** use the plugin-specific steps below. This is the existing fully tested path.
+- **Other setups:** use only the applicable lines in **Other setups** below and explain that end-to-end support is not yet validated.
+
+Before the wizard, check Node.js 20.19+, Python 3.9+ and Chrome 144+. Before building a resume or offering a practice application, also check `tectonic --version` and `python3 -c "import fitz"` (Windows: `py -3`). If missing, give the install instructions in `docs/getting-started.md`; never skip the resume gate or upload an ungated PDF.
 
 ## Workspace and progress
 
@@ -59,7 +63,9 @@ Progress file: `<workspace>/state/setup-progress.json`, like `{"done": ["chrome"
    - Click path: open Chrome, paste `chrome://inspect/#remote-debugging` into the address bar, turn on the remote debugging toggle. One time only. Needs Chrome 144 or later and Node.js (for `npx chrome-devtools-mcp`).
    - The Claude Code plugin ships the `job-agent-browser` MCP server (chrome-devtools MCP with `--autoConnect --no-usage-statistics --workspace=${HOME}/.job-agent`). `--workspace` lets the browser server read tailored resumes for upload. (other setups: see end)
    - Test it: call `list_pages`. Chrome shows "Allow remote debugging?". Tell them: click **Allow**. Chrome asks again for every new connection, and each parallel applier connects separately, so a run can raise one prompt per applier. Tell them the prompt is Chrome's own check with no off switch, and that the next step offers a helper that clicks it for them.
-   - Parallel appliers: copy `assets/job-applier.md` from this skill's folder to `~/.claude/agents/job-applier.md`. In the copy, always replace `${HOME}/.job-agent` in `--workspace=` with the absolute workspace path (for example `/Users/sam/.job-agent`), because variables in a user agent's frontmatter may not be expanded. In dedicated mode swap `--autoConnect` for `--browser-url=http://127.0.0.1:<browser.port>`. Tell the user you did it. If the file exists and differs, show the difference and ask before replacing it.
+   - Codex browser: reuse an existing correctly configured server or add `codex mcp add job-agent-browser -- npx -y chrome-devtools-mcp@1.10.1 --autoConnect --no-usage-statistics --workspace=<absolute workspace>`. Resolve the actual workspace first; do not save a literal `${HOME}` or `<absolute workspace>`. Reopen the session if tools have not loaded, then test `list_pages`. Do not overwrite another project's server without checking its configuration.
+   - Parallel appliers (Claude Code only): copy `assets/job-applier.md` from this skill's folder to `~/.claude/agents/job-applier.md`. In the copy, always replace `${HOME}/.job-agent` in `--workspace=` with the absolute workspace path (for example `/Users/sam/.job-agent`), because variables in a user agent's frontmatter may not be expanded. In dedicated mode swap `--autoConnect` for `--browser-url=http://127.0.0.1:<browser.port>`. Tell the user you did it. If the file exists and differs, show the difference and ask before replacing it.
+   - Codex dedicated mode: use the same `launch_chrome.py` helper below, then register `job-agent-dedicated` with `codex mcp add job-agent-dedicated -- npx -y chrome-devtools-mcp@1.10.1 --browser-url=http://127.0.0.1:9333 --no-usage-statistics --workspace=<absolute workspace>`. Use only the selected mode's server.
    - Alternative, isolated from the main browser: `python3 scripts/launch_chrome.py` starts a separate profile with `--remote-debugging-port=9333 --user-data-dir=<workspace>/chrome-profile`. No prompts, but they sign in to JobRight, Gmail and portals once in that window. Set `browser.mode: dedicated` and use `--browser-url=http://127.0.0.1:9333` instead of `--autoConnect`. The plugin's own `job-agent-browser` server always uses `--autoConnect`, so in Claude Code also add a server for this session to drive: `claude mcp add --scope user job-agent-dedicated -- npx -y chrome-devtools-mcp@1.10.1 --browser-url=http://127.0.0.1:9333 --no-usage-statistics --workspace=<absolute workspace>`, then tell the user to run `/mcp` (or restart Claude Code) so it loads. Use its tools for scans and gating in dedicated mode.
 
 3. **Hands-free Allow clicks** (id `autoallow`, macOS only, default no).
@@ -71,7 +77,8 @@ Progress file: `<workspace>/state/setup-progress.json`, like `{"done": ["chrome"
 
 4. **Gmail and connectors** (id `connectors`).
    - Why: Gmail lets me find confirmation emails and verification codes.
-   - Check which MCP connectors exist. If Gmail is missing: "Open claude.ai, go to Settings > Connectors, find **Gmail**, click Connect, choose your Google account, click Allow. Then run `/mcp` here and check Gmail shows as connected." Re-check after they say done. (other setups: see end)
+   - Codex: discover the tools exposed in this session. Test Gmail with one read-only label-list or search call. A configured server name alone does not prove access. If absent, use this client's available Gmail plugin or MCP connection setup; a terminal session may need its own authenticated MCP server. Never send the user to claude.ai. Record missing capabilities and leave `connectors` incomplete until the read check passes; other setup steps can continue. Do not disable the prior-application email check to make a run pass.
+   - Claude Code only: check which MCP connectors exist. If Gmail is missing: "Open claude.ai, go to Settings > Connectors, find **Gmail**, click Connect, choose your Google account, click Allow. Then run `/mcp` here and check Gmail shows as connected." Re-check after they say done. (other setups: see end)
    - Notion and Sheets connectors are handled in the tracker step. Indeed is an optional fallback job source. Missing optional ones are fine.
 
 5. **Tracker** (id `tracker`).
@@ -82,6 +89,7 @@ Progress file: `<workspace>/state/setup-progress.json`, like `{"done": ["chrome"
      3. **Notion**: the nicest board view. Needs the Notion connector.
    - Columns for all: `company, role, req_id, link, date, resume_used, status, receipt_id, notes, applied_at, pay, location` (statuses are in the tracker skill).
    - CSV: create `<workspace>/tracker.csv` with that header row. Set `tracker.backend: csv`.
+   - Codex: default to CSV. Offer Sheets or Notion only after a read-only access check succeeds in this client; use its connection settings if missing. The following connector click paths are for Claude Code only.
    - Sheets: if the connector is missing, click path: Connectors > Google Sheets > Connect > Allow. Create a sheet named "Job applications" with that header row. Save its URL to `tracker.sheets_url`, set `backend: sheets`.
    - Notion: if the connector is missing, click path: Connectors > Notion > Connect > choose a workspace > pick a page to share. Create a database "Job applications": `company` as title, `status` as select (tracker skill statuses), `date` as date, `link` as URL, the other columns as text. Save its URL to `tracker.notion_database_url`, set `backend: notion`. Offer a Board view grouped by `status`.
    - Check: confirm the file, sheet or database exists and has the columns.
@@ -135,25 +143,28 @@ Progress file: `<workspace>/state/setup-progress.json`, like `{"done": ["chrome"
     - **SMS codes** (macOS, only if credential mode is on, default no). Consequence: reads `~/Library/Messages/chat.db` read-only for a code from the last 5 minutes. Click path: System Settings > Privacy & Security > Full Disk Access > add the app running the agent; on iPhone: Settings > Messages > Text Message Forwarding > your Mac. On Windows, codes come back to you.
     - If credential mode needs it, check `python3 -c "import keyring"`; if missing, ask before `pip install keyring`.
     - **auto_submit** (default **no**). Consequence: yes means the agent presses Submit itself, up to the daily cap; no means it fills every form and stops for you to review and press Submit. Explain the README "Auto-submit" trade-off. Also set `dry_run` and `caps.daily_submit_cap`.
-    - **Schedule** (default no). Consequence: the agent scans and applies while you are away, within your caps. If yes, default **every 3 hours**; accept another interval. Save `schedule.every_hours`. Walk-away runs need the Mac awake: tell them to keep it plugged in and offer `caffeinate -dimsu &` (stops sleep until they quit it or restart), or System Settings > Battery > Options > "Prevent automatic sleeping on power adapter when the display is off". Scheduled runs use a local Claude Code scheduled task (see `job-run`), never a cloud one, because the run needs this Mac's Chrome. If the schedule is yes, `browser.mode` is `main` and `browser.auto_allow` is false, tell them each scheduled run will stop at Chrome's Allow prompt while they are away, and offer to turn on auto-allow now (same explanation and consequence as step 3).
+    - **Codex schedule:** leave `schedule.every_hours: 0`. Explain that unattended execution is a later migration milestone; do not create a schedule or use Claude scheduling commands.
+    - **Schedule** (Claude Code and other validated runtimes, default no). Consequence: the agent scans and applies while you are away, within your caps. If yes, default **every 3 hours**; accept another interval. Save `schedule.every_hours`. Walk-away runs need the Mac awake: tell them to keep it plugged in and offer `caffeinate -dimsu &` (stops sleep until they quit it or restart), or System Settings > Battery > Options > "Prevent automatic sleeping on power adapter when the display is off". Scheduled runs use a local Claude Code scheduled task (see `job-run`), never a cloud one, because the run needs this Mac's Chrome. If the schedule is yes, `browser.mode` is `main` and `browser.auto_allow` is false, tell them each scheduled run will stop at Chrome's Allow prompt while they are away, and offer to turn on auto-allow now (same explanation and consequence as step 3).
     - CAPTCHAs and bot checks are never solved: the agent parks that tab, filled and open, and tells you.
 
 12. **Notifications** (id `notify`). Why: so you hear when a tab needs you. Offer, default 1: (1) a macOS notification on this Mac, (2) an ntfy.sh topic to get alerts on your phone (suggest a long random name, since anyone who knows it can read it), (3) a Slack incoming webhook, (4) none. (other setups: see end) Write `<workspace>/state/notify.json` (shapes in `../job-run/scripts/notify.py`), set `notify.method`, and send a test with `notify.py --title "job-agent" --message "test"`.
 
 13. **Practice run** (id `dryrun`). Why: proves everything works before it matters.
+    - Codex: first offer the local mock ATS validation described in `tests/e2e/README.md`, when the clone is available. Explain that the complete browser workflow has not yet been validated in Codex before offering a real practice application. Do not mark `dryrun` complete unless the form and resume checks actually pass.
     - Write both YAML files first and print a short summary (no secrets). Before the practice run, gate the general resume: `python3 ../tailor-resume/scripts/resume_gate.py --pdf <general>.pdf --resume <general>.tex --master <master>`, with the general resume's own PDF and source. It must print `VERDICT: PASS`; fix the resume and rerun until it does. Pick one real posting from the JobRight feed that matches the preferences. Run the job-run skill in dry-run mode on that one posting: tailor the resume, open the application, fill every field, stop at Submit without pressing it. Show the filled form and the tailored resume path. If something parks or fails, fix it or give the exact click needed.
 
 14. **Summary screen.** Print:
     - A checklist of what is set up (Chrome, auto-allow on or off, Gmail, tracker type and location, JobRight feed URL, master resume path, voice (profile from N samples or rules, or humanizing layer only), auto_submit, schedule, notifications), each ticked or "not set".
-    - How to start: `/job-agent:run dry-run` for another practice, `/job-agent:run` for a real run (other agents: "run the job-run skill").
+    - Codex: use `$job-setup` to resume setup. After browser validation, request `$job-run in dry-run mode, one job at a time`. Keep the migration status visible; do not claim a successful application run from setup checks alone.
+    - Claude Code: how to start: `/job-agent:run dry-run` for another practice, `/job-agent:run` for a real run (other agents: "run the job-run skill").
     - If a schedule is enabled: "Say 'start the schedule' and I will run every <N> hours. Say 'stop the schedule' to end it." Do not start it without a yes.
-    - "Run `/job-agent:setup` again any time; finished steps are skipped."
+    - Claude Code: "Run `/job-agent:setup` again any time; finished steps are skipped."
 
-## Not on Mac or not using Claude Code?
+## Other setups
 
 Community-supported. The skills work in other agents and on other systems, with these differences. Use only the lines that apply.
 
-- **Other agents** (Codex, Cursor, others via `npx skills add azizu06/job-agent`, skills in `.agents/skills/`): add the browser MCP yourself: `npx -y chrome-devtools-mcp@1.10.1 --autoConnect --no-usage-statistics --workspace=<absolute workspace>`. Codex: `codex mcp add job-agent-browser -- npx -y chrome-devtools-mcp@1.10.1 --autoConnect --no-usage-statistics --workspace=<absolute workspace>`. Show the exact snippet for their agent. Skip the `job-applier` copy; jobs run one at a time unless the agent can give each worker its own browser MCP process. Connectors (Gmail, Notion, Sheets) are added in that agent's own MCP settings; point the user there.
+- **Other agents** (Codex, Cursor, others via `npx skills add jonathan-prabakar/job-agent`, skills in `.agents/skills/`): add the browser MCP yourself: `npx -y chrome-devtools-mcp@1.10.1 --autoConnect --no-usage-statistics --workspace=<absolute workspace>`. Codex: `codex mcp add job-agent-browser -- npx -y chrome-devtools-mcp@1.10.1 --autoConnect --no-usage-statistics --workspace=<absolute workspace>`. Show the exact snippet for their agent. Skip the `job-applier` copy; jobs run one at a time unless the agent can give each worker its own browser MCP process. Connectors (Gmail, Notion, Sheets) are added in that agent's own MCP settings; point the user there.
 - **Windows** (experimental): `python_cmd: py -3`. No auto-allow helper: the user clicks Allow, or uses dedicated mode (`launch_chrome.py`), which never prompts. Notifications: ntfy or Slack, never `macos`. Keep the PC awake in Settings > System > Power. Schedules: Task Scheduler running the agent's headless CLI (see `job-run`).
 - **Linux**: no auto-allow helper and no SMS codes; same notification and schedule notes as Windows (cron instead of Task Scheduler).
 

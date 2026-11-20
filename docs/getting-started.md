@@ -10,16 +10,18 @@ This page is for you if you have never set up a coding agent or a browser MCP. j
 - [What runs on its own](#what-runs-on-its-own)
 - [If something goes wrong](#if-something-goes-wrong)
 
+For Codex, start with [Codex setup](codex.md). This milestone covers discovery and setup; the full browser workflow is not yet validated. The Claude-specific instructions below remain available for existing users.
+
 ## 1. Install the tools
 
-You need Chrome, Node.js and Python. The PDF tools are optional: without them the agent hands you the resume source file to export yourself.
+You need Chrome, Node.js and Python. The PDF tools are required for the built-in resume build and upload gate. Without them you can prepare resume source, but must not upload a resume until its gate passes.
 
 | Tool | macOS (Homebrew) | Windows (winget) | Linux (Debian, Ubuntu) |
 | --- | --- | --- | --- |
 | Chrome 144+ | [google.com/chrome](https://www.google.com/chrome/) | `winget install Google.Chrome` | [google.com/chrome](https://www.google.com/chrome/) |
 | Node.js 20.19+ | `brew install node` | `winget install OpenJS.NodeJS.LTS` | Use [nvm](https://github.com/nvm-sh/nvm); distro packages are often too old |
 | Python 3.9+ | `brew install python` | `winget install Python.Python.3.12` | `sudo apt install python3` |
-| PDF tools (optional) | `brew install tectonic`, then `python3 -m pip install pymupdf` | [tectonic](https://tectonic-typesetting.github.io), then `py -3 -m pip install pymupdf` | [tectonic](https://tectonic-typesetting.github.io), then `python3 -m pip install pymupdf` |
+| PDF tools (required for resume gate) | `brew install tectonic`, then `python3 -m pip install pymupdf` | [tectonic](https://tectonic-typesetting.github.io), then `py -3 -m pip install pymupdf` | [tectonic](https://tectonic-typesetting.github.io), then `python3 -m pip install pymupdf` |
 
 Check them:
 
@@ -57,11 +59,11 @@ Do this in the Chrome you will use with job-agent, so the agent finds you alread
 Install with the command in the [README](../README.md#setup). Inside a running Claude Code session you can use these instead, then `/reload-plugins`:
 
 ```text
-/plugin marketplace add azizu06/job-agent
+/plugin marketplace add jonathan-prabakar/job-agent
 /plugin install job-agent@job-agent
 ```
 
-Using another agent? `npx skills add azizu06/job-agent` loads the skills in Codex, Cursor and others, one job at a time. Then:
+Using another agent? `npx skills add jonathan-prabakar/job-agent` loads the skills in Codex, Cursor and others, one job at a time. Then:
 
 1. Open `chrome://inspect/#remote-debugging` in Chrome and switch remote debugging on. This lets the agent drive Chrome. You do it once.
 2. Run setup. In Claude Code: `/job-agent:setup`. In other agents: "set up job-agent".

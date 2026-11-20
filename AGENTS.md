@@ -2,11 +2,16 @@
 
 This repo turns you into a job-application agent. If a user gave you this repo's link and said "set this up" (or similar), do all of it for them: install, setup, then offer a dry run.
 
+## Choose the task first
+
+Only install or run the application workflow when the user asks to set up or use job-agent. Requests to inspect, develop, test or migrate the repository are development tasks: follow **Developing this repo** without starting setup or connecting to the user's browser.
+
 ## What to do
 
 1. **Install the skills** for your agent:
-   - Claude Code: `/plugin marketplace add azizu06/job-agent` then `/plugin install job-agent@job-agent`.
-   - Other agents (community-supported, not tested end to end): `npx skills add azizu06/job-agent`, or clone the repo and read `skills/*/SKILL.md` directly.
+   - Claude Code: `/plugin marketplace add jonathan-prabakar/job-agent` then `/plugin install job-agent@job-agent`.
+   - Codex: open this clone as the project. The ten skills are exposed through `.agents/skills/`; no Claude installation is needed. Follow `docs/codex.md` for browser and connector setup. Discovery and setup are the first migration milestone; the complete Codex browser workflow is not yet validated.
+   - Other agents (community-supported, not tested end to end): `npx skills add jonathan-prabakar/job-agent`, or clone the repo and read `skills/*/SKILL.md` directly.
    - If installed with npx skills add, skills live in .agents/skills/, and add the browser MCP yourself: `npx -y chrome-devtools-mcp@1.10.1 --autoConnect` (Codex: `codex mcp add job-agent-browser -- npx -y chrome-devtools-mcp@1.10.1 --autoConnect`). Also pass `--no-usage-statistics --workspace=$HOME/.job-agent` so it sends no usage data and can upload resumes from the workspace.
 2. **Setup:** follow `skills/job-setup/SKILL.md`. It writes the user's profile into the workspace (`$JOB_AGENT_HOME`, default `~/.job-agent/`) and attaches to the user's own Chrome with chrome-devtools MCP `--autoConnect`.
 3. **Run:** follow `skills/job-run/SKILL.md`, which calls the other skills in order.
@@ -46,7 +51,8 @@ On Windows, use `py -3` wherever these docs say `python3`.
 ## Developing this repo
 
 - Tests: `python3 -m unittest discover -s tests` (standard library only).
-- Plugin check: `claude plugin validate .`
+- Claude plugin check (only when changing Claude packaging, with Claude installed): `claude plugin validate .`. Codex setup does not require this command.
+- Codex discovery checks: `python3 -m unittest discover -s tests -p test_codex_discovery.py`. Keep `skills/` canonical and all ten `.agents/skills/` links relative.
 - Keep prose plain: no em dashes, no hype words.
 - Docs: `README.md` is the product page, `docs/how-it-works.md` holds the detail, `docs/getting-started.md` is for first-time users, and `docs/faq.md`, `docs/troubleshooting.md` and `docs/your-voice.md` hold the FAQ, fixes and answer-writing detail. Keep facts in sync across them when a skill changes.
 - README images: `assets/demo.gif` and `assets/demo.mp4`, a screen recording of a real run that stops at Submit. No real person's data may appear in any frame.
