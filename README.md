@@ -9,7 +9,7 @@
 
 <p align="center">
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-E8590C"></a>
-  <a href="https://github.com/azizu06/job-agent/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/azizu06/job-agent/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="https://github.com/jonathan-prabakar/job-agent/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/jonathan-prabakar/job-agent/actions/workflows/ci.yml/badge.svg"></a>
   <img alt="Built for Claude Code on macOS" src="https://img.shields.io/badge/built%20for-Claude%20Code%20on%20macOS-0F1115">
 </p>
 
@@ -31,12 +31,14 @@ job-agent reads new postings from your JobRight feed, builds a one-page resume f
 
 ## Setup
 
+**Codex:** this fork now includes repository skill discovery and setup instructions. Open the clone as a Codex project and follow [Codex setup](docs/codex.md). Full browser-run validation, scheduling and parallel workers are later migration milestones. The instructions below describe the existing Claude Code path.
+
 You need a Mac, [Claude Code](https://claude.com/claude-code), Google Chrome 144 or later, Node.js 20.19 or later and Python 3.9 or later. New to any of these? [Getting started](docs/getting-started.md) installs each one.
 
 1. **Install the plugin** from your Mac's Terminal. This also gives Claude the browser connection it needs.
 
    ```bash
-   claude plugin marketplace add azizu06/job-agent && claude plugin install job-agent@job-agent
+   claude plugin marketplace add jonathan-prabakar/job-agent && claude plugin install job-agent@job-agent
    ```
 
 2. **Turn on Chrome remote debugging.** Open `chrome://inspect/#remote-debugging` and switch it on. You do this once.
@@ -51,7 +53,7 @@ You need a Mac, [Claude Code](https://claude.com/claude-code), Google Chrome 144
 
 > **Auto-submit when you trust it.** Set `auto_submit: true` and job-agent presses the final button itself, within your daily and per-company caps. It is off by default, so your first runs fill each form and leave the click to you while you check the fills. CAPTCHAs, passwords and account creation stay with you: the agent parks that tab, filled and open, and notifies you.
 
-Optional: install `tectonic` and PyMuPDF (`pip install pymupdf`) so the agent can build the resume PDF and check its layout. Without them you get the resume source file to export yourself.
+Install `tectonic` and PyMuPDF (`python3 -m pip install pymupdf`) before the resume build and upload gate. Without them you can prepare resume source, but must not upload a resume until its gate passes.
 
 ## Usage
 
@@ -124,7 +126,7 @@ Stuck? [Troubleshooting](docs/troubleshooting.md) · [FAQ](docs/faq.md)
 
 ## Roadmap
 
-Codex, Cursor and other agents with parallel appliers, then Windows and Linux. Want one sooner? Open an issue and say which.
+Codex migration: skill discovery and setup first, then sequential browser workflow validation, then scheduling and isolated parallel workers. Cursor, Windows and Linux remain community-supported.
 
 ---
 
